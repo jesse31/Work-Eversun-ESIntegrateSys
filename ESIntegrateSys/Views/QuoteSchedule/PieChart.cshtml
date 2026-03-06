@@ -1,0 +1,207 @@
+﻿@model List<ESIntegrateSys.ViewModels.PieChartData>
+@{
+    ViewBag.Title = "PieChart";
+}
+
+<h2>PieChart</h2>
+
+<head>
+    <script src="~/Scripts/chart.js"></script>
+    <script src="~/Scripts/chart-plugin-datalables.mini.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+
+    <style>
+        .chart-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chart-wrapper {
+            width: 80%;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: auto !important;
+        }
+    </style>
+</head>
+
+<div class="container">
+    <div class="chart-container">
+        <div class="chart-wrapper">
+            <canvas id="myPieChart1"></canvas>
+        </div>
+        @*<div class="chart-wrapper">
+            <canvas id="myPieChart2"></canvas>
+        </div>*@
+    </div>
+</div>
+
+@*<script>
+    $(document).ready(function () {
+        var ctx = document.getElementById('myPieChart').getContext('2d');
+        var pieData = {
+            labels: @Html.Raw(Json.Encode(Model.Select(m => m.CustNo).Distinct())),
+            datasets: [{
+                data: @Html.Raw(Json.Encode(Model.GroupBy(m => m.CustNo).Select(g => g.Sum(m => m.RequestCount)))),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        };
+
+        var myPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: pieData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                var label = pieData.labels[tooltipItem.dataIndex];
+                                var value = pieData.datasets[0].data[tooltipItem.dataIndex];
+                                return label + ': ' + value;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        formatter: (value, context) => {
+                            let label = context.chart.data.labels[context.dataIndex];
+                            return label + ': ' + value;
+                        }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels] // 引入 ChartDataLabels 插件
+        });
+    });
+</script>*@
+
+<script>
+    $(document).ready(function () {
+        // Data for the first pie chart
+        var ctx1 = document.getElementById('myPieChart1').getContext('2d');
+        var pieData1 = {
+            labels: @Html.Raw(Json.Encode(Model.Select(m => m.CustNo).Distinct())),
+            datasets: [{
+                data: @Html.Raw(Json.Encode(Model.GroupBy(m => m.CustNo).Select(g => g.Sum(m => m.RequestCount)))),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        };
+
+        var myPieChart1 = new Chart(ctx1, {
+            type: 'pie',
+            data: pieData1,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                var label = pieData1.labels[tooltipItem.dataIndex];
+                                var value = pieData1.datasets[0].data[tooltipItem.dataIndex];
+                                var percentage = @Html.Raw(Json.Encode(Model.Select(m => m.RequestRatioPercentage)));
+                                return label + ': ' + value + ' (' + percentage[tooltipItem.dataIndex] + ')';
+                            }
+                        }
+                    },
+                    datalabels: {
+                        formatter: (value, context) => {
+                            let label = context.chart.data.labels[context.dataIndex];
+                            let percentage = @Html.Raw(Json.Encode(Model.Select(m => m.RequestRatioPercentage)));
+                            return label + ': ' + value + ' (' + percentage[context.dataIndex] + ')';
+                        }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels] // 引入 ChartDataLabels 插件
+        });
+
+        //// Data for the second pie chart (this is just an example, you can modify it as needed)
+        //var ctx2 = document.getElementById('myPieChart2').getContext('2d');
+        //var pieData2 = {
+        //    labels: ['Example 1', 'Example 2', 'Example 3'],
+        //    datasets: [{
+        //        data: [10, 20, 30],
+        //        backgroundColor: [
+        //            'rgba(75, 192, 192, 0.2)',
+        //            'rgba(153, 102, 255, 0.2)',
+        //            'rgba(255, 159, 64, 0.2)'
+        //        ],
+        //        borderColor: [
+        //            'rgba(75, 192, 192, 1)',
+        //            'rgba(153, 102, 255, 1)',
+        //            'rgba(255, 159, 64, 1)'
+        //        ],
+        //        borderWidth: 1
+        //    }]
+        //};
+
+        //var myPieChart2 = new Chart(ctx2, {
+        //    type: 'pie',
+        //    data: pieData2,
+        //    options: {
+        //        responsive: true,
+        //        plugins: {
+        //            legend: {
+        //                position: 'top',
+        //            },
+        //            tooltip: {
+        //                callbacks: {
+        //                    label: function(tooltipItem) {
+        //                        var label = pieData2.labels[tooltipItem.dataIndex];
+        //                        var value = pieData2.datasets[0].data[tooltipItem.dataIndex];
+        //                        return label + ': ' + value + '%';
+        //                    }
+        //                }
+        //            },
+        //            datalabels: {
+        //                formatter: (value, context) => {
+        //                    let label = context.chart.data.labels[context.dataIndex];
+        //                    return label + ': ' + value + '%';
+        //                }
+        //            }
+        //        }
+        //    },
+        //    plugins: [ChartDataLabels] // 引入 ChartDataLabels 插件
+        //});
+    });
+</script>
