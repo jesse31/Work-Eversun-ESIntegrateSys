@@ -1,0 +1,435 @@
+﻿@using PagedList
+@using PagedList.Mvc
+@model IPagedList<ESIntegrateSys.Services.Dtos.QuoteDataListDto>
+
+@{
+    // 使用複合鍵來存儲統計數據，鍵為 (WoNoAttri, RequDate)
+    var countDict = new Dictionary<Tuple<int, DateTime>, int>();
+    string dept = ViewBag.DeptNo;
+}
+
+<head>
+    <meta charset="utf-8" />
+    <title>報價清單</title>    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .table-container {
+            overflow-x: auto; /* 添加水平滚动条 */
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            white-space: nowrap; /* 防止内容换行 */
+        }
+
+        .upload-link {
+            color: #007bff; /* 連結顏色 */
+            text-decoration: none; /* 去掉下底線 */
+        }
+
+            .upload-link:hover {
+                text-decoration: underline; /* 游標停在上面時添加下底線 */
+            }
+
+            .upload-link i {
+                margin-right: 5px; /* 圖文之間的間距 */
+            }
+
+        .empty-row {
+            background-color: #D0D0D0;
+        }
+
+        a.disabled {
+            pointer-events: none;
+            cursor: not-allowed;
+            color: grey;
+            text-decoration: none;
+        }
+
+        /* 模態框背景 */
+        .modal {
+            display: none; /* 預設隱藏 */
+            position: fixed; /* 固定位置 */
+            z-index: 1; /* 在其他元件之上 */
+            left: 0;
+            top: 0;
+            width: 100%; /* 整體寬度 */
+            height: 100%; /* 整體高度 */
+            overflow: auto; /* 如果内容太多可以滾動 */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* 黑色背景透明 */
+        }
+
+        /* 模态框内容 */
+        .modal-content {
+            position: relative;
+            background-color: #fefefe;
+            margin: auto; /* 自動邊距*/
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* 例如80%寬度 */
+            max-width: 800px; /* 最大寬度 */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            overflow: auto; /* 使内容可滾動 */
+        }
+
+        .modal-content {
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+            .close:hover, .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+        .highlight {
+            background-color: #DDDDFF; /* 或者你想要的顏色 */
+        }
+    </style>
+</head>
+
+<p></p>
+@Html.PagedListPager(Model, page => Url.Action("QuotesView",
+    new
+    {
+        page = page,
+        SalesID = Request["SalesID"],
+        CustNo = Request["CustNo"],
+        Cancel = Request["Cancel"],
+        indate = Request["indate"],
+        indate2 = Request["indate2"],
+        Sort = Request["Sort"]
+    }))
+<div class="table-container">
+    <table class="table">
+        <tr>
+            <th></th>
+            <th>編號</th>
+            <th>業務</th>
+            <th>填寫時間</th>
+            <th>客戶別</th>
+            <th>業務單號</th>
+            <th>工程編號</th>
+            <th>機種名稱</th>
+            <th>工單性質</th>
+            <th>需求日期</th>
+            <th>備註</th>
+            <th>IE負責人</th>
+            <th>IE報價日</th>
+            <th>IE測試報價日</th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+        @foreach (var item in Model)
+        {
+            // 取得鍵值
+            var key = Tuple.Create(item.AttriNo, item.RequDate.Date);
+
+            // 增加統計數據
+            if (!countDict.ContainsKey(key))
+            {
+                countDict[key] = 0;
+            }
+            countDict[key]++;
+
+            // 當工單性質同一天超過數量（item.AttriNo == 1 且超過 10 筆，或其他性質超過 5 筆）時，底色為 background-color: #DDDDFF;（淡紫色）
+            // empty-row：當 item.CancelChk 為 true（已取消），底色為 background-color: #D0D0D0;（灰色）
+            // 判斷是否需要變色
+            bool changeColor = (item.AttriNo == 1 && countDict[key] > 10) ||
+                                           (item.AttriNo != 1 && countDict[key] > 5);
+
+    <tr class="@(changeColor ? "highlight" : (item.CancelChk ? "empty-row" : ""))" data-ieonwer="@item.IEonwer" data-dept="@item.DeptNo" data-iestatus="@item.IEStatus">
+        @* 展開按鈕，僅當有文件時顯示 *@
+        <td>
+            @if (item.HasFiles)
+            {
+                <a href="#" class="expand-btn" data-files="@item.FRecordId" title="展開"><i class="fas fa-search"></i> <!-- 放大鏡圖標 --></a>
+            }
+        </td>
+        <td>@item.Sno</td>
+        <td>@item.SalesName</td>
+        <td>@(item.CreateDate != DateTime.MinValue ? item.CreateDate.ToString("yyyy/MM/dd") : "")</td>
+        <td>(@item.CustNo)@item.CustName</td>
+        <td>@item.SalesNo</td>
+        <td>@item.EngSr</td>
+        <td>@item.CustMaterial</td>
+        <td>@item.WoNoAttri</td>
+        <td>@(item.RequDate != DateTime.MinValue ? item.RequDate.ToString("yyyy/MM/dd") : "")</td>
+        <td>@item.Mark</td>
+        <td>@item.IEonwer</td>
+        <td>@(item.IEQuoteDate != DateTime.MinValue ? item.IEQuoteDate.ToString("yyyy/MM/dd") : "")</td>
+        <td>@(item.IEQuoteTDate != DateTime.MinValue ? item.IEQuoteTDate.ToString("yyyy/MM/dd") : "")</td>
+        @if (item.CancelChk)
+        {
+            if (dept == "SD")
+            {
+                <td><a href="#" class="edit-link disabled" onclick="return false;">Edit</a></td>
+                <td><a href="#" class="cancel-link disabled" onclick="return false;">Cancel</a></td>
+            }
+            else
+            {
+                <td><a href="#" class="edit-link disabled" onclick="return false;">IE Check</a></td>
+            }
+        }
+        else
+        {
+            if (dept == "SD")
+            {
+                <td>@Html.ActionLink("Edit", "SalesEdit", new { sno = item.Sno }, new { @class = "seditlink" })</td>
+                <td>@Html.ActionLink("Cancel", "SalesCancel", new { sno = item.Sno }, new { @class = "cancel-link", @onclick = "return checkLink()" })</td>
+            }
+            else
+            {
+                <td>@Html.ActionLink("IE Check", "QuoteIE", new { sno = item.Sno }, new { @class = "edit-link" })</td>
+            }
+        }
+        @*<td><button class="btn-default" data-sno="@item.Sno">上傳</button></td>*@
+        <td><a href="#" class="upload-link" data-sno="@item.Sno"><i class="fas fa-paperclip"></i> </a></td>
+        @if (dept != "SD")
+        {
+            <td>
+                <input type="checkbox" class="handleCheckbox" id="handleCheckbox_@item.Sno"
+                       data-record-id="@item.Sno" data-status="@item.IEStatus"
+                       @(item.IEStatus == "U" ? "checked" : "")
+                       @(item.IEStatus == "U" ? "disabled" : "") /> 報價中
+            </td>
+
+
+
+        }
+
+    </tr>
+        }
+    </table>
+</div>
+
+
+<!-- Modal for Upload File -->
+<div id="uploadModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>文件上傳</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <table>
+                <tr>
+                    <td><input type="text" name="name" id="modalName" placeholder="Enter record name" required /></td>
+                    <td><input type="hidden" name="sno" id="modalSno" /></td>
+                    <td><input type="file" name="file" required /></td>
+                    <td><button type="submit">上傳</button></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>
+
+<!-- Modal for Record Details -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>詳細資料</h2>
+        <div id="detailsContent"></div>
+    </div>
+</div>
+
+<script src="~/Scripts/jquery-3.7.1.min.js"></script>
+<script>
+        var fName='@(ViewBag.Name.ToString())';
+        var Temp = '@(ViewBag.UserId.ToString())';
+        var uId = Temp.padStart(5, '0');
+    $(document).ready(function () {
+        // Handle click on edit, cancel, and check links
+        $(document).on("click", ".seditlink, .cancel-link, .edit-link", function (e) {
+            e.preventDefault();
+            var Deptno = $(this).closest("tr").data("dept");
+            var IEonwer = $(this).closest("tr").data("ieonwer");
+            var IEStatus = $(this).closest("tr").data("iestatus");
+            var actionType = $(this).hasClass("seditlink") ? "修改" : "取消";
+
+            if (IEStatus == "U" && IEonwer !== fName) {
+                alert("報價中，此單不可操作！");
+                return false;
+            }
+            if (IEonwer.length == 3 && Deptno == "SD") {
+                alert("IE已報價，此單不可" + actionType + "！");
+            } else {
+                if ($(this).hasClass("cancel-link")) {
+                    if (confirm("您確定要取消報價嗎?")) {
+                        window.location.href = this.href;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    window.location.href = this.href;
+                }
+            }
+        });
+
+        // 檢查每個 checkbox 的狀態
+        $(".handleCheckbox").each(function () {
+            var recordId = $(this).data("record-id");
+            var checkbox = $(this);
+
+            // 檢查是否被當前使用者鎖定
+            $.ajax({
+                url: '@Url.Action("CheckHandleStatus", "QuoteSchedule")',
+                type: 'GET',
+                data: { sno: recordId },
+                success: function (response) {
+                    if (response.isChecked) {
+                        // 如果資料已被鎖定，檢查是誰鎖定的
+                        if (response.lockedBy !== uId) {
+                            // 如果不是當前使用者鎖定的，禁用該 `checkbox`
+                            checkbox.prop("checked", true);
+                            checkbox.prop("disabled", true);
+                        } else {
+                            // 如果是自己鎖定的，保持勾選但不禁用
+                            checkbox.prop("checked", true);
+                            checkbox.prop("disabled", false);
+                        }
+                    } else {
+                        checkbox.prop("checked", false);
+                        checkbox.prop("disabled", false);
+                    }
+                },
+                error: function () {
+                    alert('無法取得紀錄狀態');
+                }
+            });
+        });
+
+        // 事件代理：當使用者點擊 checkbox 時
+    $(document).on("change", ".handleCheckbox", function () {
+        var recordId = $(this).data("record-id");
+        var isChecked = $(this).is(":checked");
+
+        // 發送 AJAX 請求
+        $.ajax({
+            url: '@Url.Action("HandleCheckboxChange", "QuoteSchedule")',
+            type: 'POST',
+            data: {
+                sno: recordId,
+                isChecked: isChecked
+            },
+            success: function (response) {
+                if (response.isChecked) {
+                    alert("該資料已經被其他使用者勾選，報價中！");
+                    $(`#handleCheckbox_${recordId}`).prop("checked", true); // 保持勾選
+                    $(`#handleCheckbox_${recordId}`).prop("disabled", true); // 禁用 checkbox
+                } else if (response.status == "success") {
+                    alert("紀錄已成功更新");
+                    window.location.assign(window.location.href);//刷新當前頁
+                }
+            },
+            error: function () {
+                alert('無法更新紀錄');
+            }
+        });
+    });
+    });
+
+
+
+    $(document).ready(function () {
+        // 取得模擬窗
+        var modal = $('#detailsModal');
+
+        // 取得 <span> 元素，點下後關閉模擬窗
+        var span = $(".close");
+
+        // user點下<span> (x), 關閉模擬窗
+        span.click(function () {
+            modal.hide();
+        });
+
+        // 當user點模擬窗以外的地方則關閉模擬窗
+        $(window).click(function (event) {
+            if ($(event.target).is(modal)) {
+                modal.hide();
+            }
+        });
+
+
+        // 展開按鈕事件
+        $('.expand-btn').click(function () {
+            var recordId = $(this).data('files');
+            $.ajax({
+                url: '@Url.Action("RecordDetails", "QuoteSchedule")',
+                type: 'GET',
+                data: { recordId: recordId },
+                success: function (data) {
+                    $('#detailsContent').html(data);
+                    modal.show();  // 顯示
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('取得詳細訊息失敗');
+                }
+            });
+        });
+    });
+
+    $(document).ready(function () {
+        // 取得模態視窗
+        var modal = document.getElementById("uploadModal");
+
+        // 抓 <span> 元素，點一下關閉模態視窗
+        var span = document.getElementsByClassName("close")[0];
+
+        // 用戶點一下 <span> (x), 關閉模態視窗
+        span.onclick = function () {
+            modal.style.display = "none";
+        }
+
+        // 當用戶點一下模態視窗內容以外的地方,關閉視窗
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        // 上傳按鈕事件
+        $(document).on("click", ".upload-link", function (e) {
+            e.preventDefault(); // 防止默认行为
+            var sno = $(this).data("sno");
+            $("#modalSno").val(sno); // 設置隱藏字串sno
+            modal.style.display = "block"; // 打開模態視窗
+        });
+
+        // 文件上傳submit事件
+        $('#uploadForm').submit(function (e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            $.ajax({
+                url: '@Url.Action("Upload", "QuoteSchedule")',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (data) {
+                    alert('文件上傳成功');
+                    $('#uploadModal').hide();
+                    window.location.assign(window.location.href);//刷新當前頁
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    var dom_nodes = $($.parseHTML(jqXHR.responseText));
+                    alert('文件上傳失敗，原因 : ' + dom_nodes.filter('title').text());
+                }
+            });
+        });
+    });
+</script>
+
