@@ -1,0 +1,180 @@
+﻿@model ESIntegrateSys.Models_MGun.RepairGun
+
+@{
+    ViewBag.Title = "料槍送修作業";
+}
+<h2>料槍送修作業</h2>
+
+<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <!-- 引入 SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* 針對年長者優化 SweetAlert2 字體 */
+        .swal2-popup {
+            font-size: 1.2rem !important; /* 基礎字級提升 */
+        }
+        .swal2-title {
+            font-size: 2.2rem !important; /* 標題顯著放大 */
+        }
+        .swal2-content, .swal2-html-container {
+            font-size: 1.8rem !important; /* 內容文字放大 */
+            line-height: 1.5;
+        }
+        /* 優化選單與輸入框 (平衡字體大小與顯示空間) */
+        .form-control, #BadDescription, #MaterialGun_Sno, #Mark {
+            font-size: 1.4rem !important;
+            height: auto !important;
+            min-height: 45px !important;
+            padding: 8px 12px !important;
+            line-height: 1.4 !important;
+            width: 100% !important; /* 確保寬度填滿 */
+            max-width: 600px; /* 設定最大寬度限制 */
+        }
+        
+        #BadDescription option {
+            font-size: 1.3rem !important;
+            padding: 10px !important;
+        }
+
+        /* 標籤字體顯著放大 */
+        .control-label {
+            font-size: 1.8rem !important;
+            padding-top: 5px !important;
+            font-weight: bold;
+        }
+
+        /* 按鈕優化 */
+        #BtnSubmit, .btn-default {
+            font-size: 1.3rem !important;
+            padding: 8px 25px !important;
+        }
+    </style>
+    <script>
+        $(document).ready(function () {
+            // Load BadDescription options via AJAX
+            $.ajax({
+                url: '@Url.Action("BadDesc", "MaterialGun")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    $('#BadDescription').empty();
+                    $.each(data, function (index, item) {
+                        $('#BadDescription').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                },
+                error: function (xhr, status, error) {
+                    Swal.fire({ icon: 'error', title: '選單讀取失敗', text: status + ': ' + error });
+                }
+            });
+
+            // ⚡ 即時檢查料槍狀態 (AJAX)
+            $('#MaterialGun_Sno').change(function() {
+                var val = $(this).val().trim();
+                if(!val) return;
+
+                $.ajax({
+                    url: '@Url.Action("CheckData", "MaterialGun")',
+                    type: 'POST',
+                    data: { input: val },
+                    success: function (response) {
+                        /* 修正判斷是否已維修 By 20260211 Jesse */
+                        // 注意：後端傳回 "" 代表已維修/可開單，"not repair" 代表尚未維修
+                        // 這裡的邏輯是檢查是否重複開單
+                        if(response.result !== "") {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '重複開單警告',
+                                text: '此料槍已有尚未完成的維修紀錄，請勿重複開單！'
+                            }).then(() => {
+                                $('#MaterialGun_Sno').val('').focus();
+                            });
+                        }
+                    }
+                });
+            });
+
+            // Bind form submit event
+            $("#BtnSubmit").click(function (event) {
+                var wono = $("#MaterialGun_Sno").val().trim();
+                var badDescription = $("#BadDescription").val();
+
+                if (wono === "") {
+                    Swal.fire({ icon: 'warning', title: '提示', text: '尚未輸入料槍編號' });
+                    event.preventDefault();
+                    return false;
+                }
+
+                if (badDescription === "0" || badDescription === "") {
+                    Swal.fire({ icon: 'warning', title: '提示', text: '尚未選擇送修原因' });
+                    event.preventDefault();
+                    return false;
+                }
+            });
+
+            // Bind change event for BadDescription
+            $("#BadDescription").change(function () {
+                var wono = $("#MaterialGun_Sno").val().trim();
+                if (wono === "") {
+                    Swal.fire({ icon: 'warning', title: '提示', text: '尚未輸入料槍編號' });
+                }
+            });
+        });
+    </script>
+</head>
+
+@if (TempData["message"] != null)
+{
+    <script type="text/javascript">
+        Swal.fire({
+            icon: 'info',
+            title: '系統提示',
+            text: '@Html.Raw(TempData["message"])'
+        });
+    </script>
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>RepairGun</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <div class="form-group">
+            <label class="control-label col-md-2">料槍編號</label>
+            <div class="col-md-10">
+                <input class="form-control" id="MaterialGun_Sno" name="MaterialGun_Sno" autocomplete="off" style="text-transform:uppercase" oninput="this.value = this.value.toUpperCase()" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">送修原因</label>
+            <div class="col-md-10">
+                <select id="BadDescription" name="BadDescription" class="form-control">
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">備註</label>
+            <div class="col-md-10">
+                <input class="form-control" id="Mark" name="Mark" autocomplete="off" />
+            </div>
+        </div>        
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-default" id="BtnSubmit" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="javascript:history.go(-1);" class="btn btn-default">返回上一頁</a>
+</div>
+

@@ -1,0 +1,170 @@
+﻿@model ESIntegrateSys.Models_MGun.MaintainGun
+
+@{
+    ViewBag.Title = "料槍保養作業";
+}
+<style>
+    /* SweetAlert2 大尺寸樣式 */
+    .swal-large-title {
+        font-size: 2.5em !important;
+        line-height: 1.5 !important;
+    }
+    .swal-large-content {
+        font-size: 1.6em !important;
+        line-height: 1.6 !important;
+    }
+    .swal-large-confirm {
+        font-size: 1.5em !important;
+        padding: 0.8em 2em !important;
+    }
+</style>
+<script src="~/Scripts/jquery-3.4.1.min.js"></script>
+<!-- 引入 SweetAlert2 (CDN 模式) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<h2>CreateMaintainWork</h2>
+
+@using (Html.BeginForm()) 
+{
+    @Html.AntiForgeryToken()
+    
+<div class="form-horizontal">
+    <h4>料槍保養作業</h4>
+    <hr />
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    <div class="form-group">
+        <label class="control-label col-md-2">料槍編號</label>
+        <div class="col-md-10">            
+            <input class="form-control" id="itemgun" name="itemgun" autocomplete="off" style="text-transform:uppercase" />
+        </div>
+    </div>
+
+    
+    <div class="form-group">
+        <div class="col-md-2"></div>
+        <div class="col-md-10">
+            <h2>@Html.CheckBox("isTrue", false)所有料槍皆已執行以下保養項目</h2>
+            <p>1. 料槍外表擦拭及清潔</p>
+            <p>2. 膠膜回收機構清潔及潤滑</p>
+            <p>3. Pitch棘輪上油和清潔</p>
+            <p>4. 傳動機構的清潔及潤滑</p>
+            <p>5. 彈簧機構的清潔及潤滑</p>
+            <p>6. 料槍固定機構(卡勾)的清潔及潤滑</p>
+            <p>7. 電器插頭(座)的清潔及潤滑</p>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">            
+            <button type="submit" value="送出" class="btn btn-default" id="submitClick">送出</button>
+        </div>
+    </div>
+</div>
+}
+<div>
+    <a href="javascript:history.go(-1);" class="btn btn-default">返回上一頁</a>
+</div>
+<script>
+    $(document).ready(function () {
+        // 顯示後端傳回的訊息 (如有)
+        @if (TempData["message"] != null)
+        {
+            <text>
+            Swal.fire({
+                icon: 'warning',
+                title: '提示',
+                text: '@TempData["message"]'
+            });
+            </text>
+        }
+
+        let isSubmitting = false; // 全域提交旗標
+
+        $('#submitClick').click(function (e) {
+            // ⚡ 效能關鍵:立即檢查旗標 (記憶體操作,< 1ms)
+            if (isSubmitting) {
+                console.warn('表單正在提交中,請勿重複操作');
+                e.preventDefault();
+                return false;
+            }
+
+            // 檢查料槍編號是否為空
+            var itemgun = $('#itemgun').val();
+            if (!itemgun) {
+                Swal.fire({ icon: 'warning', title: '料槍編號不能為空' });
+                return false; // 防止表單提交
+            }
+
+            // 檢查是否勾選所有料槍皆已執行保養項目
+            var isTrue = $('#isTrue').is(':checked');
+            if (!isTrue) {
+                Swal.fire({ icon: 'warning', title: '請確認所有料槍皆已執行保養項目' });
+                return false; // 防止表單提交
+            }
+
+            // ⚡ 效能優化:先設定旗標,再執行 UI 更新
+            isSubmitting = true;
+
+            // UI 鎖定 (防止重複點擊)
+            var $btn = $(this);
+            $btn.prop('disabled', true).text('提交中...');
+            $('#itemgun').prop('readonly', true); // 鎖定輸入框
+
+            // 提交表單
+            $('form').submit();
+        });
+
+        // ⚡ 防止同月重複提交 - 前端即時檢查 API
+        $('#itemgun').change(function() {
+            // 強制轉大寫 (雙重確保)
+            $(this).val($(this).val().toUpperCase());
+            var val = $(this).val().trim();
+            if(!val) return;
+
+            $.ajax({
+                url: '@Url.Action("CheckMaintainStatus", "MaterialGun")',
+                type: 'POST',
+                data: { itemgun: val },
+                success: function(response) {
+                    if(response.isDuplicate) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '重複保養警告',
+                            text: response.message,
+                            width: '600px',
+                            padding: '3em',
+                            timer: 4000,
+                            timerProgressBar: true,
+                            customClass: {
+                                title: 'swal-large-title',
+                                htmlContainer: 'swal-large-content', // SweetAlert2 v11 使用 htmlContainer
+                                confirmButton: 'swal-large-confirm'
+                            }
+                        }).then(() => {
+                            $('#itemgun').val(''); // 清空輸入框
+                            setTimeout(() => $('#itemgun').focus(), 100); // 重新聚焦
+                        });
+                    }
+                },
+                error: function() {
+                    console.error('檢查料槍狀態失敗');
+                }
+            });
+        });
+
+        // 監聽 input 事件，即時將輸入轉為大寫
+        $('#itemgun').on('input', function () {
+            var start = this.selectionStart;
+            var end = this.selectionEnd;
+            this.value = this.value.toUpperCase();
+            this.setSelectionRange(start, end);
+        });
+
+        // 防止 Enter 鍵重複提交 (保持原邏輯)        
+        $('#itemgun').on('keydown', function (e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                $('#submitClick').click();
+            }
+        });
+    });
+</script>

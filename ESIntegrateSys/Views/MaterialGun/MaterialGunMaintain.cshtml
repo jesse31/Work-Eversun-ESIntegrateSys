@@ -1,0 +1,104 @@
+﻿@using PagedList
+@using PagedList.Mvc
+@model IPagedList<ESIntegrateSys.Models_MGun.MaintainGun.MGunDataList>
+
+@{
+    ViewBag.Title = "料槍保養首頁";
+}
+
+<!-- 引入 SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+    /* 針對年長者優化 SweetAlert2 字體 - 增大版 */
+    .swal2-popup {
+        font-size: 1.6rem !important; /* 基礎字級大幅提升 (原約 1rem) */
+        width: auto !important;       /* 寬度自適應，避免內容被擠壓 */
+        min-width: 400px;             /* 設定最小寬度 */
+        padding: 2em !important;      /* 增加內距 */
+    }
+    .swal2-title {
+        font-size: 3rem !important;   /* 標題特大 (原約 1.8rem) */
+        margin-bottom: 0.5em !important;
+    }
+    .swal2-html-container {
+        font-size: 2rem !important;   /* 內容文字加大 (原約 1.1rem) */
+        font-weight: bold;            /* 內容加粗更清晰 */
+    }
+    .swal2-icon {
+        /* 使用 transform 放大圖示，避免內部 CSS 繪圖跑版 */
+        transform: scale(1.8) !important;
+        margin-top: 2em !important;   /* 增加上距以免被切到 */
+        margin-bottom: 1.5em !important; /* 增加下距與標題隔開 */
+        /* 恢復預設寬高，讓 scale 發揮作用 */
+        width: 5em !important;        
+        height: 5em !important;
+    }
+    /* 修復 Bootstrap 等框架導致的圖示渲染不全問題 */
+    .swal2-icon, .swal2-icon div, .swal2-icon span {
+        box-sizing: content-box !important;
+    }
+</style>
+
+<h2>料槍保養首頁</h2>
+<h2>    </h2>
+<p>
+    @if (@ViewBag.RoleId != "V")
+        {
+            @Html.ActionLink("進入保養作業", "CreateMaintainWork", null, new { @class = "btn btn-default" })
+        }    
+</p>
+
+@if (ViewBag.FilteredItemGun != null)
+{
+    <div class="alert alert-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <span>
+            <i class="fas fa-filter"></i> 目前顯示新增/指定的料槍編號：<strong>@ViewBag.FilteredItemGun</strong>
+        </span>
+        <a href="@Url.Action("MaterialGunMaintain")" class="btn btn-primary btn-sm" style="color: white;">
+            <i class="fas fa-list"></i> 顯示全部資料
+        </a>
+    </div>
+}
+
+@Html.PagedListPager(Model, page => Url.Action("MaterialGunMaintain", new { li = ViewBag.List, page }))
+<table class="table">
+    <tr>
+        <th>料槍編號_原廠</th>
+        @*<th>料槍編號_昶亨</th>*@
+        <th>保養週期</th>
+        <th>保養時間</th>
+        <th>保養人員</th>
+        <th>下此保養時間</th>
+    </tr>
+
+    @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.MaterialGun_Sno</td>
+                @*<td>@item.MaterialGun_Eno</td>*@
+                <td>@item.MaintainCycle</td>
+                <td>@(item.MaintainTime !=DateTime.MinValue ? item.MaintainTime.ToString("yyyy-MM-dd") : "")</td>
+                <td>@item.fName</td>
+                <td>@(item.MaintainNexDate !=DateTime.MinValue ? item.MaintainNexDate.ToString("yyyy-MM-dd") : "")</td>
+            </tr>
+        }
+
+</table>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        @if (ViewBag.ShowSuccessToast == true)
+        {
+            <text>
+            Swal.fire({
+                icon: 'success',
+                title: '新增成功',
+                text: '已為您篩選顯示剛新增的資料',
+                showConfirmButton: false,
+                timer: 2000,
+                position: 'center'
+            });
+            </text>
+        }
+    });
+</script>

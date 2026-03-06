@@ -1,0 +1,164 @@
+﻿@model ESIntegrateSys.Models_MGun.RepairGun
+
+@{
+    ViewBag.Title = "料槍維修作業";
+}
+<h2>料槍維修作業</h2>
+
+<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <script>
+        $(document).ready(function () {
+            var selectedClassification = '@ViewBag.Classic';
+            var selectedMaintenanceResult = '@ViewBag.Results';
+            $.ajax({
+                url: '@Url.Action("Classification", "MaterialGun")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#Classification').empty();
+                    // 在選擇器中動態添加選項
+                    $.each(data, function (index, item) {
+                        $('#Classification').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                    // 设置之前选中的值
+                    if (selectedClassification) {
+                        $('#Classification').val(selectedClassification);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+            $.ajax({
+                url: '@Url.Action("MResult", "MaterialGun")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#MaintenanceResult').empty();
+                    // 在選擇器中動態添加選項
+                    $.each(data, function (index, item) {
+                        $('#MaintenanceResult').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                    // 设置之前选中的值
+                    if (selectedMaintenanceResult) {
+                        $('#MaintenanceResult').val(selectedMaintenanceResult);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+
+            $("#BtnSubmit").click(function (event) {                
+                var classification = $("#Classification").val();
+                var result = $("#MaintenanceResult").val(); // Corrected here
+                var other = $("#Other").val().trim();
+
+                if (classification === "0") {
+                    alert("尚未選擇檢修不良分類");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+
+                if (result === "0" || result === "") {
+                    alert("尚未選擇檢修不良原因");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+                else if (result === "99" && other === "") {
+                    alert("尚未輸入原因");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+            });
+        });
+    </script>
+</head>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>RepairGun</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <div class="form-group">
+            <label class="control-label col-md-2">料槍編號</label>
+            <div class="col-md-10">
+                @* 將料槍編號更改為隱藏欄位 *@
+                <input type="hidden" id="MaterialGun_Eno" name="MaterialGun_Eno" value="@ViewBag.Eno" />
+                @* 顯示料槍編號的值 *@
+                <input class="form-control" id="MaterialGun_Eno" name="MaterialGun_Eno" disabled="disabled" value="@ViewBag.Eno" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">檢修不良分類</label>
+            <div class="col-md-10">
+                <select id="Classification" name="Classification" class="form-control">
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">檢修不良原因</label>
+            <div class="col-md-10">
+                <select id="MaintenanceResult" name="MaintenanceResult" class="form-control">
+                </select>
+                <input class="form-control" id="Other" name="Other" autocomplete="off" style="display:none;" placeholder="請輸入其他原因" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">更換部品名稱</label>
+            <div class="col-md-10">
+                <input class="form-control" id="ChangeItemName" name="ChangeItemName" autocomplete="off" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">更換部品料號</label>
+            <div class="col-md-10">
+                <input class="form-control" id="ChangeItemNo" name="ChangeItemNo" autocomplete="off" />
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="維修完成" class="btn btn-success" id="BtnSubmit" name="BtnSubmit" />
+
+                <input type="submit" value="等待材料" id="b_Chk" name="b_Chk" class="btn btn-danger" />
+            </div>            
+        </div>
+    </div>
+}
+<div>
+    <a href="javascript:history.go(-1);" class="btn btn-default">返回上一頁</a>
+</div>
+
+<script>
+    $(document).ready(function () {       
+        // 监听下拉列表的变化事件
+        $('#MaintenanceResult').change(function () {
+            var selectedValue = $(this).val();
+            if (selectedValue == 99) { // 如果选择的是“其他”
+                $('#Other').show(); // 显示输入框
+            } else {
+                $('#Other').hide(); // 隐藏输入框
+            }
+        });
+    });
+</script>

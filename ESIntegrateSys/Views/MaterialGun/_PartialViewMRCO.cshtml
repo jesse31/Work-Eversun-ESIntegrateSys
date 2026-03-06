@@ -1,0 +1,169 @@
+﻿@using PagedList
+@using PagedList.Mvc
+@model IPagedList<ESIntegrateSys.Models_MGun.MaterialAbout.AboutDataList>
+
+<head>
+    <meta charset="utf-8" />
+    <title>查詢結果資訊</title>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+</head>
+
+<p></p>
+@Html.PagedListPager(Model, page => Url.Action("PartialViewMRCO", new { page = page, work = Request["work"], indate = Request["indate"], indate2 = Request["indate2"], MaterialG = Request["MaterialG"] }))
+@*<button id="print-btn">列印</button>*@
+<p>@Html.ActionLink("匯出Excel", "ExportToExcel",new { Works = Request["work"], indate = Request["indate"], indate2 = Request["indate2"], MaterialG = Request["MaterialG"] })</p>
+@if (ViewBag.Works == "M")
+    {
+        <table class="table" id="table-to-print">
+            <tr>
+                <th>原廠編號</th>
+                @*<th>昶亨編號</th>*@
+                <th>料槍廠商</th>
+                <th>料槍尺寸</th>
+                <th>保養週期</th>
+                <th>保養日期</th>
+                <th>保養人員</th>
+                <th></th>
+            </tr>
+
+            @foreach (var item in Model)
+                    {
+                    <tr>
+                        <td>@item.MaterialGun_Sno</td>
+                        @*<td>@item.MaterialGun_Eno</td>*@
+                        <td>@item.MaterialGun_Trade</td>
+                        <td>@item.MaterialGun_Size</td>
+                        <td>@item.MaintainCycle</td>
+                        <td>@item.MaintainTime</td>
+                        <td>@item.fName</td>
+                        <td>
+                        </td>
+                    </tr>
+                }
+        </table>
+    }
+    else if (ViewBag.Works == "R")
+    {
+        <table class="table" id="table-to-print">
+            <tr>
+                <th>原廠編號</th>
+                @*<th>昶亨編號</th>*@
+                <th>料槍廠商</th>
+                <th>料槍尺寸</th>
+                <th>不良情形</th>
+                <th>送修人員</th>
+                <th>不良分類</th>
+                <th>維修結果</th>
+                <th>更換部品名稱</th>
+                <th>更換部品料號</th>
+                <th>維修日期</th>
+                <th>維修人員</th>
+            </tr>
+
+            @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.MaterialGun_Sno</td>
+                        @*<td>@item.MaterialGun_Eno</td>*@
+                        <td>@item.MaterialGun_Trade</td>
+                        <td>@item.MaterialGun_Size</td>
+                        <td>@item.BadDescription</td>
+                        <td>@item.rName</td>
+                        <td>@item.Classification</td>
+                        <td>@item.MaintenanceResult</td>
+                        <td>@item.ChangeItemName</td>
+                        <td>@item.ChangeItemNo</td>
+                        <td>@(item.MaintenanceTime != DateTime.MinValue ? item.MaintenanceTime.ToString("yyyy-MM-dd") : "")</td>
+                        <td>@item.mName</td>
+                    </tr>
+                }
+        </table>
+    }
+    else if (ViewBag.Works == "C")
+    {
+        <table class="table" id="table-to-print">
+            <tr>
+                <th>原廠編號</th>
+                @*<th>昶亨編號</th>*@
+                <th>料槍廠商</th>
+                <th>料槍尺寸</th>
+                <th>校正週期</th>
+                <th>校正結果</th>
+                <th>校正時間</th>
+                <th>操作人員</th>
+                <th>狀態</th>
+            </tr>
+
+            @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.MaterialGun_Sno</td>
+                        @*<td>@item.MaterialGun_Eno</td>*@
+                        <td>@item.MaterialGun_Trade</td>
+                        <td>@item.MaterialGun_Size</td>
+                        <td>@item.MaintainCycle</td>
+                        <td>@(item.TestResult ? "OK" : "NG")</td>
+                        <td>@(item.CorrectionDate!=DateTime.MinValue ? item.CorrectionDate.ToString("yyyy-MM-dd") : "")</td>
+                        <td>@item.fName</td>
+                       <td>@item.Status</td>
+                    </tr>
+                }
+        </table>
+    }
+    else if (ViewBag.Works == "O") 
+    {
+        <table class="table" id="table-to-print">
+            <tr>
+                <th>原廠編號</th>
+                <th>料槍廠商</th>
+                <th>料槍尺寸</th>
+                <th>作業日期</th>
+                <th>校正結果</th>
+                <th>狀態</th>
+                <th>不良情形</th>
+                <th>維修說明</th>
+                <th>更換部品名稱</th>
+                <th>更換部品料號</th>
+                <th>作業人員</th>
+            </tr>            
+            @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.MaterialGun_Sno</td>                        
+                        <td>@item.MaterialGun_Trade</td>
+                        <td>@item.MaterialGun_Size</td>                        
+                        <td>@(item.MaintainTime != DateTime.MinValue ? item.MaintainTime.ToString("yyyy-MM-dd") : "")</td>
+                        <td>@(item.TestResult ? "OK" : "NG")</td>                        
+                        <td>@item.Status</td>
+                        <td>@item.BadDescription</td>
+                        <td>@item.MaintenanceResult</td>
+                        <td>@item.ChangeItemName</td>
+                        <td>@item.ChangeItemNo</td>
+                        <td>@item.fName</td>
+
+                    </tr>
+                }
+        </table>
+    }
+
+<script>
+    $(function () {
+        $('#print-btn').click(function () {
+            // 產生一個暫時的 div 用來儲存要列印的內容
+            var printContent = $('<div>').append($('#table-to-print').clone());
+
+            // 隱藏不需要列印的欄位
+            printContent.find('th:last-child, td:last-child').remove();
+
+            // 開始列印
+            var printWindow = window.open('', '', 'height=600,width=800');
+            //printWindow.document.write('<html><head><title>Print</title>');
+            printWindow.document.write('<style>@@media print { table, th, td { border: 1px solid black; } }</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(printContent.html());
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        });
+    });
+</script>

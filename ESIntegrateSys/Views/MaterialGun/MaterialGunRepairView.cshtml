@@ -1,0 +1,201 @@
+﻿@using PagedList
+@using PagedList.Mvc
+@model IPagedList<ESIntegrateSys.Models_MGun.RGunDataListDto>
+
+
+@*@{
+        ViewBag.Title = "MaterialGunRepairView";
+    }*@
+<head>
+    <meta charset="utf-8" />
+    <title>料槍維修首頁</title>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <!-- 引入 SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* 針對年長者優化 SweetAlert2 字體 - 增大版 */
+        .swal2-popup {
+            font-size: 1.6rem !important; /* 基礎字級大幅提升 (原約 1rem) */
+            width: auto !important;       /* 寬度自適應，避免內容被擠壓 */
+            min-width: 400px;             /* 設定最小寬度 */
+            padding: 2em !important;      /* 增加內距 */
+        }
+        .swal2-title {
+            font-size: 3rem !important;   /* 標題特大 (原約 1.8rem) */
+            margin-bottom: 0.5em !important;
+        }
+        .swal2-html-container {
+            font-size: 2rem !important;   /* 內容文字加大 (原約 1.1rem) */
+            font-weight: bold;            /* 內容加粗更清晰 */
+        }
+        .swal2-icon {
+            /* 使用 transform 放大圖示，避免內部 CSS 繪圖跑版 */
+            transform: scale(1.8) !important;
+            margin-top: 2em !important;   /* 增加上距以免被切到 */
+            margin-bottom: 1.5em !important; /* 增加下距與標題隔開 */
+            /* 恢復預設寬高，讓 scale 發揮作用 */
+            width: 5em !important;        
+            height: 5em !important;
+        }
+        /* 修復 Bootstrap 等框架導致的圖示渲染不全問題 */
+        .swal2-icon, .swal2-icon div, .swal2-icon span {
+            box-sizing: content-box !important;
+        }
+    </style>
+    <style>
+        .forrepair {
+            background-color: #FF9797;
+        }
+
+        .repaired {
+            background-color: #E8FFE8;
+        }
+
+        /* 限制字數並換行 */
+        .word-break {
+            word-wrap: break-word; /* 針對老舊瀏覽器 */
+            overflow-wrap: break-word;
+            white-space: pre-wrap; /* 保留空白 */
+        }
+
+        /* 設定欄位最大寬度 */
+        .limited-width {
+            max-width: 150px; /* 你可以根據需要調整這個寬度 */
+        }
+        /* 設定欄位最大寬度 */
+        .material-gun-eno {
+            max-width: 100px;
+        }
+
+        .repair-date {
+            max-width: 120px;
+        }
+
+        .rname {
+            max-width: 120px;
+        }
+
+        .bad-description {
+            max-width: 100px;
+        }
+
+        .maintenance-time {
+            max-width: 120px;
+        }
+
+        .mname {
+            max-width: 120px;
+        }
+
+        .maintenance-result {
+            max-width: 150px;
+        }
+        
+        .change-item-name {
+            max-width: 150px;
+        }
+
+        .change-item-no {
+            max-width: 150px;
+        }
+
+        .marks {
+            max-width: 150px;
+        }
+    </style>
+</head>
+<h2>料槍維修主頁</h2>
+
+<div class="row">
+    <div class="col-md-12 text-right">
+        @Html.ActionLink("料槍送修", "MaterialGunForRepair", null, new { @class = "btn btn-danger" })
+    </div>
+    @*<div class="col-md-6 text-right">
+            @Html.ActionLink("料槍維修", "MaterialGunRepair", null, new { @class = "btn btn-success" })
+        </div>*@
+</div>
+
+<p></p>
+@Html.PagedListPager(Model, page => Url.Action("MaterialGunRepairView", new { li = ViewBag.List, page }))
+<table class="table">
+    <tr>
+        <th class="material-gun-eno">料槍編號</th>
+        <th class="repair-date">送修日期</th>
+        <th class="rname">送修人員</th>
+        <th class="bad-description word-break">不良情況</th>
+        <th class="maintenance-time">維修時間</th>
+        <th class="mname">維修人員</th>
+        <th class="maintenance-result word-break limited-width">維修結果</th>
+        <th class="change-item-name word-break limited-width">更換部品名稱</th>
+        <th class="change-item-no word-break limited-width">更換部品料號</th>
+        <th class="marks word-break limited-width">備註</th>
+        <th></th>
+        <th></th>
+    </tr>
+
+    @foreach (var item in Model)
+        {
+            <tr class="@(!item.Chk ? "forrepair" : "repaired")" data-chk="@item.Chk">
+                <td class="material-gun-eno">@item.MaterialGun_Sno</td>
+                <td class="repair-date">@(item.RepairDate != DateTime.MinValue ? item.RepairDate.ToString("yyyy-MM-dd") : "")</td>
+                <td class="rname">@item.rName</td>
+                <td class="bad-description word-break">@item.BadDescription</td>
+                <td class="maintenance-time">@(item.MaintenanceTime != DateTime.MinValue ? item.MaintenanceTime.ToString("yyyy-MM-dd") : "")</td>
+                <td class="mname">@item.mName</td>
+                <td class="maintenance-result word-break limited-width">@item.MaintenanceResult</td>
+                <td class="change-item-name word-break limited-width">@item.ChangeItemName</td>
+                <td class="change-item-no word-break limited-width">@item.ChangeItemNo</td>
+                <td class="marks word-break limited-width">@item.Mark</td>
+                <td>
+                    @if (@ViewBag.RoleId != "V" && @ViewBag.RoleId != "FR")
+                        {
+                            @Html.ActionLink("料槍維修", "MaterialGunRepair", new { sno = item.Sno }, new { @class = "repairLink" })
+                        }
+
+                </td>
+            </tr>
+        }
+</table>
+
+<script>
+    $(document).ready(function () {
+        // 檢查後端是否有傳來訊息 (TempData)
+        var serverMessage = '@Html.Raw(TempData["message"] ?? "")';
+        var showSuccess = '@(TempData["ShowSuccess"] ?? "false")';
+
+        if (showSuccess === 'True' || showSuccess === 'true') {
+            Swal.fire({
+                icon: 'success',
+                title: '送修開單成功',
+                text: '資料已成功儲存',
+                timer: 2500,
+                showConfirmButton: false
+            });
+        } else if (serverMessage) {
+            Swal.fire({
+                icon: 'info',
+                title: '訊息',
+                text: serverMessage
+            });
+        }
+
+        $(document).on("click", ".repairLink", function (e) {
+            e.preventDefault(); // 防止連結的默認行為
+
+            var chk = $(this).closest("tr").data("chk"); // 取得 data-chk 屬性值
+            
+            // 轉型為字串比較，確保相容性
+            if (String(chk) === "True") {                
+                Swal.fire({
+                    icon: 'warning',
+                    title: '注意',
+                    text: '料槍已維修，不可重複維修！'
+                });
+            } else {
+                // 進行料槍維修操作，這裡可以導向維修頁面或執行其他操作
+                window.location.href = this.href;
+            }
+        });
+    });
+</script>
+

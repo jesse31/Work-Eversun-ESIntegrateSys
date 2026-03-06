@@ -1,0 +1,107 @@
+﻿@using PagedList
+@using PagedList.Mvc
+@model IPagedList<ESIntegrateSys.Models_MGun.MaterialAbout.AboutDataList>
+
+@{
+    ViewBag.Title = "料槍之總查詢";
+}
+
+<h2>料槍之總查詢</h2>
+<head>
+    <meta charset="utf-8" />
+    <title>MaterialGunInfo</title>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <style>
+        .empty-row {
+            background-color: #E8FFE8;
+        }
+    </style>
+    <script>
+        //搜尋
+        $(document).ready(function () {
+            $('#btnSearch').click(function () {
+                var sw = $("#work").val();
+                var materialG = $("#MaterialG").val();
+
+                // 判斷 work 是否為 "O" 且 MaterialG 是否為空
+                //if (sw === "O" && !materialG) {
+                //    alert("請輸入料號");
+                //    return; // 阻止執行
+                //}
+                $.ajax({
+                    url: '@Url.Action("PartialViewMRCO", "MaterialGun")',
+                    type: 'GET',
+                    data: {
+                        work: $("#work").val(),
+                        MaterialG: $("#MaterialG").val(),
+                        indate: $("#indate").val(),
+                        indate2: $("#indate2").val(),
+                    },
+                    cache: false,
+                    success: function (data) {
+                        // 更新部分視圖
+                        $('#partialViewContainer').html(data);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('AJAX Error: ' + status + error);
+                    }
+                });
+            });
+            // 绑定分頁按鈕事件
+            $(document).on('click', '.pagination a', function (e) {
+                e.preventDefault();
+                var url = $(this).attr('href');
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (data) {
+                        $('#partialViewContainer').html(data);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('AJAX Error: ' + status + error);
+                    }
+                });
+            });
+        });
+
+        function checkLink() {
+            if (confirm("您確定要執行此操作嗎?")) {
+                window.location.href = this.href;
+            } else {
+                return false;
+            }
+        }
+    </script>
+</head>
+
+<p>
+    @*@Html.ActionLink("料槍新增", "MaterialGunCreate")*@
+</p>
+<div class="form-inline">
+    <label>工作項目:</label>
+    <select id="work" name="work" class="form-control mr-2" style="width: 100px">
+        <option value="">請選擇...</option>
+        <option value="M">保養</option>
+        <option value="R">維修</option>
+        <option value="C">校正</option>
+        <option value="O">全部</option>
+    </select>
+    <label>料槍編號:</label>
+    @Html.TextBox("MaterialG", null, new { @class = "form-control mr-2", @id = "MaterialG", @name = "MaterialG", style = "display:inline-block; width: 120px;" })
+    <label>日期:</label>
+    @Html.TextBox("indate", null, new { @type = "date" , @class = "form-control mr-2", @id = "indate", @placeholder = "YYYY-MM-DD", style = "display:inline-block; width: 150px;" })
+    <label>～</label>
+    @Html.TextBox("indate2", null, new { @type = "date", @class = "form-control mr-2", @id = "indate2", @placeholder = "YYYY-MM-DD", style = "display:inline-block; width: 150px;" })
+    <button type="button" class="btn btn-default" id="btnSearch" name="btnSearch">查詢</button>
+</div>
+<p></p>
+
+
+    
+<div id="partialViewContainer">
+    
+</div>    
+
+
+

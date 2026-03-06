@@ -1,0 +1,121 @@
+﻿@model ESIntegrateSys.Models_MGun.MaterialGunInfo
+
+@{
+    ViewBag.Title = "料槍新增作業";
+}
+
+<h2>料槍新增作業</h2>
+
+<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: '@Url.Action("MGunInfoTrade", "MaterialGun")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#MaterialGun_Trade').empty();
+                    // 在選擇器中動態添加選項
+                    $.each(data, function (index, item) {
+                        $('#MaterialGun_Trade').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+
+            $.ajax({
+                url: '@Url.Action("MGunInfoSize", "MaterialGun")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#MaterialGun_Size').empty();
+                    // 在選擇器中動態添加選項
+                    $.each(data, function (index, item) {
+                        $('#MaterialGun_Size').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+        });
+    </script>
+</head>
+
+@using (Html.BeginForm()) 
+{
+    @Html.AntiForgeryToken()
+    
+<div class="form-horizontal">
+    
+    <hr />
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    @*<div class="form-group">
+        <label class="control-label col-md-2">料槍編號(昶亨)</label>
+        <div class="col-md-10">
+            <input class="form-control" id="MaterialGun_Eno" name="MaterialGun_Eno" autocomplete="off" />
+        </div>
+    </div>*@
+    <div class="form-group">
+        <label class="control-label col-md-2">料槍編號(原廠)</label>
+        <div class="col-md-10">
+            <input class="form-control" id="MaterialGun_Sno" name="MaterialGun_Sno" autocomplete="off" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-md-2">料槍廠商</label>
+        <div class="col-md-10">
+            <select id="MaterialGun_Trade" name="MaterialGun_Trade" class="form-control">
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-md-2">料槍尺寸</label>
+        <div class="col-md-10">
+            <select id="MaterialGun_Size" name="MaterialGun_Size" class="form-control">                
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-md-2">保養週期</label>
+        <div class="col-md-10">
+            <select id="MaintainCycle" name="MaintainCycle" class="form-control">
+                <option value="">請選擇...</option>
+                <option value="1">1月</option>
+                <option value="2">2月</option>
+                <option value="3">3月</option>
+                <option value="6">6月</option>
+                <option value="9">9月</option>
+                <option value="12">12月</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">
+            <input type="submit" value="Create" class="btn btn-default" />
+        </div>
+    </div>    
+</div>
+}
+
+<div>
+    <a href="javascript:history.go(-1);" class="btn btn-default">返回上一頁</a>
+</div>

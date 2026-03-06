@@ -1,0 +1,74 @@
+﻿@{
+    ViewBag.Title = "";
+}
+<style>
+    .jumbotron {
+        background-image: url('../../Images/bg3.jpg');
+        background-size: cover;
+        padding-bottom: 60px;
+        margin-bottom: 60px;
+        color: red;
+        font-family: "微軟正黑體";
+    }
+</style>
+<div>
+    <h1></h1>
+</div>
+<div class="jumbotron">
+    <h1>ＥＶＥＲＳＵＮ</h1>
+    <p class="lead">　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　</p>
+    <p><a href="http://www.eversun.com.tw" class="btn btn-primary btn-lg">昶亨官網 &raquo;</a></p>
+</div>
+
+<div class="row">
+    @{
+        if (ViewBag.RoleId == "FR" || ViewBag.RoleId == "V")
+        {
+            <div class="col-md-4">
+                <h2>料槍維(送)修</h2>
+                <p></p>
+                <p>@Html.ActionLink("點我進入", "MaterialGunRepairView", null, new { @class = "btn btn-default" })</p>
+            </div>
+            if (ViewBag.RoleId == "V")
+            {
+                <div class="col-md-4">
+                    <h2>料槍查詢</h2>
+                    <p></p>
+                    <p>@Html.ActionLink("點我進入", "MaterialAbout", null, new { @class = "btn btn-default" })</p>
+                </div>
+            }
+
+        }
+        else
+        {
+            <div class="col-md-4">
+                <h2>料槍新增</h2>
+                <p></p>
+                <p>@Html.ActionLink("點我進入", "MaterialGunInfoView", null, new { @class = "btn btn-default" })</p>
+            </div>
+
+            <div class="col-md-4">
+                <h2>料槍保養</h2>
+                <p></p>
+                <p>@Html.ActionLink("點我進入", "MaterialGunMaintain", null, new { @class = "btn btn-default" })</p>
+
+            </div>
+            <div class="col-md-4">
+                <h2>料槍維(送)修</h2>
+                <p></p>
+                <p>@Html.ActionLink("點我進入", "MaterialGunRepairView", null, new { @class = "btn btn-default" })</p>
+            </div>
+
+            <div class="col-md-4">
+                <h2>料槍查詢</h2>
+                <p></p>
+                <p>@Html.ActionLink("點我進入", "MaterialAbout", null, new { @class = "btn btn-default" })</p>
+            </div>
+        }
+    }
+    <div class="col-md-4">
+        <h2></h2>
+        <p></p>
+        <p>@*<a class="btn btn-default" href="http://www.eversun.com.tw/">Learn more &raquo;</a>*@</p>
+    </div>
+</div>

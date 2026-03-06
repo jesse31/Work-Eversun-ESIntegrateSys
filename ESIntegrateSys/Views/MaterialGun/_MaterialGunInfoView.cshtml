@@ -1,0 +1,75 @@
+﻿@using PagedList
+@using PagedList.Mvc
+@model IPagedList<ESIntegrateSys.Models_MGun.MaterialGunInfo.GunInfoDataList>
+
+<head>
+    <meta charset="utf-8" />
+    <title>料槍資訊</title>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <style>
+        .empty-row {
+            background-color: #E8FFE8;
+        }
+    </style>
+</head>
+
+
+<p></p>
+@*@Html.PagedListPager(Model, page => Url.Action("MaterialGunInfoSearch", new { page }))*@
+@Html.PagedListPager(Model, page => Url.Action("MaterialGunInfoView", new { page = page, MaterialG = Request["MaterialG"], Trade = Request["Trade"], Discrad = Request["Discrad"], N_Maintain = Request["N_Maintain"], Btn = "Y" }))
+<table class="table">
+    <tr>
+        <th>料槍編號_原廠</th>
+        @*<th>料槍編號_昶亨</th>*@
+        <th>料槍廠商</th>
+        <th>料槍尺寸</th>
+        <th>保養週期</th>
+        <th class="discard-date-column">報廢日期</th>
+        <th class="create-time-column">新增日期</th>
+        <th></th>
+        <th></th>
+    </tr>
+
+    @foreach (var item in Model)
+        {
+            <tr class="@((item.MaterialGunDiscard) ? "empty-row" : "")" data-chk="@item.MaterialGunDiscard">
+                <td>@item.MaterialGun_Sno</td>
+                @*<td>@item.MaterialGun_Eno</td>*@
+                <td>@item.MaterialGun_Trade</td>
+                <td>@item.MaterialGun_Size</td>
+                <td>@item.MaintainCycle</td>
+                <td class="discard-date-column">@(item.DiscardDate != DateTime.MinValue ? item.DiscardDate.ToString("yyyy-MM-dd") : "")</td>
+                <td class="create-time-column">@(item.CreateTime != DateTime.MinValue ? item.CreateTime.ToString("yyyy-MM-dd") : "")</td>
+                @*<td>@item.MaintainNexDate</td>*@
+                <td>
+                    @if ((@ViewBag.RoleId == "E" || @ViewBag.RoleId == "SA") && !item.DiscardCheck)
+                    {
+                        @Html.ActionLink("報廢", "Discard", new { Sno = item.Sno }, new { @class = "DiscardLink" })
+                    }
+                </td>
+                <td>
+                    @if ((@ViewBag.RoleId == "SA" || @ViewBag.RoleId == "DA") && !item.DiscardCheck)
+                    {
+                        @Html.ActionLink(" 主管確認", "ManagerCheck", new { sno = item.Sno }, new { @onclick = "return checkLink()" })
+                    }
+                </td>
+            </tr>
+        }
+</table>
+
+<script>
+    $(document).ready(function () {
+        $(document).on("click", ".DiscardLink", function (e) {
+            e.preventDefault(); // 防止連結的默認行為
+
+            var chk = $(this).closest("tr").data("chk"); // 取得 data-chk 屬性值
+
+            if (chk == "True") {
+                alert("料槍待報廢，不可重複執行！");
+            } else {
+                // 進行料槍維修操作，這裡可以導向維修頁面或執行其他操作
+                window.location.href = this.href;
+            }
+        });
+    });
+</script>

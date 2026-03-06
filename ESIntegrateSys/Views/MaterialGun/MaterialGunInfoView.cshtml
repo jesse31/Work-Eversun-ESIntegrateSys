@@ -1,0 +1,88 @@
+﻿@using PagedList
+@using PagedList.Mvc
+@model IPagedList<ESIntegrateSys.Models_MGun.MaterialGunInfo.GunInfoDataList>
+
+@{
+    ViewBag.Title = "料槍清單首頁";
+}
+
+<h2>料槍清單首頁</h2>
+<head>
+    <meta charset="utf-8" />
+    <title>MaterialGunInfo</title>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <style>
+        .empty-row {
+            background-color: #E8FFE8;
+        }
+    </style>
+    <script>
+    //搜尋
+        $(document).ready(function () {
+                $('#btnSearch').click(function () {
+                    $.ajax({
+                        url: '@Url.Action("MaterialGunInfoSearch", "MaterialGun")',
+                        type: 'GET',
+                        data: {
+                            SChk: $("#SChk").prop('checked'),
+                            MaterialG: $("#MaterialG").val(),
+                            Trade: $("#Trade").val(),
+                            Discrad: $("#Discrad").prop('checked'),
+                            btn:"clk"
+                        },
+                        cache: false,
+                        success: function (data) {
+                            // 更新部分視圖
+                            $('#partialViewContainer').html(data);
+                            // If Discrad is checked, show the DiscardDate column
+                            if (Discrad) {
+                                $('.discard-date-column').show();
+                            } else {
+                                $('.discard-date-column').hide();
+                            }
+                        },
+                    });
+                });
+                // Initially show the create time column
+                $('.create-time-column').show();
+
+                // Hide the DiscardDate column initially
+                $('.discard-date-column').hide();
+                });
+
+        function checkLink() {
+            if (confirm("您確定要執行此操作嗎?")) {
+                window.location.href = this.href;
+            } else {
+                return false;
+            }
+        }
+    </script>
+</head>
+
+<p>
+    @if (@ViewBag.RoleId != "V")
+    {
+        @Html.ActionLink("料槍新增", "MaterialGunCreate")
+    }
+</p>
+
+@*<label for="indate">原廠編號:</label>
+    @Html.CheckBox("SChk", false, new { @id = "SChk", @name = "SChk" })*@
+<label for="indate">料槍編號:</label>
+@Html.TextBox("MaterialG", null, new { @class = "form-control input-sm", @id = "MaterialG", @name = "MaterialG", style = "display:inline-block; width: 100px;" })
+<label for="indate">料槍廠商:</label>
+@Html.DropDownList("Trade", (IEnumerable<SelectListItem>)ViewBag.CategoryItems, new { @id = "Trade", @name = "Trade" })
+<label for="indate">是否已報廢:</label>
+@Html.CheckBox("Discrad", false, new { @id = "Discrad", @name = "Discrad" })
+<label for="indate">逾時未保養:</label>
+@Html.CheckBox("N_Maintain", false, new { @id = "N_Maintain", @name = "N_Maintain" })
+<button type="button" class="btn btn-default" id="btnSearch" name="btnSearch">查詢</button>
+
+<p>@Html.ActionLink("匯出Excel", "ExportToExcel", new { Works = "Lists" })</p>
+
+<div id="partialViewContainer">
+    @Html.Partial("_MaterialGunInfoView", Model)
+</div>
+
