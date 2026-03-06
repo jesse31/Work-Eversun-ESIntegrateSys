@@ -1,0 +1,225 @@
+/* 人力配置模組共用樣式 */
+
+/* 面板樣式 */
+.panel-blue {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05);
+    margin-bottom: 20px;
+}
+
+.panel-blue > .panel-heading {
+    background-color: #337ab7;
+    color: white;
+    font-weight: bold;
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.panel-blue > .panel-body {
+    padding: 15px;
+    background-color: #fff;
+}
+
+/* 按鈕基礎樣式 */
+.btn {
+    min-width: 150px;
+    height: 38px; /* 與輸入框高度一致 */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.btn i {
+    margin-right: 5px;
+}
+
+/* 表單樣式 */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 200px;
+    padding: 0 5px;
+}
+
+/* 按鈕容器樣式 */
+.btn-group-container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-top: 24px;
+    width: 100%;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* 表格樣式 */
+.table {
+    table-layout: fixed;
+    width: 100%;
+    margin-bottom: 20px;
+    border-collapse: collapse;
+}
+
+.table thead th {
+    text-align: center;
+    white-space: nowrap;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+}
+
+/* 響應式設計：針對小螢幕(tablet/mobile)優化 */
+@media (max-width: 768px) {
+  .panel-blue, .panel {
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+  .form-row, .btn-group-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .form-group {
+    min-width: 100%;
+    padding: 0;
+    margin-bottom: 8px;
+  }
+  .btn, .btn-group-container .btn {
+    min-width: 90px;
+    font-size: 0.98rem;
+    padding: 0.3rem 0.6rem;
+    margin-bottom: 6px;
+    height: auto;
+  }
+  .table-responsive {
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table {
+    min-width: 600px;
+    font-size: 0.98rem;
+  }
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+  }
+  .page-header h2 {
+    font-size: 1.3rem;
+  }
+}
+@media (max-width: 576px) {
+  .panel-blue, .panel {
+    margin-bottom: 8px;
+    padding: 0 2px;
+  }
+  .form-row, .btn-group-container {
+    gap: 4px;
+  }
+  .btn, .btn-group-container .btn {
+    font-size: 0.95rem;
+    padding: 0.2rem 0.4rem;
+  }
+  .table {
+    font-size: 0.95rem;
+  }
+  .page-header h2 {
+    font-size: 1.1rem;
+  }
+}
+
+
+.table tbody td {
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #f9f9f9;
+}
+
+.table > tbody > tr:hover {
+    background-color: #f1f1f1;
+}
+
+/*/* 備註欄位樣式 */
+.remark-cell {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Select2 樣式修復 */
+.select2-container {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+.select2-selection {
+    min-height: 38px !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: center;
+}
+
+/* SweetAlert2 樣式 */
+.swal2-title {
+    font-size: 2rem !important;
+}
+
+.swal2-html-container {
+    font-size: 1.8rem !important;
+}
+
+.swal2-styled {
+    font-size: 14px !important;
+}
+
+/* 分頁樣式 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.pagination-info {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+/* 響應式調整 */
+@media (max-width: 767px) {
+    .btn-group-container {
+        flex-direction: column;
+    }
+    
+    .btn {
+        margin-bottom: 10px;
+        width: 100%;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-group {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+}

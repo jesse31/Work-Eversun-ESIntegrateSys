@@ -1,0 +1,49 @@
+/* Drawer menu styles */
+.drawer-toggle {
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    display: inline-block;
+    background-color: #f8f8f8;
+}
+
+.drawer-menu {
+    position: absolute;
+    left: 0;
+    top: 100%; /* Position below the toggle button */
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    min-width: 200px;
+    display: none; /* Hidden by default */
+    padding: 10px 0;
+}
+
+.drawer-menu.open {
+    display: block; /* Show when open */
+}
+
+.drawer-menu-item {
+    display: block;
+    padding: 8px 15px;
+    color: #333;
+    text-decoration: none;
+}
+
+.drawer-menu-item:hover {
+    background-color: #f0f0f0;
+}
+
+.drawer-menu-item i {
+    margin-right: 8px;
+}
+
+/* Align drawer toggle and search box horizontally */
+.panel-body .row {
+    display: flex;
+    align-items: flex-start; /* Align items to the top */
+}

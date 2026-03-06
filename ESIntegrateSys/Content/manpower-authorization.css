@@ -1,0 +1,175 @@
+/* 人力配置授權模組共用樣式 */
+
+/* 抽屜式選單樣式 */
+.drawer-toggle {
+    cursor: pointer;
+    font-size: 18px;
+    background-color: #337ab7;
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 2000; /* 增加 z-index 確保按鈕始終在選單上方 */
+}
+
+/* 側邊滑出式選單樣式 */
+.drawer-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 250px;
+    background-color: white;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    z-index: 1500;
+    padding: 10px 0;
+    border-radius: 0 0 4px 4px;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: translateY(-20px);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+}
+
+.drawer-menu.open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.drawer-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1400; /* 降低 z-index 值，確保不會阻擋表格內容 */
+    display: none;
+}
+
+.drawer-backdrop.open {
+    display: block;
+}
+
+.drawer-toggle i {
+    margin: 0;
+}
+
+.drawer-menu-item {
+    display: block;
+    padding: 12px 20px;
+    color: #333;
+    text-decoration: none;
+    border-bottom: 1px solid #ddd;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.drawer-menu-item:hover {
+    background-color: #e9ecef;
+    text-decoration: none;
+}
+
+.drawer-menu-item.active {
+    background-color: #007bff;
+    color: white;
+}
+
+/* 面板樣式 */
+.panel-blue {
+    border-color: #337ab7;
+    position: relative;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05);
+    margin-bottom: 20px;
+}
+
+.panel-blue > .panel-heading {
+    background-color: #337ab7;
+    color: white;
+    font-weight: bold;
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.panel-blue > .panel-body {
+    padding: 15px;
+    background-color: #fff;
+    position: relative;
+    min-height: 300px;
+}
+
+/* 按鈕基礎樣式 */
+.btn-search, .btn-add {
+    min-width: 100px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 5px;
+    white-space: nowrap;
+    height: 34px;
+    padding: 6px 12px;
+}
+
+.btn-search {
+    background-color: #337ab7;
+    color: white;
+    border: 1px solid #2e6da4;
+}
+
+.btn-add {
+    background-color: #5cb85c;
+    color: white;
+    border: 1px solid #4cae4c;
+}
+
+.btn i {
+    margin-right: 5px;
+}
+
+/* 搜尋列樣式 */
+.search-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.search-row label {
+    margin-right: 5px;
+    white-space: nowrap;
+}
+
+.search-row input {
+    height: 34px;
+    padding: 6px 12px;
+    width: 200px;
+}
+
+/* Select2 樣式調整 */
+.select2-container {
+    width: 100% !important;
+}
+
+.select2-container .select2-selection--single {
+    height: 34px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 34px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 32px;
+}
