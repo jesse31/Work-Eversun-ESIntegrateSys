@@ -1,0 +1,200 @@
+﻿@using PagedList
+@using PagedList.Mvc
+@model IPagedList<ESIntegrateSys.Services.Dtos.QuoteDataListDto>
+
+@{
+    ViewBag.Title = "報價機種一覽";
+    string dept = ViewBag.DeptNo;
+}
+<head>
+    <style>
+        .inline-form label, .inline-form select, .inline-form input, .inline-form button, .inline-form .form-check {
+            display: inline-block;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .inline-form .form-control {
+            display: inline-block;
+            width: auto;
+        }
+    </style>
+    <script src="~/Scripts/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // 使用 AJAX 載入客戶清單 ------------------------------------------------------------------------------------------------
+            $.ajax({
+                url: '@Url.Action("QuoteCust", "QuoteSchedule")',
+                type: 'GET',
+                dataType: 'json',
+                async: true, // 确保请求是异步的
+                success: function(data) {
+                    var $custNo = $('#CustNo');
+                    $custNo.empty();
+                    $.each(data, function(index, item) {
+                        $custNo.append($('<option>', {
+                            value: item.Value,
+                            text : item.Text
+                        }));
+                    });
+                },
+                error: function() {
+                    alert('無法載入客戶清單');
+                }
+            });
+
+            // 使用 AJAX 載入業務清單 ------------------------------------------------------------------------------------------------
+            $.ajax({
+                url: '@Url.Action("QuoteSalesdrop", "QuoteSchedule")',
+                type: 'GET',
+                dataType: 'json',
+                async: true, // 确保请求是异步的
+                success: function(data) {
+                    var $salesID = $('#SalesID');
+                    $salesID.empty();
+                    $.each(data, function(index, item) {
+                        $salesID.append($('<option>', {
+                            value: item.Value,
+                            text : item.Text
+                        }));
+                    });
+                },
+                error: function() {
+                    alert('無法載入業務清單');
+                }
+            });
+
+            // 查詢按鈕點擊事件 ------------------------------------------------------------------------------------------------
+            $('#btnSearch').click(function () {
+                $.ajax({
+                    url: '@Url.Action("QuotesView", "QuoteSchedule")',
+                    type: 'GET',
+                    data: {
+                        Cancel: $("#Cancel").prop('checked'),
+                        SalesID: $("#SalesID").val(),
+                        CustNo: $("#CustNo").val(),
+                        EngSr: $("#EngSr").val(),
+                        CustMaterial: $("#CustMaterial").val(),
+                        Sort: $("#Sort").val(),
+                        indate: $("#indate").val(),
+                        indate2: $("#indate2").val(),
+                        btn: "clk"
+                    },
+                    async: true, // 确保请求是异步的
+                    cache: false,
+                    success: function (data) {
+                        console.log(data);
+                        // 更新部分顯示
+                        $('#partialViewContainer').html(data);
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.log("Error: " + textStatus + " " + errorThrown);
+                    }
+                });
+            });
+
+            // 當[業務]下拉選單改變時自動觸發查詢 ----------------------------------------------------------------------------------------
+            $('#SalesID').change(function () {
+                $('#btnSearch').trigger('click');
+            });
+
+            // 當[客戶別]下拉選單改變時自動觸發查詢 ----------------------------------------------------------------------------------------
+            $('#CustNo').change(function () {
+                $('#btnSearch').trigger('click');
+            });
+
+            // 當[排序]下拉選單改變時自動觸發查詢 ----------------------------------------------------------------------------------------
+            $('#Sort').change(function () {
+                $('#btnSearch').trigger('click');
+            });
+
+            // 匯出Excel按鈕點擊事件 --------------------------------------------------------------------------------------------
+            $('#exp').click(function () {
+                // 將表單的值設置為當前查詢條件
+                $('#exportSalesID').val($("#SalesID").val());
+                $('#exportCustNo').val($("#CustNo").val());
+                $('#exportSort').val($("#Sort").val());
+                $('#exportIndate').val($("#indate").val());
+                $('#exportIndate2').val($("#indate2").val());
+                $('#exportCancel').val($("#Cancel").prop('checked'));
+                $('#exportEngSr').val($("#EngSr").val());
+                $('#exportCustMaterial').val($("#CustMaterial").val());
+                // 提交表單
+                $('#exportForm').submit();
+            });
+        });
+    </script>
+</head>
+
+@if (ViewBag.EmailError != null)
+{
+    <div class="alert alert-danger" role="alert" style="margin-top:20px;">
+        @ViewBag.EmailError
+    </div>
+}
+<h2>報價機種一覽</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @if (dept == "SD")
+        {
+            <div class="form-group">
+                @Html.ActionLink("報價機種登記", "QuoteSales", null, new { @class = "btn btn-info" })
+            </div>
+        }
+    </div>
+}
+<div class="container-fluid" style="text-align: center;">
+    <div class="inline-form">
+        <label for="SalesID">業務:</label>
+        <select id="SalesID" name="SalesID" class="form-control mr-2"></select>
+
+        <label for="CustNo">客戶別:</label>
+        <select id="CustNo" name="CustNo" class="form-control mr-2"></select>
+
+        <label for="EngSr">工程編號:</label>
+        @Html.TextBox("EngSr", null, new { @class = "form-control mr-2", @id = "EngSr", style = "width: 150px;" })
+
+        <label for="CustMaterial">機種名稱:</label>
+        @Html.TextBox("CustMaterial", null, new { @class = "form-control mr-2", @id = "CustMaterial", style = "width: 200px;" })
+
+        <label for="Sort">需求日期 & 排序:</label>
+        <select id="Sort" name="Sort" class="form-control mr-2">
+            <option value="ASC">日期正排序</option>
+            <option value="DESC">日期逆排序</option>
+        </select>
+
+        <label for="indate">日期:</label>
+        @Html.TextBox("indate", null, new { @type = "date", @class = "form-control mr-2", @id = "indate", @placeholder = "YYYY-MM-DD" })
+
+        <label for="indate2">～</label>
+        @Html.TextBox("indate2", null, new { @type = "date", @class = "form-control mr-2", @id = "indate2", @placeholder = "YYYY-MM-DD" })
+
+        <label for="Cancel">Cancel單:</label>
+        @Html.CheckBox("Cancel", false, new { @class = "form-check-input", @id = "Cancel", @name = "Cancel" })
+
+        <button type="button" class="btn btn-default" id="btnSearch" name="btnSearch">查詢</button>
+    </div>
+</div>
+<!-- 隱藏的表單，用於匯出 Excel -->
+<form id="exportForm" action="@Url.Action("ExportToExcel", "QuoteSchedule")" method="get" style="display:none;">
+    <input type="hidden" id="exportSalesID" name="SalesID" />
+    <input type="hidden" id="exportCustNo" name="CustNo" />
+    <input type="hidden" id="exportSort" name="Sort" />
+    <input type="hidden" id="exportIndate" name="Indate" />
+    <input type="hidden" id="exportIndate2" name="Indate2" />
+    <input type="hidden" id="exportCancel" name="Cancel" />
+    <input type="hidden" id="exportEngSr" name="EngSr" />
+    <input type="hidden" id="exportCustMaterial" name="CustMaterial" />
+</form>
+<p><label class="btn-link" id="exp" name="exp">匯出Excel</label></p>
+<div id="partialViewContainer">
+    @Html.Partial("_QuotePartialView", Model)
+</div>
+
