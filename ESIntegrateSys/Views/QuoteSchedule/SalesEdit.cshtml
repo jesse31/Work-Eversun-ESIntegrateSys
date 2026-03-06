@@ -1,0 +1,187 @@
+﻿@model ESIntegrateSys.Models.ES_QuoteForSales
+
+@{
+    ViewBag.Title = "報價機種修改";
+    var requDate = ViewBag.RequDate as string;
+}
+
+<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <script>
+        $(document).ready(function () {
+            // Load BadDescription options via AJAX
+            $.ajax({
+                url: '@Url.Action("QuoteCust", "QuoteSchedule")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#CustNo').empty();
+                    // 在選擇器中動態增加選項
+                    $.each(data, function (index, item) {
+                        $('#CustNo').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                    $('#CustNo').val('@ViewBag.Cust');
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+
+            $.ajax({
+                url: '@Url.Action("QuoteWoNoAttri", "QuoteSchedule")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#WoNoAttri').empty();
+                    // 在選擇器中動態增加選項
+                    $.each(data, function (index, item) {
+                        $('#WoNoAttri').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                    // 設置之前選中的值
+                    $('#WoNoAttri').val('@ViewBag.WonoAttri');
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+
+            // Bind form submit event
+            $("#BtnSubmit").click(function (event) {
+                //var wono = $("#MaterialGun_Sno").val().trim();
+                var custno = $("#CustNo").val();
+                var rqdate = $("#RequDate").val();
+
+                if (custno === "0") {
+                    alert("尚未選擇客戶");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+
+                if (rqdate === "") {
+                    alert("尚未輸入需求日期");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+
+                if (rqdate != "" && custno === "0") {
+                    alert("尚未選擇客戶");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+            });
+
+        });
+    </script>
+</head>
+
+<h2>報價機種登記</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @* sno 隱藏欄位 *@
+        <input type="hidden" id="Sno" name="Sno" value="@ViewBag.Sno" />
+        <div class="form-group">
+            <label class="control-label col-md-2">客戶別</label>
+            <div class="col-md-10">
+                <input class="form-control" id="OtherName" name="OtherName" value="@ViewBag.Cust" readonly="readonly" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">業務單號</label>
+            <div class="col-md-10">
+                <input class="form-control" id="SalesNo" name="SalesNo" value="@ViewBag.SalesNo" readonly="readonly" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">工程編號</label>
+            <div class="col-md-10">
+                <input class="form-control" id="EngSr" name="EngSr" value="@ViewBag.Engsr" autocomplete="off" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">客戶料號</label>
+            <div class="col-md-10">
+                <input class="form-control" id="CustMaterial" name="CustMaterial" value="@ViewBag.CustMaterial"
+                    autocomplete="off" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">工單性質</label>
+            <div class="col-md-10">
+                <select id="WoNoAttri" name="WoNoAttri" class="form-control">
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">需求日期</label>
+            <div class="col-md-10">
+                <input type="date" id="RequDate" name="RequDate" value="@requDate" class="form-control" />
+
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">業務備註</label>
+            <div class="col-md-10">
+                <input class="form-control" id="Mark" name="Mark" value="@ViewBag.Mark" autocomplete="off" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" name="BtnSubmit" id="BtnSubmit" value="確認修改" class="btn btn-success" />
+                <input type="button" name="BtnCancel" id="BtnCancel" value="取消報價" class="btn btn-danger" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="javascript:history.go(-1);" class="btn-link btn-default">返回上一頁</a>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#CustNo').change(function () {
+            var selectedValue = $(this).val();
+            if (selectedValue == "99") { // 如果選擇的是“其他”
+                $('#OtherFields').show(); // 顯示輸入框
+            } else {
+                $('#OtherFields').hide(); // 隱藏輸入框
+            }
+        });
+
+        // 取消報價按鈕 click 事件
+        $('#BtnCancel').click(function () {
+            var sno = $('#Sno').val();
+            if (!sno) {
+                alert('找不到報價主鍵，無法取消');
+                return;
+            }
+            // 跳出確認視窗
+            if (confirm('確定要取消這筆報價嗎？')) {
+                window.location.href = '/QuoteSchedule/SalesCancel?sno=' + sno;
+            }
+        });
+    });
+</script>
