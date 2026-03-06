@@ -1,0 +1,318 @@
+﻿@model ESIntegrateSys.Models_QSchedule.QuoteQuery
+
+@{
+    ViewBag.Title = "報價機種登記";
+}
+
+<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <style>
+        .required::after {
+            content: "*";
+            color: red;
+            margin-left: 5px;
+        }
+    </style>
+    <script>
+        $(document).ready(function () {
+            // Load BadDescription options via AJAX
+            $.ajax({
+                url: '@Url.Action("QuoteCust", "QuoteSchedule")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#CustNo').empty();
+                    // 在選擇器中動態增加選項
+                    $.each(data, function (index, item) {
+                        $('#CustNo').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+
+            $.ajax({
+                url: '@Url.Action("QuoteWoNoAttri", "QuoteSchedule")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#WoNoAttri').empty();
+                    // 在選擇器中動態增加選項
+                    $.each(data, function (index, item) {
+                        $('#WoNoAttri').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+
+            // Bind form submit event
+            $("#BtnSubmit").click(function (event) {
+                //var wono = $("#MaterialGun_Sno").val().trim();
+                var custno = $("#CustNo").val();
+                var rqdate = $("#RequDate").val();
+                var woatt = $("#WoNoAttri").val();
+                
+                if (custno === "0" || custno === "") {
+                    alert("尚未選擇客戶");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+
+                if (woatt === "0" || woatt === "") {
+                    alert("尚未工單性質");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+
+                if (rqdate === "") {
+                    alert("尚未輸入需求日期");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+
+                // 將輸入的日期字符串轉換為 Date 
+                var inputDate = new Date(rqdate);                
+                var today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                // 檢查輸入日期是否小於當前日期
+                if (inputDate < today) {
+                    alert("需求日期不能小於當日");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+                
+                if (rqdate != "" && custno === "0") {
+                    alert("尚未選擇客戶");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+            });
+        });
+    </script>
+</head>
+
+<h2>報價機種登記</h2>
+
+@using (Html.BeginForm()) 
+    {
+        @Html.AntiForgeryToken()
+    
+        <div class="form-horizontal">        
+            <hr />            
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                <div class="form-group">
+                    <label class="control-label col-md-2 required">客戶別</label>
+                    <div class="col-md-10">
+                        <select id="CustNo" name="CustNo" class="form-control">
+                        </select>
+                        <div class="row" style="display: none;" id="OtherFields">
+                            <div class="col-md-4 required">
+                                <input class="form-control" id="OtherName" name="OtherName" autocomplete="off" placeholder="請輸入客戶名稱" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-2">業務單號</label>
+                    <div class="col-md-10">
+                        <input class="form-control" id="SalesNo" name="SalesNo" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-2">工程編號</label>
+                    <div class="col-md-10">
+                        <input class="form-control" id="EngSr" name="EngSr" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-2 required">客戶料號</label>
+                    <div class="col-md-10">
+                        <input class="form-control" id="CustMaterial" name="CustMaterial" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-2 required">工單性質</label>
+                    <div class="col-md-10">
+                        <select id="WoNoAttri" name="WoNoAttri" class="form-control">
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-2 required">需求日期</label>
+                    <div class="col-md-10">
+                        <input type="checkbox" id="urgentCheckbox" /> 急件
+                        <input class="form-control" id="RequDate" name="RequDate" autocomplete="off" type="date" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-2">業務備註</label>
+                    <div class="col-md-10">
+                        <input class="form-control" id="Mark" name="Mark" autocomplete="off" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-offset-2 col-md-10">
+                        <input type="submit" name="BtnSubmit" id="BtnSubmit" value="Create" class="btn btn-default" />
+                    </div>
+                </div>
+        </div>
+    }
+
+<div>
+    <a href="javascript:history.go(-1);" class="btn-link btn-default">返回上一頁</a>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#CustNo').change(function () {
+            var selectedValue = $(this).val();
+            if (selectedValue == "99") { // 如果選擇的是“其他”
+                $('#OtherFields').show(); // 顯示輸入框
+            } else {
+                $('#OtherFields').hide(); // 隱藏輸入框                
+            }
+        });
+    });
+
+    // 全局變數來存放假日資料，避免多次請求
+    let holidays = [];
+
+    $(document).ready(function () {
+        // 載入假日資料
+        getHolidayData(new Date().getFullYear());
+
+        // 綁定急件 checkbox 事件
+        $("#urgentCheckbox").change(function () {
+            if ($(this).is(":checked")) {
+                alert("請另外電話通知IE!!");
+                // 取消 N+3 和假日規則，允許自由選擇
+                $("#RequDate").removeAttr("min");
+            } else {
+                // 重置 N+3 和假日規則
+                if (holidays.length > 0) {  // 確保假日資料已載入
+                    setupInitialDate();  // 設置 N+3 和假日規則
+                }
+            }
+        });
+
+        // 當使用者更改日期時觸發事件
+        $("#RequDate").change(function () {
+            // 如果急件已勾選，跳過日期檢查
+            if ($("#urgentCheckbox").is(":checked")) {
+                return;
+            }
+
+            let selectedDate = new Date($(this).val());
+
+            // 檢查新選擇的日期是否為假日或週日
+            if (isHolidayOrWeekend(selectedDate, holidays)) {
+                alert("您選擇的日期是週日或假日，請選擇其他日期。");
+
+                // 自動調整到下一個可用的日期
+                let nextValidDate = getNextValidDate(selectedDate, holidays);
+                setValidDate(nextValidDate);  // 自動設置為有效日期
+            }
+        });
+    });
+
+    // 函數：取得假日資料並存放於全局變數中
+    function getHolidayData(year) {
+        let url = `https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`;
+        $.getJSON(url, function (data) {
+            holidays = data;
+            console.log(holidays);  // 檢查假日資料
+
+            // 在資料載入後設置 N+3 和假日檢查
+            setupInitialDate();
+        }).fail(function () {
+            alert("無法取得假日資料，請稍後再試！");
+        });
+    }
+
+    // 函數：設置 N+3 日期並檢查是否是假日或週日
+    function setupInitialDate() {
+        let nDays = 2;
+        let today = new Date();
+
+        // 如果今天是週五(5)，應該從下週一開始計算
+        if (today.getDay() === 5) {
+            today.setDate(today.getDate() + 3); // 跳過週六 & 週日
+        } else if (today.getDay() === 6) {
+            today.setDate(today.getDate() + 2); // 如果今天是週六，跳過週日
+        }
+
+        // 計算 N+3 後的日期
+        let minDate = new Date(today);
+        minDate.setDate(today.getDate() + nDays);
+
+        // 確保最終日期不是週末或假日
+        let finalDate = getNextValidDate(minDate, holidays);
+
+        // 設定為可選的最小日期 (加上 `min` 限制)
+        setValidDate(finalDate);
+        document.getElementById("RequDate").setAttribute("min", finalDate.toISOString().split("T")[0]);
+    }
+    // 檢查是否為週六(6)、週日(0) 或 假日
+    function isHolidayOrWeekend(date, holidays) {
+        let dayOfWeek = date.getDay();
+        let dateStr = date.toISOString().split("T")[0]; // 轉換成 YYYY-MM-DD
+        return dayOfWeek === 6 || dayOfWeek === 0 || holidays.includes(dateStr);
+    }
+    // 函數：設置有效日期的函數，將日期格式化並設置到 datePicker 中
+    //function setValidDate(date) {
+    //    let formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD 格式
+    //    $("#RequDate").val(formattedDate);
+    //    $("#RequDate").attr("min", formattedDate); // 設置最小日期        
+    //}
+    function setValidDate(date) {
+        let dateStr = date.toISOString().split("T")[0]; // 轉換成 YYYY-MM-DD
+        document.getElementById("RequDate").value = dateStr;
+    }
+    
+    // 找到下一個有效日期
+    function getNextValidDate(date, holidays) {
+        while (isHolidayOrWeekend(date, holidays)) {
+            date.setDate(date.getDate() + 1);
+        }
+        return date;
+    }
+
+    // 函數：檢查日期是否為假日或週日
+    function isHolidayOrWeekend(date, holidays) {
+        let formattedDate = date.toISOString().split('T')[0].replace(/-/g, ""); // 格式轉換為 YYYYMMDD
+
+        // 檢查是否為週日
+        if (date.getDay() === 0) { // 0 表示週日
+            return true;
+        }
+
+        // 檢查是否為假日
+        for (let i = 0; i < holidays.length; i++) {
+            if (holidays[i].date === formattedDate && holidays[i].isHoliday) {
+                return true;
+            }
+        }
+        return false;
+    }
+</script>
