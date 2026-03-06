@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="565ed5d102cf418a80f9b973c704d43b" Name="Diagram1">
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_Member" Width="1.75" PointX="0.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MemberRole" Width="1.5" PointX="2.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MaterialGunBadDesc" Width="1.5" PointX="5.75" PointY="0.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MaterialGunRepairClass" Width="2.375" PointX="9.875" PointY="1.125" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MaterialGunInfo" Width="1.875" PointX="2.75" PointY="3.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MaterialGunDiscardDesc" Width="2.25" PointX="6.875" PointY="4" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MaintainWork" Width="1.625" PointX="0.625" PointY="3.875" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_RoleClassification" Width="1.5" PointX="10" PointY="4.125" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_DeptInfo" Width="1.5" PointX="13" PointY="1.125" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MemberLayout" Width="2.25" PointX="9.75" PointY="6.375" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_QuoteForIE" Width="1.5" PointX="5.375" PointY="7.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MaterialGunRepair" Width="1.875" PointX="4.75" PointY="3.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MaterialCorrection" Width="2.125" PointX="12.125" PointY="4.125" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MaterialGunSize" Width="1.5" PointX="12.125" PointY="7.625" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_QuoteWoNoAttri" Width="1.5" PointX="2.75" PointY="8.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_QuoteCust" Width="1.5" PointX="2.625" PointY="11" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_QuoteForSales" Width="2.25" PointX="7.25" PointY="7.875" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_QuoteUploadRecords" Width="2.125" PointX="6.625" PointY="11.875" />
+        <AssociationConnector Association="ESIntegrateSysModel.FK__ES_QuoteU__Q_sno__2B0A656D" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_QuoteUploadFiles" Width="2.125" PointX="10.125" PointY="11.375" />
+        <AssociationConnector Association="ESIntegrateSysModel.FK__ES_QuoteU__Recor__2DE6D218" />
+        <AssociationConnector Association="ESIntegrateSysModel.FK_ES_QuoteUploadFiles_ES_QuoteForSale" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_FunctionItem" Width="1.5" PointX="4.625" PointY="10.625" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MemberFunction" Width="1.5" PointX="0.5" PointY="7.75" />
+        <AssociationConnector Association="ESIntegrateSysModel.FK_ES_MemberFunction_ES_Member" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_MaterialGunMResult" Width="1.5" PointX="13.375" PointY="10.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.EmployeeAssignments_Log" Width="2" PointX="7.375" PointY="14.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.人力配置授權表" Width="1.5" PointX="0.75" PointY="13.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.HResources_人員" Width="2" PointX="3.125" PointY="28.125" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.HResources_出勤類型" Width="2.25" PointX="1.875" PointY="21.125" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.HResources_生產單位名稱" Width="1.5" PointX="3.125" PointY="24.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.HResources_班別" Width="2.25" PointX="1.875" PointY="17.25" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.HResources_報工生產單位" Width="2.25" PointX="3.125" PointY="14.375" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.EmployeeAssignments" Width="3" PointX="5.375" PointY="20.25" />
+        <AssociationConnector Association="ESIntegrateSysModel.FK_HResources_人員GUID" />
+        <AssociationConnector Association="ESIntegrateSysModel.FK_HResources_出勤類型" />
+        <AssociationConnector Association="ESIntegrateSysModel.FK_HResources_生產單位名稱GUID" />
+        <AssociationConnector Association="ESIntegrateSysModel.FK_HResources_班別" />
+        <AssociationConnector Association="ESIntegrateSysModel.FK_HResources_報工生產單位GUID" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_ReportingUnit" Width="1.5" PointX="13.375" PointY="13.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.ES_ProductionUnit" Width="1.5" PointX="10.375" PointY="14.75" />
+        <EntityTypeShape EntityType="ESIntegrateSysModel.AppMultiLanguageResources" Width="1.5" PointX="14.375" PointY="7.75" />
+        </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

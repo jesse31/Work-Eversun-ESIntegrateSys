@@ -1,0 +1,1670 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="ESIntegrateSysModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2008" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="AppMultiLanguageResources">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ResourceType" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="ResourceId" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="CultureCode" Type="varchar" MaxLength="10" Nullable="false" />
+          <Property Name="ResourceValue" Type="nvarchar" MaxLength="200" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" />
+        </EntityType>
+        <EntityType Name="EmployeeAssignments">
+          <Key>
+            <PropertyRef Name="assignment_id" />
+          </Key>
+          <Property Name="assignment_id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="reporting_unit_ID" Type="nvarchar" MaxLength="20" />
+          <Property Name="報工生產單位GUID" Type="uniqueidentifier" />
+          <Property Name="生產單位名稱GUID" Type="uniqueidentifier" />
+          <Property Name="班別GUID" Type="uniqueidentifier" />
+          <Property Name="出勤類型GUID" Type="uniqueidentifier" />
+          <Property Name="employee_id" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="remarks" Type="nvarchar(max)" />
+          <Property Name="created_at" Type="datetime" />
+          <Property Name="created_by" Type="nvarchar" MaxLength="10" />
+          <Property Name="updated_at" Type="datetime" />
+          <Property Name="updated_by" Type="nvarchar" MaxLength="10" />
+          <Property Name="current_editor" Type="nvarchar" MaxLength="20" />
+          <Property Name="edit_lock_time" Type="datetime" />
+        </EntityType>
+        <EntityType Name="EmployeeAssignments_Log">
+          <Key>
+            <PropertyRef Name="LogId" />
+          </Key>
+          <Property Name="LogId" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="AssignmentId" Type="varchar" MaxLength="255" Nullable="false" />
+          <Property Name="ActionType" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="ActionTimestamp" Type="datetime" Nullable="false" />
+          <Property Name="PerformedBy" Type="nvarchar" MaxLength="100" />
+          <Property Name="Old_ReportingUnit" Type="nvarchar" MaxLength="255" />
+          <Property Name="Old_ProductionUnit" Type="nvarchar" MaxLength="255" />
+          <Property Name="Old_Shift" Type="nvarchar" MaxLength="50" />
+          <Property Name="Old_AttendanceType" Type="nvarchar" MaxLength="50" />
+          <Property Name="Old_EmployeeId" Type="nvarchar" MaxLength="50" />
+          <Property Name="Old_EmployeeName" Type="nvarchar" MaxLength="100" />
+          <Property Name="Old_Remarks" Type="nvarchar(max)" />
+        </EntityType>
+        <EntityType Name="ES_DeptInfo">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Dept_Name" Type="nvarchar" MaxLength="10" />
+          <Property Name="Dept_No" Type="nvarchar" MaxLength="2" />
+          <Property Name="CreateDate" Type="datetime" />
+          <Property Name="CreateUser" Type="nvarchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="ES_FunctionItem">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ActionName" Type="nvarchar" MaxLength="50" />
+          <Property Name="FunctionNo" Type="nvarchar" MaxLength="5" />
+          <Property Name="FunctionName" Type="nvarchar" MaxLength="50" />
+        </EntityType>
+        <EntityType Name="ES_MaintainWork">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="MaterialGun_Sno" Type="nvarchar" MaxLength="50" />
+          <Property Name="MaterialGun_Eno" Type="nvarchar" MaxLength="50" />
+          <Property Name="MaintainCycle" Type="int" />
+          <Property Name="MaintainTime" Type="datetime" />
+          <Property Name="MUserNo" Type="nchar" MaxLength="5" />
+          <Property Name="MaintainNexDate" Type="datetime" />
+        </EntityType>
+        <EntityType Name="ES_MaterialCorrection">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="MaterialGun_Sno" Type="nvarchar" MaxLength="50" />
+          <Property Name="MaterialGun_Eno" Type="nvarchar" MaxLength="50" />
+          <Property Name="MaterialGun_Size" Type="nvarchar" MaxLength="10" />
+          <Property Name="TestResult" Type="bit" />
+          <Property Name="CorrectionDate" Type="datetime" />
+          <Property Name="FileName" Type="nvarchar" MaxLength="100" />
+          <Property Name="operators" Type="varchar" MaxLength="5" />
+          <Property Name="memo" Type="varchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunBadDesc">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="BadDescription" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KeyWorld" Type="int" Nullable="false" />
+          <Property Name="BadDescription" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="Date" Type="datetime" />
+          <Property Name="CreateUserId" Type="nvarchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunDiscardDesc">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="DiscardDescription" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KeyWorld" Type="int" Nullable="false" />
+          <Property Name="DiscardDescription" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="Date" Type="datetime" />
+          <Property Name="CreateUserId" Type="nvarchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunInfo">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="MaterialGun_Eno" Type="nvarchar" MaxLength="50" />
+          <Property Name="MaterialGun_Sno" Type="nvarchar" MaxLength="50" />
+          <Property Name="MaterialGun_Trade" Type="nvarchar" MaxLength="50" />
+          <Property Name="MaterialGun_Size" Type="nchar" MaxLength="10" />
+          <Property Name="MaintainCycle" Type="int" />
+          <Property Name="MaintainNexDate" Type="datetime" />
+          <Property Name="CreateTime" Type="datetime" />
+          <Property Name="CreateUserId" Type="nvarchar" MaxLength="5" />
+          <Property Name="DiscardDesc" Type="int" />
+          <Property Name="MaterialGunDiscard" Type="bit" />
+          <Property Name="DiscardDate" Type="datetime" />
+          <Property Name="DiscardOPId" Type="nvarchar" MaxLength="5" />
+          <Property Name="DiscardCheck" Type="bit" />
+          <Property Name="Mark" Type="nvarchar" MaxLength="200" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunMResult">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="MaintenanceResult" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KeyWorld" Type="int" Nullable="false" />
+          <Property Name="MaintenanceResult" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="Date" Type="datetime" />
+          <Property Name="CreateUserId" Type="nvarchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunRepair">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="MaterialGun_Eno" Type="nvarchar" MaxLength="50" />
+          <Property Name="MaterialGun_Sno" Type="nvarchar" MaxLength="50" />
+          <Property Name="RepairDate" Type="datetime" />
+          <Property Name="RepairUserId" Type="nvarchar" MaxLength="5" />
+          <Property Name="BadDescription" Type="int" />
+          <Property Name="MaintenanceTime" Type="datetime" />
+          <Property Name="MaintenanceUserId" Type="nvarchar" MaxLength="5" />
+          <Property Name="MaintenanceResult" Type="int" />
+          <Property Name="Classification" Type="int" />
+          <Property Name="Other" Type="nvarchar" MaxLength="100" />
+          <Property Name="ChangeItemName" Type="nvarchar" MaxLength="50" />
+          <Property Name="ChangeItemNo" Type="nvarchar" MaxLength="50" />
+          <Property Name="Mark" Type="nvarchar" MaxLength="100" />
+          <Property Name="Chk" Type="bit" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunRepairClass">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KeyWorld" Type="int" Nullable="false" />
+          <Property Name="Classification" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="Date" Type="date" />
+          <Property Name="CreateUserId" Type="nvarchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunSize">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="MaintenanceSize" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KeyWorld" Type="int" Nullable="false" />
+          <Property Name="MaintenanceSize" Type="nvarchar" MaxLength="5" Nullable="false" />
+          <Property Name="Date" Type="datetime" />
+          <Property Name="CreateUserId" Type="nvarchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="ES_Member">
+          <Key>
+            <PropertyRef Name="fId" />
+          </Key>
+          <Property Name="fId" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="fUserId" Type="nvarchar" MaxLength="5" />
+          <Property Name="fPwd" Type="nvarchar" MaxLength="50" />
+          <Property Name="fName" Type="nvarchar" MaxLength="50" />
+          <Property Name="fStatus" Type="bit" />
+          <Property Name="Dept_No" Type="nvarchar" MaxLength="2" />
+          <Property Name="classRoom" Type="nvarchar" MaxLength="1" />
+          <Property Name="email" Type="nvarchar" MaxLength="50" />
+        </EntityType>
+        <EntityType Name="ES_MemberFunction">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="UserNo_sno" Type="int" />
+          <Property Name="FunctionNo" Type="nvarchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="ES_MemberLayout">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Dept_No" Type="nvarchar" MaxLength="2" />
+          <Property Name="LayoutViewName" Type="nvarchar" MaxLength="50" />
+          <Property Name="LayoutViewText" Type="nvarchar" MaxLength="50" />
+          <Property Name="LayoutIndex" Type="nvarchar" MaxLength="50" />
+          <Property Name="CreateDate" Type="datetime" />
+        </EntityType>
+        <EntityType Name="ES_MemberRole">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="USER_ID" Type="varchar" MaxLength="5" />
+          <Property Name="ROLE_ID" Type="varchar" MaxLength="5" />
+          <Property Name="EXPIRED_DATE" Type="datetime" />
+        </EntityType>
+        <EntityType Name="ES_ProductionUnit">
+          <Key>
+            <PropertyRef Name="ProductionUnitID" />
+          </Key>
+          <Property Name="ProductionUnitID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ProductionUnitName" Type="nvarchar" MaxLength="255" Nullable="false" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="CreatedBy" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+          <Property Name="UpdatedBy" Type="nvarchar" MaxLength="50" />
+          <Property Name="UpdatedAt" Type="datetime" />
+        </EntityType>
+        <EntityType Name="ES_QuoteCust">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="Customer" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KeyWorld" Type="nvarchar" MaxLength="8" Nullable="false" />
+          <Property Name="Customer" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="Date" Type="datetime" />
+          <Property Name="CreateUserId" Type="nvarchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="ES_QuoteForIE">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="id" Type="int" Nullable="false" />
+          <Property Name="IEonwer" Type="nvarchar" MaxLength="5" />
+          <Property Name="IEQuoteDate" Type="datetime" />
+          <Property Name="IEQuoteTDate" Type="datetime" />
+          <Property Name="OperatorDate" Type="datetime" />
+          <Property Name="IEMark" Type="nvarchar" MaxLength="200" />
+          <Property Name="IEStatus" Type="nchar" MaxLength="1" />
+        </EntityType>
+        <EntityType Name="ES_QuoteForSales">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="CustNo" Type="nvarchar" MaxLength="20" />
+          <Property Name="SalesNo" Type="nvarchar" MaxLength="20" />
+          <Property Name="EngSr" Type="nvarchar" MaxLength="20" />
+          <Property Name="CustMaterial" Type="nvarchar" MaxLength="50" />
+          <Property Name="WoNoAttri" Type="int" />
+          <Property Name="RequDate" Type="datetime" />
+          <Property Name="Mark" Type="nvarchar" MaxLength="200" />
+          <Property Name="SalesId" Type="nvarchar" MaxLength="5" />
+          <Property Name="CreateDate" Type="datetime" />
+          <Property Name="Chk" Type="bit" Nullable="false" />
+          <Property Name="OtherName" Type="nvarchar" MaxLength="20" />
+          <Property Name="CancelChk" Type="bit" />
+        </EntityType>
+        <EntityType Name="ES_QuoteUploadFiles">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="RecordId" Type="int" />
+          <Property Name="FilePath" Type="nvarchar" MaxLength="255" />
+          <Property Name="UploadTime" Type="datetime" />
+          <Property Name="FileName" Type="nvarchar" MaxLength="255" />
+          <Property Name="DeptNo" Type="nvarchar" MaxLength="2" />
+        </EntityType>
+        <EntityType Name="ES_QuoteUploadRecords">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Q_sno" Type="int" />
+          <Property Name="Name" Type="nvarchar" MaxLength="255" />
+        </EntityType>
+        <EntityType Name="ES_QuoteWoNoAttri">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="WoNoAttri" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KeyWorld" Type="int" Nullable="false" />
+          <Property Name="WoNoAttri" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="Date" Type="datetime" />
+          <Property Name="CreateUserId" Type="nvarchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="ES_ReportingUnit">
+          <Key>
+            <PropertyRef Name="ReportingUnitID" />
+          </Key>
+          <Property Name="ReportingUnitID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ReportingUnitName" Type="nvarchar" MaxLength="255" Nullable="false" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="CreatedBy" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+          <Property Name="UpdatedBy" Type="nvarchar" MaxLength="50" />
+          <Property Name="UpdatedAt" Type="datetime" />
+        </EntityType>
+        <EntityType Name="ES_RoleClassification">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ROLE_NAME" Type="nvarchar" MaxLength="50" />
+          <Property Name="ROLE_DESC" Type="nvarchar" MaxLength="150" />
+          <Property Name="CREATE_USERID" Type="varchar" MaxLength="5" />
+          <Property Name="ROLE_ID" Type="nchar" MaxLength="2" />
+        </EntityType>
+        <EntityType Name="HResources_人員">
+          <Key>
+            <PropertyRef Name="employee_id" />
+          </Key>
+          <Property Name="GUID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="employee_id" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="employee_name" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="CreatedBy" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+          <Property Name="UpdatedBy" Type="nvarchar" MaxLength="10" />
+          <Property Name="UpdatedAt" Type="datetime" />
+        </EntityType>
+        <EntityType Name="HResources_出勤類型">
+          <Key>
+            <PropertyRef Name="GUID" />
+          </Key>
+          <Property Name="GUID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="出勤ID" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="出勤名稱" Type="nvarchar" MaxLength="20" Nullable="false" />
+          <Property Name="是否啟用" Type="bit" Nullable="false" />
+          <Property Name="CreatedBy" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+          <Property Name="UpdatedBy" Type="nvarchar" MaxLength="10" />
+          <Property Name="UpdatedAt" Type="datetime" />
+        </EntityType>
+        <EntityType Name="HResources_生產單位名稱">
+          <Key>
+            <PropertyRef Name="GUID" />
+          </Key>
+          <Property Name="GUID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="生產單位ID" Type="nvarchar" MaxLength="20" Nullable="false" />
+          <Property Name="生產單位名稱" Type="nvarchar" MaxLength="30" Nullable="false" />
+          <Property Name="是否啟用" Type="bit" Nullable="false" />
+          <Property Name="CreatedBy" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+          <Property Name="UpdatedBy" Type="nvarchar" MaxLength="10" />
+          <Property Name="UpdatedAt" Type="datetime" />
+        </EntityType>
+        <EntityType Name="HResources_班別">
+          <Key>
+            <PropertyRef Name="GUID" />
+          </Key>
+          <Property Name="GUID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="shift_ID" Type="nvarchar" MaxLength="4" Nullable="false" />
+          <Property Name="班別名稱" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="是否啟用" Type="bit" Nullable="false" />
+          <Property Name="CreatedBy" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+          <Property Name="UpdatedBy" Type="nvarchar" MaxLength="10" />
+          <Property Name="UpdatedAt" Type="datetime" />
+          <Property Name="生產單位班別" Type="nvarchar" MaxLength="10" />
+        </EntityType>
+        <EntityType Name="HResources_報工生產單位">
+          <Key>
+            <PropertyRef Name="GUID" />
+          </Key>
+          <Property Name="GUID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="報工生產單位名稱" Type="nvarchar" MaxLength="30" Nullable="false" />
+          <Property Name="reporting_unit_ID" Type="nvarchar" MaxLength="25" />
+          <Property Name="是否啟用" Type="bit" Nullable="false" />
+          <Property Name="CreatedBy" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+          <Property Name="UpdatedBy" Type="nvarchar" MaxLength="10" />
+          <Property Name="UpdatedAt" Type="datetime" />
+        </EntityType>
+        <EntityType Name="人力配置授權表">
+          <Key>
+            <PropertyRef Name="授權ID" />
+          </Key>
+          <Property Name="授權ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="報工生產單位名稱" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="生產單位" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="班別" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="授權者工號" Type="nvarchar" MaxLength="10" Nullable="false" />
+          <Property Name="報工生產單位GUID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="狀態" Type="bit" Nullable="false" />
+          <Property Name="建立者" Type="nvarchar" MaxLength="20" />
+          <Property Name="建立時間" Type="datetime" />
+          <Property Name="修改者" Type="nvarchar" MaxLength="20" />
+          <Property Name="修改時間" Type="datetime" />
+        </EntityType>
+        <Association Name="FK_ES_MemberFunction_ES_Member">
+          <End Role="ES_Member" Type="Self.ES_Member" Multiplicity="0..1" />
+          <End Role="ES_MemberFunction" Type="Self.ES_MemberFunction" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ES_Member">
+              <PropertyRef Name="fId" />
+            </Principal>
+            <Dependent Role="ES_MemberFunction">
+              <PropertyRef Name="UserNo_sno" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ES_QuoteUploadFiles_ES_QuoteForSale">
+          <End Role="ES_QuoteForSales" Type="Self.ES_QuoteForSales" Multiplicity="0..1" />
+          <End Role="ES_QuoteUploadFiles" Type="Self.ES_QuoteUploadFiles" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ES_QuoteForSales">
+              <PropertyRef Name="sno" />
+            </Principal>
+            <Dependent Role="ES_QuoteUploadFiles">
+              <PropertyRef Name="RecordId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ES_QuoteUploadRecords_ES_QuoteForSales">
+          <End Role="ES_QuoteForSales" Type="Self.ES_QuoteForSales" Multiplicity="0..1" />
+          <End Role="ES_QuoteUploadRecords" Type="Self.ES_QuoteUploadRecords" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ES_QuoteForSales">
+              <PropertyRef Name="sno" />
+            </Principal>
+            <Dependent Role="ES_QuoteUploadRecords">
+              <PropertyRef Name="Q_sno" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_HResources_人員GUID">
+          <End Role="HResources_人員" Type="Self.HResources_人員" Multiplicity="1" />
+          <End Role="EmployeeAssignments" Type="Self.EmployeeAssignments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="HResources_人員">
+              <PropertyRef Name="employee_id" />
+            </Principal>
+            <Dependent Role="EmployeeAssignments">
+              <PropertyRef Name="employee_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_HResources_出勤類型">
+          <End Role="HResources_出勤類型" Type="Self.HResources_出勤類型" Multiplicity="0..1" />
+          <End Role="EmployeeAssignments" Type="Self.EmployeeAssignments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="HResources_出勤類型">
+              <PropertyRef Name="GUID" />
+            </Principal>
+            <Dependent Role="EmployeeAssignments">
+              <PropertyRef Name="出勤類型GUID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_HResources_生產單位名稱GUID">
+          <End Role="HResources_生產單位名稱" Type="Self.HResources_生產單位名稱" Multiplicity="0..1" />
+          <End Role="EmployeeAssignments" Type="Self.EmployeeAssignments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="HResources_生產單位名稱">
+              <PropertyRef Name="GUID" />
+            </Principal>
+            <Dependent Role="EmployeeAssignments">
+              <PropertyRef Name="生產單位名稱GUID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_HResources_班別">
+          <End Role="HResources_班別" Type="Self.HResources_班別" Multiplicity="0..1" />
+          <End Role="EmployeeAssignments" Type="Self.EmployeeAssignments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="HResources_班別">
+              <PropertyRef Name="GUID" />
+            </Principal>
+            <Dependent Role="EmployeeAssignments">
+              <PropertyRef Name="班別GUID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_HResources_報工生產單位GUID">
+          <End Role="HResources_報工生產單位" Type="Self.HResources_報工生產單位" Multiplicity="0..1" />
+          <End Role="EmployeeAssignments" Type="Self.EmployeeAssignments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="HResources_報工生產單位">
+              <PropertyRef Name="GUID" />
+            </Principal>
+            <Dependent Role="EmployeeAssignments">
+              <PropertyRef Name="報工生產單位GUID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="ESIntegrateSysModelStoreContainer">
+          <EntitySet Name="AppMultiLanguageResources" EntityType="Self.AppMultiLanguageResources" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="EmployeeAssignments" EntityType="Self.EmployeeAssignments" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="EmployeeAssignments_Log" EntityType="Self.EmployeeAssignments_Log" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_DeptInfo" EntityType="Self.ES_DeptInfo" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_FunctionItem" EntityType="Self.ES_FunctionItem" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MaintainWork" EntityType="Self.ES_MaintainWork" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MaterialCorrection" EntityType="Self.ES_MaterialCorrection" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MaterialGunBadDesc" EntityType="Self.ES_MaterialGunBadDesc" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MaterialGunDiscardDesc" EntityType="Self.ES_MaterialGunDiscardDesc" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MaterialGunInfo" EntityType="Self.ES_MaterialGunInfo" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MaterialGunMResult" EntityType="Self.ES_MaterialGunMResult" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MaterialGunRepair" EntityType="Self.ES_MaterialGunRepair" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MaterialGunRepairClass" EntityType="Self.ES_MaterialGunRepairClass" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MaterialGunSize" EntityType="Self.ES_MaterialGunSize" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_Member" EntityType="Self.ES_Member" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MemberFunction" EntityType="Self.ES_MemberFunction" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MemberLayout" EntityType="Self.ES_MemberLayout" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_MemberRole" EntityType="Self.ES_MemberRole" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_ProductionUnit" EntityType="Self.ES_ProductionUnit" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_QuoteCust" EntityType="Self.ES_QuoteCust" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_QuoteForIE" EntityType="Self.ES_QuoteForIE" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_QuoteForSales" EntityType="Self.ES_QuoteForSales" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_QuoteUploadFiles" EntityType="Self.ES_QuoteUploadFiles" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_QuoteUploadRecords" EntityType="Self.ES_QuoteUploadRecords" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_QuoteWoNoAttri" EntityType="Self.ES_QuoteWoNoAttri" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_ReportingUnit" EntityType="Self.ES_ReportingUnit" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ES_RoleClassification" EntityType="Self.ES_RoleClassification" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="HResources_人員" EntityType="Self.HResources_人員" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="HResources_出勤類型" EntityType="Self.HResources_出勤類型" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="HResources_生產單位名稱" EntityType="Self.HResources_生產單位名稱" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="HResources_班別" EntityType="Self.HResources_班別" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="HResources_報工生產單位" EntityType="Self.HResources_報工生產單位" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="人力配置授權表" EntityType="Self.人力配置授權表" Schema="dbo" store:Type="Tables" />
+          <AssociationSet Name="FK_ES_MemberFunction_ES_Member" Association="Self.FK_ES_MemberFunction_ES_Member">
+            <End Role="ES_Member" EntitySet="ES_Member" />
+            <End Role="ES_MemberFunction" EntitySet="ES_MemberFunction" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ES_QuoteUploadFiles_ES_QuoteForSale" Association="Self.FK_ES_QuoteUploadFiles_ES_QuoteForSale">
+            <End Role="ES_QuoteForSales" EntitySet="ES_QuoteForSales" />
+            <End Role="ES_QuoteUploadFiles" EntitySet="ES_QuoteUploadFiles" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ES_QuoteUploadRecords_ES_QuoteForSales" Association="Self.FK_ES_QuoteUploadRecords_ES_QuoteForSales">
+            <End Role="ES_QuoteForSales" EntitySet="ES_QuoteForSales" />
+            <End Role="ES_QuoteUploadRecords" EntitySet="ES_QuoteUploadRecords" />
+          </AssociationSet>
+          <AssociationSet Name="FK_HResources_人員GUID" Association="Self.FK_HResources_人員GUID">
+            <End Role="HResources_人員" EntitySet="HResources_人員" />
+            <End Role="EmployeeAssignments" EntitySet="EmployeeAssignments" />
+          </AssociationSet>
+          <AssociationSet Name="FK_HResources_出勤類型" Association="Self.FK_HResources_出勤類型">
+            <End Role="HResources_出勤類型" EntitySet="HResources_出勤類型" />
+            <End Role="EmployeeAssignments" EntitySet="EmployeeAssignments" />
+          </AssociationSet>
+          <AssociationSet Name="FK_HResources_生產單位名稱GUID" Association="Self.FK_HResources_生產單位名稱GUID">
+            <End Role="HResources_生產單位名稱" EntitySet="HResources_生產單位名稱" />
+            <End Role="EmployeeAssignments" EntitySet="EmployeeAssignments" />
+          </AssociationSet>
+          <AssociationSet Name="FK_HResources_班別" Association="Self.FK_HResources_班別">
+            <End Role="HResources_班別" EntitySet="HResources_班別" />
+            <End Role="EmployeeAssignments" EntitySet="EmployeeAssignments" />
+          </AssociationSet>
+          <AssociationSet Name="FK_HResources_報工生產單位GUID" Association="Self.FK_HResources_報工生產單位GUID">
+            <End Role="HResources_報工生產單位" EntitySet="HResources_報工生產單位" />
+            <End Role="EmployeeAssignments" EntitySet="EmployeeAssignments" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="ESIntegrateSysModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="ES_Member">
+          <Key>
+            <PropertyRef Name="fId" />
+          </Key>
+          <Property Name="fId" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="fUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="fPwd" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="fName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="fStatus" Type="Boolean" />
+          <Property Name="Dept_No" Type="String" MaxLength="2" FixedLength="false" Unicode="true" />
+          <Property Name="email" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="classRoom" Type="String" MaxLength="1" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="ES_MemberFunction" Relationship="ESIntegrateSysModel.FK_ES_MemberFunction_ES_Member" FromRole="ES_Member" ToRole="ES_MemberFunction" />
+        </EntityType>
+        <EntityType Name="ES_MemberRole">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="USER_ID" Type="String" MaxLength="5" FixedLength="false" Unicode="false" />
+          <Property Name="ROLE_ID" Type="String" MaxLength="5" FixedLength="false" Unicode="false" />
+          <Property Name="EXPIRED_DATE" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityContainer Name="ESIntegrateSysEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="ES_Member" EntityType="Self.ES_Member" />
+          <EntitySet Name="ES_MemberRole" EntityType="Self.ES_MemberRole" />
+          <EntitySet Name="ES_MaterialGunBadDesc" EntityType="ESIntegrateSysModel.ES_MaterialGunBadDesc" />
+          <EntitySet Name="ES_MaterialGunRepairClass" EntityType="ESIntegrateSysModel.ES_MaterialGunRepairClass" />
+          <EntitySet Name="ES_MaterialGunInfo" EntityType="ESIntegrateSysModel.ES_MaterialGunInfo" />
+          <EntitySet Name="ES_MaterialGunDiscardDesc" EntityType="ESIntegrateSysModel.ES_MaterialGunDiscardDesc" />
+          <EntitySet Name="ES_MaintainWork" EntityType="ESIntegrateSysModel.ES_MaintainWork" />
+          <EntitySet Name="ES_RoleClassification" EntityType="ESIntegrateSysModel.ES_RoleClassification" />
+          <EntitySet Name="ES_DeptInfo" EntityType="ESIntegrateSysModel.ES_DeptInfo" />
+          <EntitySet Name="ES_MemberLayout" EntityType="ESIntegrateSysModel.ES_MemberLayout" />
+          <EntitySet Name="ES_QuoteForIE" EntityType="ESIntegrateSysModel.ES_QuoteForIE" />
+          <EntitySet Name="ES_MaterialGunRepair" EntityType="ESIntegrateSysModel.ES_MaterialGunRepair" />
+          <EntitySet Name="ES_MaterialCorrection" EntityType="ESIntegrateSysModel.ES_MaterialCorrection" />
+          <EntitySet Name="ES_MaterialGunSize" EntityType="ESIntegrateSysModel.ES_MaterialGunSize" />
+          <EntitySet Name="ES_QuoteWoNoAttri" EntityType="ESIntegrateSysModel.ES_QuoteWoNoAttri" />
+          <EntitySet Name="ES_QuoteCust" EntityType="ESIntegrateSysModel.ES_QuoteCust" />
+          <EntitySet Name="ES_QuoteForSales" EntityType="ESIntegrateSysModel.ES_QuoteForSales" />
+          <EntitySet Name="ES_QuoteUploadRecords" EntityType="ESIntegrateSysModel.ES_QuoteUploadRecords" />
+          <AssociationSet Name="FK__ES_QuoteU__Q_sno__2B0A656D" Association="ESIntegrateSysModel.FK__ES_QuoteU__Q_sno__2B0A656D">
+            <End Role="ES_QuoteForSales" EntitySet="ES_QuoteForSales" />
+            <End Role="ES_QuoteUploadRecords" EntitySet="ES_QuoteUploadRecords" />
+          </AssociationSet>
+          <EntitySet Name="ES_QuoteUploadFiles" EntityType="ESIntegrateSysModel.ES_QuoteUploadFiles" />
+          <AssociationSet Name="FK__ES_QuoteU__Recor__2DE6D218" Association="ESIntegrateSysModel.FK__ES_QuoteU__Recor__2DE6D218">
+            <End Role="ES_QuoteUploadRecords" EntitySet="ES_QuoteUploadRecords" />
+            <End Role="ES_QuoteUploadFiles" EntitySet="ES_QuoteUploadFiles" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ES_QuoteUploadFiles_ES_QuoteForSale" Association="ESIntegrateSysModel.FK_ES_QuoteUploadFiles_ES_QuoteForSale">
+            <End Role="ES_QuoteForSales" EntitySet="ES_QuoteForSales" />
+            <End Role="ES_QuoteUploadFiles" EntitySet="ES_QuoteUploadFiles" />
+          </AssociationSet>
+          <EntitySet Name="ES_FunctionItem" EntityType="ESIntegrateSysModel.ES_FunctionItem" />
+          <EntitySet Name="ES_MemberFunction" EntityType="ESIntegrateSysModel.ES_MemberFunction" />
+          <AssociationSet Name="FK_ES_MemberFunction_ES_Member" Association="ESIntegrateSysModel.FK_ES_MemberFunction_ES_Member">
+            <End Role="ES_Member" EntitySet="ES_Member" />
+            <End Role="ES_MemberFunction" EntitySet="ES_MemberFunction" />
+          </AssociationSet>
+          <EntitySet Name="ES_MaterialGunMResult" EntityType="ESIntegrateSysModel.ES_MaterialGunMResult" />
+          <EntitySet Name="EmployeeAssignments_Log" EntityType="ESIntegrateSysModel.EmployeeAssignments_Log" />
+          <EntitySet Name="人力配置授權表" EntityType="ESIntegrateSysModel.人力配置授權表" />
+          <EntitySet Name="HResources_人員" EntityType="ESIntegrateSysModel.HResources_人員" />
+          <EntitySet Name="HResources_出勤類型" EntityType="ESIntegrateSysModel.HResources_出勤類型" />
+          <EntitySet Name="HResources_生產單位名稱" EntityType="ESIntegrateSysModel.HResources_生產單位名稱" />
+          <EntitySet Name="HResources_班別" EntityType="ESIntegrateSysModel.HResources_班別" />
+          <EntitySet Name="HResources_報工生產單位" EntityType="ESIntegrateSysModel.HResources_報工生產單位" />
+          <EntitySet Name="EmployeeAssignments" EntityType="ESIntegrateSysModel.EmployeeAssignments" />
+          <AssociationSet Name="FK_HResources_人員GUID" Association="ESIntegrateSysModel.FK_HResources_人員GUID">
+            <End Role="HResources_人員" EntitySet="HResources_人員" />
+            <End Role="EmployeeAssignments" EntitySet="EmployeeAssignments" />
+          </AssociationSet>
+          <AssociationSet Name="FK_HResources_出勤類型" Association="ESIntegrateSysModel.FK_HResources_出勤類型">
+            <End Role="HResources_出勤類型" EntitySet="HResources_出勤類型" />
+            <End Role="EmployeeAssignments" EntitySet="EmployeeAssignments" />
+          </AssociationSet>
+          <AssociationSet Name="FK_HResources_生產單位名稱GUID" Association="ESIntegrateSysModel.FK_HResources_生產單位名稱GUID">
+            <End Role="HResources_生產單位名稱" EntitySet="HResources_生產單位名稱" />
+            <End Role="EmployeeAssignments" EntitySet="EmployeeAssignments" />
+          </AssociationSet>
+          <AssociationSet Name="FK_HResources_班別" Association="ESIntegrateSysModel.FK_HResources_班別">
+            <End Role="HResources_班別" EntitySet="HResources_班別" />
+            <End Role="EmployeeAssignments" EntitySet="EmployeeAssignments" />
+          </AssociationSet>
+          <AssociationSet Name="FK_HResources_報工生產單位GUID" Association="ESIntegrateSysModel.FK_HResources_報工生產單位GUID">
+            <End Role="HResources_報工生產單位" EntitySet="HResources_報工生產單位" />
+            <End Role="EmployeeAssignments" EntitySet="EmployeeAssignments" />
+          </AssociationSet>
+          <EntitySet Name="ES_ReportingUnit" EntityType="ESIntegrateSysModel.ES_ReportingUnit" />
+          <EntitySet Name="ES_ProductionUnit" EntityType="ESIntegrateSysModel.ES_ProductionUnit" />
+          <EntitySet Name="AppMultiLanguageResources" EntityType="ESIntegrateSysModel.AppMultiLanguageResources" />
+          </EntityContainer>
+        <EntityType Name="ES_MaterialGunBadDesc">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="BadDescription" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KeyWorld" Type="Int32" Nullable="false" />
+          <Property Name="BadDescription" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Date" Type="DateTime" Precision="3" />
+          <Property Name="CreateUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunRepairClass">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KeyWorld" Type="Int32" Nullable="false" />
+          <Property Name="Classification" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Date" Type="DateTime" Precision="0" />
+          <Property Name="CreateUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunInfo">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="MaterialGun_Eno" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MaterialGun_Sno" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MaterialGun_Trade" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MaterialGun_Size" Type="String" MaxLength="10" FixedLength="true" Unicode="true" />
+          <Property Name="MaintainCycle" Type="Int32" />
+          <Property Name="MaintainNexDate" Type="DateTime" Precision="3" />
+          <Property Name="CreateTime" Type="DateTime" Precision="3" />
+          <Property Name="CreateUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="DiscardDesc" Type="Int32" />
+          <Property Name="MaterialGunDiscard" Type="Boolean" />
+          <Property Name="DiscardDate" Type="DateTime" Precision="3" />
+          <Property Name="DiscardOPId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="DiscardCheck" Type="Boolean" />
+          <Property Name="Mark" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunDiscardDesc">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="DiscardDescription" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KeyWorld" Type="Int32" Nullable="false" />
+          <Property Name="DiscardDescription" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Date" Type="DateTime" Precision="3" />
+          <Property Name="CreateUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_MaintainWork">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="MaterialGun_Sno" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MaterialGun_Eno" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MaintainCycle" Type="Int32" />
+          <Property Name="MaintainTime" Type="DateTime" Precision="3" />
+          <Property Name="MUserNo" Type="String" MaxLength="5" FixedLength="true" Unicode="true" />
+          <Property Name="MaintainNexDate" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityType Name="ES_RoleClassification">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ROLE_NAME" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ROLE_DESC" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="CREATE_USERID" Type="String" MaxLength="5" FixedLength="false" Unicode="false" />
+          <Property Name="ROLE_ID" Type="String" MaxLength="2" FixedLength="true" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_DeptInfo">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Dept_Name" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="Dept_No" Type="String" MaxLength="2" FixedLength="false" Unicode="true" />
+          <Property Name="CreateDate" Type="DateTime" Precision="3" />
+          <Property Name="CreateUser" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_MemberLayout">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Dept_No" Type="String" MaxLength="2" FixedLength="false" Unicode="true" />
+          <Property Name="LayoutViewName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="CreateDate" Type="DateTime" Precision="3" />
+          <Property Name="LayoutViewText" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="LayoutIndex" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_QuoteForIE">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="id" Type="Int32" Nullable="false" />
+          <Property Name="IEonwer" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="IEQuoteDate" Type="DateTime" Precision="3" />
+          <Property Name="IEQuoteTDate" Type="DateTime" Precision="3" />
+          <Property Name="OperatorDate" Type="DateTime" Precision="3" />
+          <Property Name="IEMark" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="IEStatus" Type="String" MaxLength="1" FixedLength="true" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunRepair">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="MaterialGun_Eno" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MaterialGun_Sno" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="RepairDate" Type="DateTime" Precision="3" />
+          <Property Name="RepairUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="BadDescription" Type="Int32" />
+          <Property Name="MaintenanceTime" Type="DateTime" Precision="3" />
+          <Property Name="MaintenanceUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="MaintenanceResult" Type="Int32" />
+          <Property Name="Classification" Type="Int32" />
+          <Property Name="Other" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="ChangeItemName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ChangeItemNo" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Mark" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Chk" Type="Boolean" />
+        </EntityType>
+        <EntityType Name="ES_MaterialCorrection">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="MaterialGun_Sno" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MaterialGun_Eno" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MaterialGun_Size" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="TestResult" Type="Boolean" />
+          <Property Name="CorrectionDate" Type="DateTime" Precision="3" />
+          <Property Name="FileName" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="operators" Type="String" MaxLength="5" FixedLength="false" Unicode="false" />
+          <Property Name="memo" Type="String" MaxLength="5" FixedLength="false" Unicode="false" />
+        </EntityType>
+        <EntityType Name="ES_MaterialGunSize">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="MaintenanceSize" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KeyWorld" Type="Int32" Nullable="false" />
+          <Property Name="MaintenanceSize" Type="String" Nullable="false" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="Date" Type="DateTime" Precision="3" />
+          <Property Name="CreateUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_QuoteWoNoAttri">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="WoNoAttri" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KeyWorld" Type="Int32" Nullable="false" />
+          <Property Name="WoNoAttri" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Date" Type="DateTime" Precision="3" />
+          <Property Name="CreateUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_QuoteCust">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="Customer" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KeyWorld" Type="String" Nullable="false" MaxLength="8" FixedLength="false" Unicode="true" />
+          <Property Name="Customer" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Date" Type="DateTime" Precision="3" />
+          <Property Name="CreateUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_QuoteForSales">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CustNo" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="SalesNo" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="EngSr" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="CustMaterial" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="WoNoAttri" Type="Int32" />
+          <Property Name="RequDate" Type="DateTime" Precision="3" />
+          <Property Name="Mark" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="SalesId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="CreateDate" Type="DateTime" Precision="3" />
+          <Property Name="Chk" Type="Boolean" Nullable="false" />
+          <Property Name="OtherName" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="CancelChk" Type="Boolean" />
+          <NavigationProperty Name="ES_QuoteUploadRecords" Relationship="ESIntegrateSysModel.FK__ES_QuoteU__Q_sno__2B0A656D" FromRole="ES_QuoteForSales" ToRole="ES_QuoteUploadRecords" />
+          <NavigationProperty Name="ES_QuoteUploadFiles" Relationship="ESIntegrateSysModel.FK_ES_QuoteUploadFiles_ES_QuoteForSale" FromRole="ES_QuoteForSales" ToRole="ES_QuoteUploadFiles" />
+        </EntityType>
+        <EntityType Name="ES_QuoteUploadRecords">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" />
+          <Property Name="Q_sno" Type="Int32" />
+          <Property Name="Name" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="ES_QuoteForSales" Relationship="ESIntegrateSysModel.FK__ES_QuoteU__Q_sno__2B0A656D" FromRole="ES_QuoteUploadRecords" ToRole="ES_QuoteForSales" />
+          <NavigationProperty Name="ES_QuoteUploadFiles" Relationship="ESIntegrateSysModel.FK__ES_QuoteU__Recor__2DE6D218" FromRole="ES_QuoteUploadRecords" ToRole="ES_QuoteUploadFiles" />
+        </EntityType>
+        <Association Name="FK__ES_QuoteU__Q_sno__2B0A656D">
+          <End Type="ESIntegrateSysModel.ES_QuoteForSales" Role="ES_QuoteForSales" Multiplicity="0..1" />
+          <End Type="ESIntegrateSysModel.ES_QuoteUploadRecords" Role="ES_QuoteUploadRecords" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ES_QuoteForSales">
+              <PropertyRef Name="sno" />
+            </Principal>
+            <Dependent Role="ES_QuoteUploadRecords">
+              <PropertyRef Name="Q_sno" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityType Name="ES_QuoteUploadFiles">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="RecordId" Type="Int32" />
+          <Property Name="FilePath" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="UploadTime" Type="DateTime" Precision="3" />
+          <Property Name="FileName" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="ES_QuoteUploadRecords" Relationship="ESIntegrateSysModel.FK__ES_QuoteU__Recor__2DE6D218" FromRole="ES_QuoteUploadFiles" ToRole="ES_QuoteUploadRecords" />
+          <NavigationProperty Name="ES_QuoteForSales" Relationship="ESIntegrateSysModel.FK_ES_QuoteUploadFiles_ES_QuoteForSale" FromRole="ES_QuoteUploadFiles" ToRole="ES_QuoteForSales" />
+          <Property Name="DeptNo" Type="String" MaxLength="2" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <Association Name="FK__ES_QuoteU__Recor__2DE6D218">
+          <End Type="ESIntegrateSysModel.ES_QuoteUploadRecords" Role="ES_QuoteUploadRecords" Multiplicity="0..1" />
+          <End Type="ESIntegrateSysModel.ES_QuoteUploadFiles" Role="ES_QuoteUploadFiles" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ES_QuoteUploadRecords">
+              <PropertyRef Name="sno" />
+            </Principal>
+            <Dependent Role="ES_QuoteUploadFiles">
+              <PropertyRef Name="RecordId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ES_QuoteUploadFiles_ES_QuoteForSale">
+          <End Type="ESIntegrateSysModel.ES_QuoteForSales" Role="ES_QuoteForSales" Multiplicity="0..1" />
+          <End Type="ESIntegrateSysModel.ES_QuoteUploadFiles" Role="ES_QuoteUploadFiles" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ES_QuoteForSales">
+              <PropertyRef Name="sno" />
+            </Principal>
+            <Dependent Role="ES_QuoteUploadFiles">
+              <PropertyRef Name="RecordId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityType Name="ES_FunctionItem">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="FunctionNo" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="FunctionName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ActionName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ES_MemberFunction">
+          <Key>
+            <PropertyRef Name="sno" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="UserNo_sno" Type="Int32" />
+          <Property Name="FunctionNo" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="ES_Member" Relationship="ESIntegrateSysModel.FK_ES_MemberFunction_ES_Member" FromRole="ES_MemberFunction" ToRole="ES_Member" />
+        </EntityType>
+        <Association Name="FK_ES_MemberFunction_ES_Member">
+          <End Type="ESIntegrateSysModel.ES_Member" Role="ES_Member" Multiplicity="0..1" />
+          <End Type="ESIntegrateSysModel.ES_MemberFunction" Role="ES_MemberFunction" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ES_Member">
+              <PropertyRef Name="fId" />
+            </Principal>
+            <Dependent Role="ES_MemberFunction">
+              <PropertyRef Name="UserNo_sno" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityType Name="ES_MaterialGunMResult">
+          <Key>
+            <PropertyRef Name="sno" />
+            <PropertyRef Name="MaintenanceResult" />
+          </Key>
+          <Property Name="sno" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KeyWorld" Type="Int32" Nullable="false" />
+          <Property Name="MaintenanceResult" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Date" Type="DateTime" Precision="3" />
+          <Property Name="CreateUserId" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="EmployeeAssignments_Log">
+          <Key>
+            <PropertyRef Name="LogId" />
+          </Key>
+          <Property Name="LogId" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="AssignmentId" Type="String" Nullable="false" MaxLength="255" FixedLength="false" Unicode="false" />
+          <Property Name="ActionType" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="ActionTimestamp" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="PerformedBy" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Old_ReportingUnit" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Old_ProductionUnit" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Old_Shift" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Old_AttendanceType" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Old_EmployeeId" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Old_EmployeeName" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Old_Remarks" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="人力配置授權表">
+          <Key>
+            <PropertyRef Name="授權ID" />
+          </Key>
+          <Property Name="授權ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="報工生產單位名稱" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="授權者工號" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="狀態" Type="Boolean" Nullable="false" />
+          <Property Name="建立者" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="建立時間" Type="DateTime" Precision="3" />
+          <Property Name="修改者" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="修改時間" Type="DateTime" Precision="3" />
+          <Property Name="報工生產單位GUID" Type="Guid" Nullable="false" />
+          <Property Name="生產單位" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="班別" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+        </EntityType>
+        <EntityType Name="HResources_人員">
+          <Key>
+            <PropertyRef Name="employee_id" />
+          </Key>
+          <Property Name="GUID" Type="Guid" Nullable="false" />
+          <Property Name="employee_id" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="employee_name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedBy" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="UpdatedBy" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="UpdatedAt" Type="DateTime" Precision="3" />
+          <NavigationProperty Name="EmployeeAssignments" Relationship="ESIntegrateSysModel.FK_HResources_人員GUID" FromRole="HResources_人員" ToRole="EmployeeAssignments" />
+        </EntityType>
+        <EntityType Name="HResources_出勤類型">
+          <Key>
+            <PropertyRef Name="GUID" />
+          </Key>
+          <Property Name="GUID" Type="Guid" Nullable="false" />
+          <Property Name="出勤ID" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="出勤名稱" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="是否啟用" Type="Boolean" Nullable="false" />
+          <Property Name="CreatedBy" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="UpdatedBy" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="UpdatedAt" Type="DateTime" Precision="3" />
+          <NavigationProperty Name="EmployeeAssignments" Relationship="ESIntegrateSysModel.FK_HResources_出勤類型" FromRole="HResources_出勤類型" ToRole="EmployeeAssignments" />
+        </EntityType>
+        <EntityType Name="HResources_生產單位名稱">
+          <Key>
+            <PropertyRef Name="GUID" />
+          </Key>
+          <Property Name="GUID" Type="Guid" Nullable="false" />
+          <Property Name="生產單位ID" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="生產單位名稱" Type="String" Nullable="false" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="是否啟用" Type="Boolean" Nullable="false" />
+          <Property Name="CreatedBy" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="UpdatedBy" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="UpdatedAt" Type="DateTime" Precision="3" />
+          <NavigationProperty Name="EmployeeAssignments" Relationship="ESIntegrateSysModel.FK_HResources_生產單位名稱GUID" FromRole="HResources_生產單位名稱" ToRole="EmployeeAssignments" />
+        </EntityType>
+        <EntityType Name="HResources_班別">
+          <Key>
+            <PropertyRef Name="GUID" />
+          </Key>
+          <Property Name="GUID" Type="Guid" Nullable="false" />
+          <Property Name="shift_ID" Type="String" Nullable="false" MaxLength="4" FixedLength="false" Unicode="true" />
+          <Property Name="班別名稱" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="是否啟用" Type="Boolean" Nullable="false" />
+          <Property Name="CreatedBy" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="UpdatedBy" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="UpdatedAt" Type="DateTime" Precision="3" />
+          <Property Name="生產單位班別" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="EmployeeAssignments" Relationship="ESIntegrateSysModel.FK_HResources_班別" FromRole="HResources_班別" ToRole="EmployeeAssignments" />
+        </EntityType>
+        <EntityType Name="HResources_報工生產單位">
+          <Key>
+            <PropertyRef Name="GUID" />
+          </Key>
+          <Property Name="GUID" Type="Guid" Nullable="false" />
+          <Property Name="報工生產單位名稱" Type="String" Nullable="false" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="reporting_unit_ID" Type="String" MaxLength="25" FixedLength="false" Unicode="true" />
+          <Property Name="是否啟用" Type="Boolean" Nullable="false" />
+          <Property Name="CreatedBy" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="UpdatedBy" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="UpdatedAt" Type="DateTime" Precision="3" />
+          <NavigationProperty Name="EmployeeAssignments" Relationship="ESIntegrateSysModel.FK_HResources_報工生產單位GUID" FromRole="HResources_報工生產單位" ToRole="EmployeeAssignments" />
+        </EntityType>
+        <EntityType Name="EmployeeAssignments">
+          <Key>
+            <PropertyRef Name="assignment_id" />
+          </Key>
+          <Property Name="assignment_id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="reporting_unit_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="報工生產單位GUID" Type="Guid" />
+          <Property Name="生產單位名稱GUID" Type="Guid" />
+          <Property Name="班別GUID" Type="Guid" />
+          <Property Name="出勤類型GUID" Type="Guid" />
+          <Property Name="employee_id" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="remarks" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="created_at" Type="DateTime" Precision="3" />
+          <Property Name="created_by" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="updated_at" Type="DateTime" Precision="3" />
+          <Property Name="updated_by" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="current_editor" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="edit_lock_time" Type="DateTime" Precision="3" />
+          <NavigationProperty Name="HResources_人員" Relationship="ESIntegrateSysModel.FK_HResources_人員GUID" FromRole="EmployeeAssignments" ToRole="HResources_人員" />
+          <NavigationProperty Name="HResources_出勤類型" Relationship="ESIntegrateSysModel.FK_HResources_出勤類型" FromRole="EmployeeAssignments" ToRole="HResources_出勤類型" />
+          <NavigationProperty Name="HResources_生產單位名稱" Relationship="ESIntegrateSysModel.FK_HResources_生產單位名稱GUID" FromRole="EmployeeAssignments" ToRole="HResources_生產單位名稱" />
+          <NavigationProperty Name="HResources_班別" Relationship="ESIntegrateSysModel.FK_HResources_班別" FromRole="EmployeeAssignments" ToRole="HResources_班別" />
+          <NavigationProperty Name="HResources_報工生產單位" Relationship="ESIntegrateSysModel.FK_HResources_報工生產單位GUID" FromRole="EmployeeAssignments" ToRole="HResources_報工生產單位" />
+        </EntityType>
+        <Association Name="FK_HResources_人員GUID">
+          <End Type="ESIntegrateSysModel.HResources_人員" Role="HResources_人員" Multiplicity="1" />
+          <End Type="ESIntegrateSysModel.EmployeeAssignments" Role="EmployeeAssignments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="HResources_人員">
+              <PropertyRef Name="employee_id" />
+            </Principal>
+            <Dependent Role="EmployeeAssignments">
+              <PropertyRef Name="employee_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_HResources_出勤類型">
+          <End Type="ESIntegrateSysModel.HResources_出勤類型" Role="HResources_出勤類型" Multiplicity="0..1" />
+          <End Type="ESIntegrateSysModel.EmployeeAssignments" Role="EmployeeAssignments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="HResources_出勤類型">
+              <PropertyRef Name="GUID" />
+            </Principal>
+            <Dependent Role="EmployeeAssignments">
+              <PropertyRef Name="出勤類型GUID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_HResources_生產單位名稱GUID">
+          <End Type="ESIntegrateSysModel.HResources_生產單位名稱" Role="HResources_生產單位名稱" Multiplicity="0..1" />
+          <End Type="ESIntegrateSysModel.EmployeeAssignments" Role="EmployeeAssignments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="HResources_生產單位名稱">
+              <PropertyRef Name="GUID" />
+            </Principal>
+            <Dependent Role="EmployeeAssignments">
+              <PropertyRef Name="生產單位名稱GUID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_HResources_班別">
+          <End Type="ESIntegrateSysModel.HResources_班別" Role="HResources_班別" Multiplicity="0..1" />
+          <End Type="ESIntegrateSysModel.EmployeeAssignments" Role="EmployeeAssignments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="HResources_班別">
+              <PropertyRef Name="GUID" />
+            </Principal>
+            <Dependent Role="EmployeeAssignments">
+              <PropertyRef Name="班別GUID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_HResources_報工生產單位GUID">
+          <End Type="ESIntegrateSysModel.HResources_報工生產單位" Role="HResources_報工生產單位" Multiplicity="0..1" />
+          <End Type="ESIntegrateSysModel.EmployeeAssignments" Role="EmployeeAssignments" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="HResources_報工生產單位">
+              <PropertyRef Name="GUID" />
+            </Principal>
+            <Dependent Role="EmployeeAssignments">
+              <PropertyRef Name="報工生產單位GUID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityType Name="ES_ReportingUnit">
+          <Key>
+            <PropertyRef Name="ReportingUnitID" />
+          </Key>
+          <Property Name="ReportingUnitID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ReportingUnitName" Type="String" Nullable="false" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="CreatedBy" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="UpdatedBy" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="UpdatedAt" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityType Name="ES_ProductionUnit">
+          <Key>
+            <PropertyRef Name="ProductionUnitID" />
+          </Key>
+          <Property Name="ProductionUnitID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ProductionUnitName" Type="String" Nullable="false" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="CreatedBy" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="UpdatedBy" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="UpdatedAt" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityType Name="AppMultiLanguageResources">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ResourceType" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="ResourceId" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="CultureCode" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="false" />
+          <Property Name="ResourceValue" Type="String" Nullable="false" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+        </EntityType>
+        </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="ESIntegrateSysModelStoreContainer" CdmEntityContainer="ESIntegrateSysEntities">
+          <EntitySetMapping Name="ES_Member">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_Member">
+              <MappingFragment StoreEntitySet="ES_Member">
+                <ScalarProperty Name="classRoom" ColumnName="classRoom" />
+                <ScalarProperty Name="email" ColumnName="email" />
+                <ScalarProperty Name="Dept_No" ColumnName="Dept_No" />
+                <ScalarProperty Name="fId" ColumnName="fId" />
+                <ScalarProperty Name="fUserId" ColumnName="fUserId" />
+                <ScalarProperty Name="fPwd" ColumnName="fPwd" />
+                <ScalarProperty Name="fName" ColumnName="fName" />
+                <ScalarProperty Name="fStatus" ColumnName="fStatus" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MemberRole">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MemberRole">
+              <MappingFragment StoreEntitySet="ES_MemberRole">
+                <ScalarProperty Name="sno" ColumnName="sno" />
+                <ScalarProperty Name="USER_ID" ColumnName="USER_ID" />
+                <ScalarProperty Name="ROLE_ID" ColumnName="ROLE_ID" />
+                <ScalarProperty Name="EXPIRED_DATE" ColumnName="EXPIRED_DATE" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MaterialGunBadDesc">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MaterialGunBadDesc">
+              <MappingFragment StoreEntitySet="ES_MaterialGunBadDesc">
+                <ScalarProperty Name="CreateUserId" ColumnName="CreateUserId" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="BadDescription" ColumnName="BadDescription" />
+                <ScalarProperty Name="KeyWorld" ColumnName="KeyWorld" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MaterialGunRepairClass">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MaterialGunRepairClass">
+              <MappingFragment StoreEntitySet="ES_MaterialGunRepairClass">
+                <ScalarProperty Name="CreateUserId" ColumnName="CreateUserId" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="Classification" ColumnName="Classification" />
+                <ScalarProperty Name="KeyWorld" ColumnName="KeyWorld" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MaterialGunInfo">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MaterialGunInfo">
+              <MappingFragment StoreEntitySet="ES_MaterialGunInfo">
+                <ScalarProperty Name="Mark" ColumnName="Mark" />
+                <ScalarProperty Name="DiscardCheck" ColumnName="DiscardCheck" />
+                <ScalarProperty Name="DiscardOPId" ColumnName="DiscardOPId" />
+                <ScalarProperty Name="DiscardDate" ColumnName="DiscardDate" />
+                <ScalarProperty Name="MaterialGunDiscard" ColumnName="MaterialGunDiscard" />
+                <ScalarProperty Name="DiscardDesc" ColumnName="DiscardDesc" />
+                <ScalarProperty Name="CreateUserId" ColumnName="CreateUserId" />
+                <ScalarProperty Name="CreateTime" ColumnName="CreateTime" />
+                <ScalarProperty Name="MaintainNexDate" ColumnName="MaintainNexDate" />
+                <ScalarProperty Name="MaintainCycle" ColumnName="MaintainCycle" />
+                <ScalarProperty Name="MaterialGun_Size" ColumnName="MaterialGun_Size" />
+                <ScalarProperty Name="MaterialGun_Trade" ColumnName="MaterialGun_Trade" />
+                <ScalarProperty Name="MaterialGun_Sno" ColumnName="MaterialGun_Sno" />
+                <ScalarProperty Name="MaterialGun_Eno" ColumnName="MaterialGun_Eno" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MaterialGunDiscardDesc">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MaterialGunDiscardDesc">
+              <MappingFragment StoreEntitySet="ES_MaterialGunDiscardDesc">
+                <ScalarProperty Name="CreateUserId" ColumnName="CreateUserId" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="DiscardDescription" ColumnName="DiscardDescription" />
+                <ScalarProperty Name="KeyWorld" ColumnName="KeyWorld" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MaintainWork">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MaintainWork">
+              <MappingFragment StoreEntitySet="ES_MaintainWork">
+                <ScalarProperty Name="MaintainNexDate" ColumnName="MaintainNexDate" />
+                <ScalarProperty Name="MUserNo" ColumnName="MUserNo" />
+                <ScalarProperty Name="MaintainTime" ColumnName="MaintainTime" />
+                <ScalarProperty Name="MaintainCycle" ColumnName="MaintainCycle" />
+                <ScalarProperty Name="MaterialGun_Eno" ColumnName="MaterialGun_Eno" />
+                <ScalarProperty Name="MaterialGun_Sno" ColumnName="MaterialGun_Sno" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_RoleClassification">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_RoleClassification">
+              <MappingFragment StoreEntitySet="ES_RoleClassification">
+                <ScalarProperty Name="ROLE_ID" ColumnName="ROLE_ID" />
+                <ScalarProperty Name="CREATE_USERID" ColumnName="CREATE_USERID" />
+                <ScalarProperty Name="ROLE_DESC" ColumnName="ROLE_DESC" />
+                <ScalarProperty Name="ROLE_NAME" ColumnName="ROLE_NAME" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_DeptInfo">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_DeptInfo">
+              <MappingFragment StoreEntitySet="ES_DeptInfo">
+                <ScalarProperty Name="CreateUser" ColumnName="CreateUser" />
+                <ScalarProperty Name="CreateDate" ColumnName="CreateDate" />
+                <ScalarProperty Name="Dept_No" ColumnName="Dept_No" />
+                <ScalarProperty Name="Dept_Name" ColumnName="Dept_Name" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MemberLayout">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MemberLayout">
+              <MappingFragment StoreEntitySet="ES_MemberLayout">
+                <ScalarProperty Name="LayoutIndex" ColumnName="LayoutIndex" />
+                <ScalarProperty Name="LayoutViewText" ColumnName="LayoutViewText" />
+                <ScalarProperty Name="CreateDate" ColumnName="CreateDate" />
+                <ScalarProperty Name="LayoutViewName" ColumnName="LayoutViewName" />
+                <ScalarProperty Name="Dept_No" ColumnName="Dept_No" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_QuoteForIE">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_QuoteForIE">
+              <MappingFragment StoreEntitySet="ES_QuoteForIE">
+                <ScalarProperty Name="IEStatus" ColumnName="IEStatus" />
+                <ScalarProperty Name="IEMark" ColumnName="IEMark" />
+                <ScalarProperty Name="OperatorDate" ColumnName="OperatorDate" />
+                <ScalarProperty Name="IEQuoteTDate" ColumnName="IEQuoteTDate" />
+                <ScalarProperty Name="IEQuoteDate" ColumnName="IEQuoteDate" />
+                <ScalarProperty Name="IEonwer" ColumnName="IEonwer" />
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MaterialGunRepair">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MaterialGunRepair">
+              <MappingFragment StoreEntitySet="ES_MaterialGunRepair">
+                <ScalarProperty Name="Chk" ColumnName="Chk" />
+                <ScalarProperty Name="Mark" ColumnName="Mark" />
+                <ScalarProperty Name="ChangeItemNo" ColumnName="ChangeItemNo" />
+                <ScalarProperty Name="ChangeItemName" ColumnName="ChangeItemName" />
+                <ScalarProperty Name="Other" ColumnName="Other" />
+                <ScalarProperty Name="Classification" ColumnName="Classification" />
+                <ScalarProperty Name="MaintenanceResult" ColumnName="MaintenanceResult" />
+                <ScalarProperty Name="MaintenanceUserId" ColumnName="MaintenanceUserId" />
+                <ScalarProperty Name="MaintenanceTime" ColumnName="MaintenanceTime" />
+                <ScalarProperty Name="BadDescription" ColumnName="BadDescription" />
+                <ScalarProperty Name="RepairUserId" ColumnName="RepairUserId" />
+                <ScalarProperty Name="RepairDate" ColumnName="RepairDate" />
+                <ScalarProperty Name="MaterialGun_Sno" ColumnName="MaterialGun_Sno" />
+                <ScalarProperty Name="MaterialGun_Eno" ColumnName="MaterialGun_Eno" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MaterialCorrection">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MaterialCorrection">
+              <MappingFragment StoreEntitySet="ES_MaterialCorrection">
+                <ScalarProperty Name="memo" ColumnName="memo" />
+                <ScalarProperty Name="operators" ColumnName="operators" />
+                <ScalarProperty Name="FileName" ColumnName="FileName" />
+                <ScalarProperty Name="CorrectionDate" ColumnName="CorrectionDate" />
+                <ScalarProperty Name="TestResult" ColumnName="TestResult" />
+                <ScalarProperty Name="MaterialGun_Size" ColumnName="MaterialGun_Size" />
+                <ScalarProperty Name="MaterialGun_Eno" ColumnName="MaterialGun_Eno" />
+                <ScalarProperty Name="MaterialGun_Sno" ColumnName="MaterialGun_Sno" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MaterialGunSize">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MaterialGunSize">
+              <MappingFragment StoreEntitySet="ES_MaterialGunSize">
+                <ScalarProperty Name="CreateUserId" ColumnName="CreateUserId" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="MaintenanceSize" ColumnName="MaintenanceSize" />
+                <ScalarProperty Name="KeyWorld" ColumnName="KeyWorld" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_QuoteWoNoAttri">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_QuoteWoNoAttri">
+              <MappingFragment StoreEntitySet="ES_QuoteWoNoAttri">
+                <ScalarProperty Name="CreateUserId" ColumnName="CreateUserId" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="WoNoAttri" ColumnName="WoNoAttri" />
+                <ScalarProperty Name="KeyWorld" ColumnName="KeyWorld" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_QuoteCust">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_QuoteCust">
+              <MappingFragment StoreEntitySet="ES_QuoteCust">
+                <ScalarProperty Name="CreateUserId" ColumnName="CreateUserId" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="Customer" ColumnName="Customer" />
+                <ScalarProperty Name="KeyWorld" ColumnName="KeyWorld" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_QuoteForSales">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_QuoteForSales">
+              <MappingFragment StoreEntitySet="ES_QuoteForSales">
+                <ScalarProperty Name="CancelChk" ColumnName="CancelChk" />
+                <ScalarProperty Name="OtherName" ColumnName="OtherName" />
+                <ScalarProperty Name="Chk" ColumnName="Chk" />
+                <ScalarProperty Name="CreateDate" ColumnName="CreateDate" />
+                <ScalarProperty Name="SalesId" ColumnName="SalesId" />
+                <ScalarProperty Name="Mark" ColumnName="Mark" />
+                <ScalarProperty Name="RequDate" ColumnName="RequDate" />
+                <ScalarProperty Name="WoNoAttri" ColumnName="WoNoAttri" />
+                <ScalarProperty Name="CustMaterial" ColumnName="CustMaterial" />
+                <ScalarProperty Name="EngSr" ColumnName="EngSr" />
+                <ScalarProperty Name="SalesNo" ColumnName="SalesNo" />
+                <ScalarProperty Name="CustNo" ColumnName="CustNo" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_QuoteUploadRecords">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_QuoteUploadRecords">
+              <MappingFragment StoreEntitySet="ES_QuoteUploadRecords">
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Q_sno" ColumnName="Q_sno" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_QuoteUploadFiles">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_QuoteUploadFiles">
+              <MappingFragment StoreEntitySet="ES_QuoteUploadFiles">
+                <ScalarProperty Name="DeptNo" ColumnName="DeptNo" />
+                <ScalarProperty Name="FileName" ColumnName="FileName" />
+                <ScalarProperty Name="UploadTime" ColumnName="UploadTime" />
+                <ScalarProperty Name="FilePath" ColumnName="FilePath" />
+                <ScalarProperty Name="RecordId" ColumnName="RecordId" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_FunctionItem">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_FunctionItem">
+              <MappingFragment StoreEntitySet="ES_FunctionItem">
+                <ScalarProperty Name="ActionName" ColumnName="ActionName" />
+                <ScalarProperty Name="FunctionName" ColumnName="FunctionName" />
+                <ScalarProperty Name="FunctionNo" ColumnName="FunctionNo" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MemberFunction">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MemberFunction">
+              <MappingFragment StoreEntitySet="ES_MemberFunction">
+                <ScalarProperty Name="FunctionNo" ColumnName="FunctionNo" />
+                <ScalarProperty Name="UserNo_sno" ColumnName="UserNo_sno" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_MaterialGunMResult">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_MaterialGunMResult">
+              <MappingFragment StoreEntitySet="ES_MaterialGunMResult">
+                <ScalarProperty Name="CreateUserId" ColumnName="CreateUserId" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="MaintenanceResult" ColumnName="MaintenanceResult" />
+                <ScalarProperty Name="KeyWorld" ColumnName="KeyWorld" />
+                <ScalarProperty Name="sno" ColumnName="sno" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="EmployeeAssignments_Log">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.EmployeeAssignments_Log">
+              <MappingFragment StoreEntitySet="EmployeeAssignments_Log">
+                <ScalarProperty Name="Old_Remarks" ColumnName="Old_Remarks" />
+                <ScalarProperty Name="Old_EmployeeName" ColumnName="Old_EmployeeName" />
+                <ScalarProperty Name="Old_EmployeeId" ColumnName="Old_EmployeeId" />
+                <ScalarProperty Name="Old_AttendanceType" ColumnName="Old_AttendanceType" />
+                <ScalarProperty Name="Old_Shift" ColumnName="Old_Shift" />
+                <ScalarProperty Name="Old_ProductionUnit" ColumnName="Old_ProductionUnit" />
+                <ScalarProperty Name="Old_ReportingUnit" ColumnName="Old_ReportingUnit" />
+                <ScalarProperty Name="PerformedBy" ColumnName="PerformedBy" />
+                <ScalarProperty Name="ActionTimestamp" ColumnName="ActionTimestamp" />
+                <ScalarProperty Name="ActionType" ColumnName="ActionType" />
+                <ScalarProperty Name="AssignmentId" ColumnName="AssignmentId" />
+                <ScalarProperty Name="LogId" ColumnName="LogId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="人力配置授權表">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.人力配置授權表">
+              <MappingFragment StoreEntitySet="人力配置授權表">
+                <ScalarProperty Name="班別" ColumnName="班別" />
+                <ScalarProperty Name="生產單位" ColumnName="生產單位" />
+                <ScalarProperty Name="報工生產單位GUID" ColumnName="報工生產單位GUID" />
+                <ScalarProperty Name="修改時間" ColumnName="修改時間" />
+                <ScalarProperty Name="修改者" ColumnName="修改者" />
+                <ScalarProperty Name="建立時間" ColumnName="建立時間" />
+                <ScalarProperty Name="建立者" ColumnName="建立者" />
+                <ScalarProperty Name="狀態" ColumnName="狀態" />
+                <ScalarProperty Name="授權者工號" ColumnName="授權者工號" />
+                <ScalarProperty Name="報工生產單位名稱" ColumnName="報工生產單位名稱" />
+                <ScalarProperty Name="授權ID" ColumnName="授權ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="HResources_人員">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.HResources_人員">
+              <MappingFragment StoreEntitySet="HResources_人員">
+                <ScalarProperty Name="UpdatedAt" ColumnName="UpdatedAt" />
+                <ScalarProperty Name="UpdatedBy" ColumnName="UpdatedBy" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
+                <ScalarProperty Name="employee_name" ColumnName="employee_name" />
+                <ScalarProperty Name="employee_id" ColumnName="employee_id" />
+                <ScalarProperty Name="GUID" ColumnName="GUID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="HResources_出勤類型">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.HResources_出勤類型">
+              <MappingFragment StoreEntitySet="HResources_出勤類型">
+                <ScalarProperty Name="UpdatedAt" ColumnName="UpdatedAt" />
+                <ScalarProperty Name="UpdatedBy" ColumnName="UpdatedBy" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
+                <ScalarProperty Name="是否啟用" ColumnName="是否啟用" />
+                <ScalarProperty Name="出勤名稱" ColumnName="出勤名稱" />
+                <ScalarProperty Name="出勤ID" ColumnName="出勤ID" />
+                <ScalarProperty Name="GUID" ColumnName="GUID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="HResources_生產單位名稱">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.HResources_生產單位名稱">
+              <MappingFragment StoreEntitySet="HResources_生產單位名稱">
+                <ScalarProperty Name="UpdatedAt" ColumnName="UpdatedAt" />
+                <ScalarProperty Name="UpdatedBy" ColumnName="UpdatedBy" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
+                <ScalarProperty Name="是否啟用" ColumnName="是否啟用" />
+                <ScalarProperty Name="生產單位名稱" ColumnName="生產單位名稱" />
+                <ScalarProperty Name="生產單位ID" ColumnName="生產單位ID" />
+                <ScalarProperty Name="GUID" ColumnName="GUID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="HResources_班別">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.HResources_班別">
+              <MappingFragment StoreEntitySet="HResources_班別">
+                <ScalarProperty Name="生產單位班別" ColumnName="生產單位班別" />
+                <ScalarProperty Name="UpdatedAt" ColumnName="UpdatedAt" />
+                <ScalarProperty Name="UpdatedBy" ColumnName="UpdatedBy" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
+                <ScalarProperty Name="是否啟用" ColumnName="是否啟用" />
+                <ScalarProperty Name="班別名稱" ColumnName="班別名稱" />
+                <ScalarProperty Name="shift_ID" ColumnName="shift_ID" />
+                <ScalarProperty Name="GUID" ColumnName="GUID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="HResources_報工生產單位">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.HResources_報工生產單位">
+              <MappingFragment StoreEntitySet="HResources_報工生產單位">
+                <ScalarProperty Name="UpdatedAt" ColumnName="UpdatedAt" />
+                <ScalarProperty Name="UpdatedBy" ColumnName="UpdatedBy" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
+                <ScalarProperty Name="是否啟用" ColumnName="是否啟用" />
+                <ScalarProperty Name="reporting_unit_ID" ColumnName="reporting_unit_ID" />
+                <ScalarProperty Name="報工生產單位名稱" ColumnName="報工生產單位名稱" />
+                <ScalarProperty Name="GUID" ColumnName="GUID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="EmployeeAssignments">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.EmployeeAssignments">
+              <MappingFragment StoreEntitySet="EmployeeAssignments">
+                <ScalarProperty Name="edit_lock_time" ColumnName="edit_lock_time" />
+                <ScalarProperty Name="current_editor" ColumnName="current_editor" />
+                <ScalarProperty Name="updated_by" ColumnName="updated_by" />
+                <ScalarProperty Name="updated_at" ColumnName="updated_at" />
+                <ScalarProperty Name="created_by" ColumnName="created_by" />
+                <ScalarProperty Name="created_at" ColumnName="created_at" />
+                <ScalarProperty Name="remarks" ColumnName="remarks" />
+                <ScalarProperty Name="employee_id" ColumnName="employee_id" />
+                <ScalarProperty Name="出勤類型GUID" ColumnName="出勤類型GUID" />
+                <ScalarProperty Name="班別GUID" ColumnName="班別GUID" />
+                <ScalarProperty Name="生產單位名稱GUID" ColumnName="生產單位名稱GUID" />
+                <ScalarProperty Name="報工生產單位GUID" ColumnName="報工生產單位GUID" />
+                <ScalarProperty Name="reporting_unit_ID" ColumnName="reporting_unit_ID" />
+                <ScalarProperty Name="assignment_id" ColumnName="assignment_id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_ReportingUnit">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_ReportingUnit">
+              <MappingFragment StoreEntitySet="ES_ReportingUnit">
+                <ScalarProperty Name="UpdatedAt" ColumnName="UpdatedAt" />
+                <ScalarProperty Name="UpdatedBy" ColumnName="UpdatedBy" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="ReportingUnitName" ColumnName="ReportingUnitName" />
+                <ScalarProperty Name="ReportingUnitID" ColumnName="ReportingUnitID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ES_ProductionUnit">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.ES_ProductionUnit">
+              <MappingFragment StoreEntitySet="ES_ProductionUnit">
+                <ScalarProperty Name="UpdatedAt" ColumnName="UpdatedAt" />
+                <ScalarProperty Name="UpdatedBy" ColumnName="UpdatedBy" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="ProductionUnitName" ColumnName="ProductionUnitName" />
+                <ScalarProperty Name="ProductionUnitID" ColumnName="ProductionUnitID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="AppMultiLanguageResources">
+            <EntityTypeMapping TypeName="ESIntegrateSysModel.AppMultiLanguageResources">
+              <MappingFragment StoreEntitySet="AppMultiLanguageResources">
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="ResourceValue" ColumnName="ResourceValue" />
+                <ScalarProperty Name="CultureCode" ColumnName="CultureCode" />
+                <ScalarProperty Name="ResourceId" ColumnName="ResourceId" />
+                <ScalarProperty Name="ResourceType" ColumnName="ResourceType" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="false" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="true" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="無" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>
