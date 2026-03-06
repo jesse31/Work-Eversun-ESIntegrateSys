@@ -1,0 +1,343 @@
+@{
+    ViewBag.Title = "權限設定";
+    Layout = "~/Views/Shared/_ManpowerAllocationLayout.cshtml";
+}
+
+<link rel="stylesheet" href="~/Content/font-awesome/all.css">
+<script src="~/Scripts/jquery-3.7.1.min.js"></script>
+<script src="~/Scripts/sweetalert2.all.min.js"></script>
+<link href="~/Content/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+<style>
+    .drawer-toggle {
+        cursor: pointer;
+        font-size: 18px;
+        background-color: #337ab7;
+        color: white;
+        padding: 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 2000; /* 增加 z-index 確保按鈕始終在選單上方 */
+    }
+
+    /* 側邊滑出式選單樣式 */
+    .drawer-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 250px;
+        background-color: white;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        z-index: 1500;
+        padding: 10px 0;
+        border-radius: 0 0 4px 4px;
+        max-height: 80vh;
+        overflow-y: auto;
+        transform: translateY(-20px);
+        opacity: 0;
+        visibility: hidden;
+        transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+    }
+
+        .drawer-menu.open {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+    .drawer-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1400; /* 降低 z-index 值，確保不會阻擋表格內容 */
+        display: none;
+    }
+
+        .drawer-backdrop.open {
+            display: block;
+        }
+
+
+    .drawer-toggle i {
+        margin: 0;
+    }
+
+    .drawer-menu-item {
+        display: block;
+        padding: 12px 20px;
+        color: #333;
+        text-decoration: none;
+        border-bottom: 1px solid #ddd;
+        transition: background-color 0.2s;
+        cursor: pointer;
+    }
+
+        .drawer-menu-item:hover {
+            background-color: #e9ecef;
+            text-decoration: none;
+        }
+
+        .drawer-menu-item.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+    .panel-blue {
+        border-color: #337ab7;
+        position: relative;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 1px 1px rgba(0,0,0,.05);
+        margin-bottom: 20px;
+    }
+
+        .panel-blue > .panel-heading {
+            background-color: #337ab7;
+            color: white;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-bottom: 1px solid transparent;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+        }
+
+        .panel-blue > .panel-body {
+            padding: 15px;
+            background-color: #fff;
+            position: relative;
+            min-height: 300px;
+        }
+
+    /* 按鈕基礎樣式 */
+    .btn-search, .btn-add {
+        min-width: 100px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 5px;
+        white-space: nowrap;
+        height: 34px;
+        padding: 6px 12px;
+    }
+
+    .btn-search {
+        background-color: #337ab7;
+        color: white;
+        border: 1px solid #2e6da4;
+    }
+
+    .btn-add {
+        background-color: #5cb85c;
+        color: white;
+        border: 1px solid #4cae4c;
+    }
+
+    .btn i {
+        margin-right: 5px;
+    }
+
+    .search-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        gap: 10px;
+    }
+
+        .search-row label {
+            margin-right: 5px;
+            white-space: nowrap;
+        }
+
+        .search-row input {
+            height: 34px;
+            padding: 6px 12px;
+            width: 200px;
+        }
+</style>
+
+<!-- 側邊欄遮罩 -->
+<div class="drawer-backdrop"></div>
+
+<div class="container-fluid">
+    <div class="page-header">
+        <h2>人力配置管理系統</h2>
+        <ol class="breadcrumb">
+            <li>
+                <a href="@Url.Action("Index", "ManpowerAllocation")" class="btn btn-success">
+                    <i class="bi bi-arrow-return-left"></i> 人力配置
+                </a>
+            </li>
+        </ol>
+    </div>
+
+    <!-- 引用共用功能選單 -->
+    @Html.Partial("~/Views/Shared/_FunctionMenuPartial.cshtml")
+
+    <div class="panel panel-blue">
+        <div class="panel-heading">
+            <h3 class="panel-title">權限設定</h3>
+        </div>
+        <div class="panel-body">
+            <div class="permission-query-section">
+                <div class="search-row">
+                    <label for="searchPermission">工號</label>
+                    <input type="text" class="form-control" id="searchPermission" placeholder="搜尋使用者工號">
+                    <button class="btn-search" id="btnSearchPermission">
+                        <i class="bi bi-search"></i> 查詢
+                    </button>
+                    <button class="btn-add" id="addPermissionBtn">
+                        <i class="bi bi-plus-circle"></i> 新增權限
+                    </button>
+                </div>
+
+                <div class="search-results" id="permissionSearchResults">
+                    <p>請輸入工號進行查詢。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    if (typeof jQuery !== 'undefined') {
+        $(document).ready(function () {
+            // 功能選單已在共用組件中處理，此處不需要重複代碼
+            $('#btnSearchPermission').off('click').on('click', function () {
+                var userEmpId = $('#searchPermission').val();
+
+                if (!userEmpId) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '請注意',
+                        text: '請輸入工號進行查詢'
+                    });
+                    return;
+                }
+
+                console.log("正在查詢權限工號:", userEmpId);
+
+                // 顯示載入中狀態
+                $('#permissionSearchResults').html('<div class="text-center"><i class="bi bi-hourglass-split fa-spin"></i> 載入中...</div>');
+
+                $.ajax({
+                    url: '@Url.Action("GetAllPermissions", "ManpowerAuthorization")',
+                    type: 'GET',
+                    data: { empId: userEmpId },
+                    success: function (response) {
+                        if (!response || !response.success) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '查詢失敗',
+                                text: response ? response.message : '未知錯誤'
+                            });
+                            return;
+                        }
+
+                        var data = response.data;
+                        var html = '<table class="table table-striped table-bordered"><thead><tr><th>工號</th><th>姓名</th><th>權限名稱</th><th>權限等級</th><th>操作</th></tr></thead><tbody>';
+                        if (data && data.length > 0) {
+                            $.each(data, function (index, item) {
+                                html += '<tr>' +
+                                    '<td>' + (item.EmpId || '') + '</td>' +
+                                    '<td>' + (item.UserName || '') + '</td>' +
+                                    '<td>' + (item.PermissionName || '') + '</td>' +
+                                    '<td>' + (item.Level || '') + '</td>' +
+                                    '<td>' +
+                                    '<button class="btn btn-sm btn-primary" onclick="editPermission(\'' + item.EmpId + '\')"><i class="bi bi-pencil"></i> 編輯</button> ' +
+                                    '<button class="btn btn-sm btn-danger" onclick="deletePermission(\'' + item.EmpId + '\')"><i class="bi bi-trash"></i> 刪除</button> ' +
+                                    '</td></tr>';
+                            });
+                        } else {
+                            html += '<tr><td colspan="5">沒有找到符合條件的權限。</td></tr>';
+                        }
+                        html += '</tbody></table>';
+                        $('#permissionSearchResults').html(html);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("權限查詢失敗:", status, error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: '查詢失敗',
+                            text: '請稍後再試'
+                        });
+                    }
+                });
+            });
+
+            $('#addPermissionBtn').off('click').on('click', function () {
+                console.log("點擊新增權限");
+                Swal.fire({
+                    title: '新增權限',
+                    text: '確定要新增權限嗎？',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: '確定',
+                    cancelButtonText: '取消'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '@Url.Action("CreatePermission", "ManpowerAuthorization")';
+                    }
+                });
+            });
+        });
+    }
+
+    function editPermission(empId) {
+        Swal.fire({
+            title: '編輯權限',
+            text: '確定要編輯此權限嗎？',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '確定',
+            cancelButtonText: '取消'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '@Url.Action("EditPermission", "ManpowerAuthorization")?empId=' + empId;
+            }
+        });
+    }
+
+    function deletePermission(empId) {
+        Swal.fire({
+            title: '刪除權限',
+            text: '確定要刪除此權限嗎？此操作無法復原',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '確定刪除',
+            cancelButtonText: '取消',
+            confirmButtonColor: '#d33'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '@Url.Action("DeletePermission", "ManpowerAuthorization")',
+                    type: 'POST',
+                    data: { empId: empId },
+                    success: function (response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '刪除成功',
+                            text: '權限已成功刪除'
+                        }).then(() => {
+                            // 重新載入權限列表
+                            $('#btnSearchPermission').click();
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '刪除失敗',
+                            text: '請稍後再試'
+                        });
+                    }
+                });
+            }
+        });
+    }
+</script>

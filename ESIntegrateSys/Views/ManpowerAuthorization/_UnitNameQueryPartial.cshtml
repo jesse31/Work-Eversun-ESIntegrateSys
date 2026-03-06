@@ -1,0 +1,720 @@
+﻿@{ ViewBag.Title = "報工生產單位";
+    Layout = "~/Views/Shared/_ManpowerAllocationLayout.cshtml";
+}
+
+<!-- 引入必要的CSS和JavaScript資源 -->
+<link href="~/Content/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+<script src="~/Scripts/sweetalert2.all.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+
+<style>
+    .drawer-toggle {
+        cursor: pointer;
+        font-size: 18px;
+        background-color: #337ab7;
+        color: white;
+        padding: 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 2000; /* 增加 z-index 確保按鈕始終在選單上方 */
+    }
+
+    /* 側邊滑出式選單樣式 */
+    .drawer-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 250px;
+        background-color: white;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        z-index: 1500;
+        padding: 10px 0;
+        border-radius: 0 0 4px 4px;
+        max-height: 80vh;
+        overflow-y: auto;
+        transform: translateY(-20px);
+        opacity: 0;
+        visibility: hidden;
+        transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+    }
+
+        .drawer-menu.open {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+    .drawer-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1400; /* 降低 z-index 值，確保不會阻擋表格內容 */
+        display: none;
+    }
+
+        .drawer-backdrop.open {
+            display: block;
+        }
+
+
+    .drawer-toggle i {
+        margin: 0;
+    }
+
+    .drawer-menu-item {
+        display: block;
+        padding: 12px 20px;
+        color: #333;
+        text-decoration: none;
+        border-bottom: 1px solid #ddd;
+        transition: background-color 0.2s;
+        cursor: pointer;
+    }
+
+        .drawer-menu-item:hover {
+            background-color: #e9ecef;
+            text-decoration: none;
+        }
+
+        .drawer-menu-item.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+    .panel-blue {
+        border-color: #337ab7;
+        position: relative;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 1px 1px rgba(0,0,0,.05);
+        margin-bottom: 20px;
+    }
+
+        .panel-blue > .panel-heading {
+            background-color: #337ab7;
+            color: white;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-bottom: 1px solid transparent;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+        }
+
+        .panel-blue > .panel-body {
+            padding: 15px;
+            background-color: #fff;
+            position: relative;
+            min-height: 300px;
+        }
+
+    /* 按鈕基礎樣式 */
+    .btn-search, .btn-add {
+        min-width: 100px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 5px;
+        white-space: nowrap;
+        height: 34px;
+        padding: 6px 12px;
+    }
+
+    .btn-search {
+        background-color: #337ab7;
+        color: white;
+        border: 1px solid #2e6da4;
+    }
+
+    .btn-add {
+        background-color: #5cb85c;
+        color: white;
+        border: 1px solid #4cae4c;
+    }
+
+    .btn i {
+        margin-right: 5px;
+    }
+
+    .search-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        gap: 10px;
+    }
+
+        .search-row label {
+            margin-right: 5px;
+            white-space: nowrap;
+        }
+
+        .search-row input {
+            height: 34px;
+            padding: 6px 12px;
+            width: 200px;
+        }
+</style>
+
+<div class="container-fluid">
+    <div class="page-header">
+        <h2>人力配置管理系統</h2>
+        <ol class="breadcrumb">
+            <li>
+                <a href="@Url.Action("Index", "ManpowerAllocation")" class="btn btn-success">
+                    <i class="bi bi-arrow-return-left"></i> 人力配置
+                </a>
+            </li>
+        </ol>
+    </div>
+
+    <!-- 引用共用功能選單 -->
+    @Html.Partial("~/Views/Shared/_FunctionMenuPartial.cshtml")
+
+    <div class="panel panel-blue">
+        <div class="panel-heading">
+            <h3 class="panel-title">報工生產單位設定</h3>
+        </div>
+        <div class="panel-body">
+            <!-- 查詢條件區域 -->
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="panel panel-blue">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">查詢條件</h4>
+                        </div>
+                        <div class="panel-body" style="min-height: auto; padding: 15px;">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>單位名稱</label>
+                                        <input type="text" class="form-control" id="searchUnit" placeholder="搜尋單位名稱">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>狀態</label>
+                                        <select id="isActive" class="form-control select2">
+                                            <option value="">全部</option>
+                                            <option value="true">啟用</option>
+                                            <option value="false">停用</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group" style="margin-top: 25px;">
+                                        <button id="btnSearchUnit" class="btn btn-search">
+                                            <i class="bi bi-search"></i> 查詢
+                                        </button>
+                                        <button class="btn btn-success" id="addUnitBtn">
+                                            <i class="bi bi-plus-circle"></i> 新增
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 查詢結果區域 -->
+            <!-- 查詢結果表格 -->
+            <div class="panel panel-blue">
+                <div class="panel-heading">
+                    <h4 class="panel-title">報工生產單位查詢結果</h4>
+                </div>
+                <div class="panel-body" style="min-height: auto; padding: 15px;">
+                    <table id="unitResultTable" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>單位名稱</th>
+                                <th>狀態</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="3" class="text-center">請點擊查詢按鈕獲取資料</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- 分頁區域 -->
+                    <div id="unitPaginationArea" class="row" style="display:none;">
+                        <div class="col-md-6">
+                            <div class="pagination-info">
+                                顯示 <span id="unitStartRecord">0</span> 到 <span id="unitEndRecord">0</span> 筆，共 <span id="unitTotalRecords">0</span> 筆
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <nav aria-label="分頁導覽">
+                                <ul id="unitPagination" class="pagination pagination-sm justify-content-end"></ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新增/編輯報工生產單位對話框 -->
+<div class="modal fade" id="unitModal" tabindex="-1" role="dialog" aria-labelledby="unitModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="unitModalLabel">新增報工生產單位</h4>
+            </div>
+            <div class="modal-body">
+                <form id="unitForm">
+                    <input type="hidden" id="unitId" name="unitId" />
+                    <div class="form-group">
+                        <label for="unitName">單位名稱</label>
+                        <input type="text" class="form-control" id="unitName" name="unitName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="unitStatus">狀態</label>
+                        <select class="form-control" id="unitStatus" name="unitStatus" required>
+                            <option value="1">啟用</option>
+                            <option value="0">停用</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveUnitBtn">儲存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="unitContent" class="content-section" style="display: none;">
+</div>
+
+@section scripts {
+
+    <script>
+    // 全局 AJAX 設定，處理未授權請求
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                // 處理未授權狀態
+                Swal.fire({
+                    icon: 'warning',
+                    title: '登入過期',
+                    text: '您的登入狀態已過期，請重新登入。',
+                    confirmButtonText: '確定'
+                }).then(() => {
+                    window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                });
+            },
+            403: function() {
+                // 處理禁止訪問狀態
+                Swal.fire({
+                    icon: 'error',
+                    title: '拒絕存取',
+                    text: '您沒有權限執行此操作。',
+                    confirmButtonText: '確定'
+                });
+            }
+        }
+    });
+
+    $(document).ready(function () {
+
+    // 全局變數
+    var reportingUnitCurrentPage = 1;
+    var reportingUnitPageSize = 10;
+    var reportingUnitTotalPages = 0;
+    var reportingUnitTotalCount = 0;
+
+        // 初始化 Select2
+        initializeSelect2();
+
+        // 初始化頁面載入
+        loadReportingUnitsWithPaging();
+
+        // 綁定搜尋按鈕事件
+        $('#btnSearchUnit').off('click').on('click', function () {
+            reportingUnitCurrentPage = 1;
+            loadReportingUnitsWithPaging();
+        });
+
+        // 綁定新增按鈕事件
+        $('#addUnitBtn').off('click').on('click', function () {
+            showReportingUnitModal(null);
+        });
+
+        // 綁定儲存按鈕事件
+        $('#saveUnitBtn').off('click').on('click', function () {
+            saveReportingUnit();
+        });
+
+        // 綁定分頁事件
+        $('#unitPagination').on('click', '.page-link', function (e) {
+            e.preventDefault();
+            var page = $(this).data('page');
+            if (page) {
+                reportingUnitCurrentPage = page;
+                loadReportingUnitsWithPaging();
+            }
+        });
+
+        // 編輯按鈕點擊事件委派
+        $(document).on('click', '.edit-unit', function () {
+            const unitId = $(this).data('id');
+            getReportingUnitById(unitId);
+        });
+
+        // 刪除按鈕點擊事件委派
+        $(document).on('click', '.delete-unit', function () {
+            const unitId = $(this).data('id');
+            confirmDeleteReportingUnit(unitId);
+        });
+
+
+    // 初始化 Select2
+    function initializeSelect2() {
+        $('#isActive').select2({
+            placeholder: '請選擇狀態',
+            allowClear: true,
+            width: '100%'
+        });
+    }
+
+    // 載入報工生產單位資料（含分頁）
+    function loadReportingUnitsWithPaging() {
+        var searchParams = {
+            unitName: $('#searchUnit').val(),
+            isActive: $('#isActive').val() === 'true' ? true : $('#isActive').val() === 'false' ? false : null,
+            page: reportingUnitCurrentPage,
+            pageSize: reportingUnitPageSize
+        };
+
+        console.log('查詢參數:', searchParams);
+
+        // 顯示載入中
+        $('#unitResultTable tbody').html('<tr><td colspan="3" class="text-center"><i class="bi bi-hourglass-split fa-spin"></i> 載入中...</td></tr>');
+
+        $.ajax({
+            url: '@Url.Action("GetProductionUnitsWithPaging", "ManpowerAuthorization")',
+            type: 'GET',
+            data: searchParams,
+            dataType: 'json',
+            success: function (result) {
+                console.log('查詢結果:', result);
+                if (result.success) {
+                    updateReportingUnitTable(result.data);
+                    updateReportingUnitPagination(result.totalRecords, result.totalPages);
+                } else {
+                    Swal.fire({
+                        title: '錯誤',
+                        text: result.message || '載入報工生產單位資料失敗',
+                        icon: 'error'
+                    });
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 403) {
+                    Swal.fire({
+                        title: '權限不足',
+                        text: '您沒有權限執行此操作',
+                        icon: 'error'
+                    });
+                } else {
+                    Swal.fire({
+                        title: '錯誤',
+                        text: '載入報工生產單位資料失敗',
+                        icon: 'error'
+                    });
+                }
+            }
+        });
+    }
+
+    // 更新報工生產單位表格
+    function updateReportingUnitTable(items) {
+        var $tableBody = $('#unitResultTable tbody');
+        $tableBody.empty();
+
+        if (items && items.length > 0) {
+            $.each(items, function (index, item) {
+                var statusText = item.啟用 ? '<span class="badge bg-success text-white">啟用</span>' : '<span class="badge bg-danger text-white">停用</span>';
+                var row = '<tr data-id="' + item.單位ID + '">' +
+                    '<td>' + item.單位名稱 + '</td>' +
+                    '<td class="text-center">' + statusText + '</td>' +
+                    '<td class="text-center">' +
+                    '<button type="button" class="btn btn-sm btn-primary edit-unit" data-id="' + item.單位ID + '"><i class="bi bi-pencil"></i> 編輯</button> ' +
+                    '<button type="button" class="btn btn-sm btn-danger delete-unit" data-id="' + item.單位ID + '"><i class="bi bi-trash"></i> 刪除</button>' +
+                    '</td>' +
+                    '</tr>';
+                $tableBody.append(row);
+            });
+
+            // 顯示分頁區域
+            $('#unitPaginationArea').show();
+
+            // 更新記錄資訊
+            var startRecord = (reportingUnitCurrentPage - 1) * reportingUnitPageSize + 1;
+            var endRecord = Math.min(startRecord + items.length - 1, reportingUnitTotalCount);
+            $('#unitStartRecord').text(startRecord);
+            $('#unitEndRecord').text(endRecord);
+            $('#unitTotalRecords').text(reportingUnitTotalCount);
+        } else {
+            $tableBody.html('<tr><td colspan="3" class="text-center">無資料</td></tr>');
+            $('#unitPaginationArea').hide();
+        }
+    }
+
+    // 更新報工生產單位分頁
+    function updateReportingUnitPagination(totalCount, totalPages) {
+        reportingUnitTotalCount = totalCount;
+        reportingUnitTotalPages = totalPages;
+
+        var $pagination = $('#unitPagination');
+        $pagination.empty();
+
+        if (totalPages <= 1) {
+            return;
+        }
+
+        // 上一頁按鈕
+        var $prevLi = $('<li class="page-item' + (reportingUnitCurrentPage === 1 ? ' disabled' : '') + '"></li>');
+        var $prevLink = $('<a href="#" class="page-link" data-page="' + (reportingUnitCurrentPage - 1) + '">上一頁</a>');
+        if (reportingUnitCurrentPage === 1) {
+            $prevLink.removeAttr('data-page');
+        }
+        $prevLi.append($prevLink);
+        $pagination.append($prevLi);
+
+        // 頁碼按鈕
+        var startPage = Math.max(1, reportingUnitCurrentPage - 2);
+        var endPage = Math.min(totalPages, startPage + 4);
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+
+        for (var i = startPage; i <= endPage; i++) {
+            var $li = $('<li class="page-item' + (i === reportingUnitCurrentPage ? ' active' : '') + '"></li>');
+            var $link = $('<a href="#" class="page-link" data-page="' + i + '">' + i + '</a>');
+            if (i === reportingUnitCurrentPage) {
+                $link.removeAttr('data-page');
+            }
+            $li.append($link);
+            $pagination.append($li);
+        }
+
+        // 下一頁按鈕
+        var $nextLi = $('<li class="page-item' + (reportingUnitCurrentPage === totalPages ? ' disabled' : '') + '"></li>');
+        var $nextLink = $('<a href="#" class="page-link" data-page="' + (reportingUnitCurrentPage + 1) + '">下一頁</a>');
+        if (reportingUnitCurrentPage === totalPages) {
+            $nextLink.removeAttr('data-page');
+        }
+        $nextLi.append($nextLink);
+        $pagination.append($nextLi);
+    }
+
+    // 根據 ID 獲取報工生產單位資料
+    function getReportingUnitById(id) {
+        $.ajax({
+            url: '@Url.Action("GetProductionUnitById", "ManpowerAuthorization")',
+            type: 'GET',
+            data: { id: id },
+            dataType: 'json',
+            success: function (result) {
+                if (result.success) {
+                    showReportingUnitModal(result.data);
+                } else {
+                    Swal.fire({
+                        title: '錯誤',
+                        text: result.message || '無法取得報工生產單位資料',
+                        icon: 'error'
+                    });
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 403) {
+                    Swal.fire({
+                        title: '權限不足',
+                        text: '您沒有權限執行此操作',
+                        icon: 'error'
+                    });
+                } else {
+                    Swal.fire({
+                        title: '錯誤',
+                        text: '無法取得報工生產單位資料',
+                        icon: 'error'
+                    });
+                }
+            }
+        });
+    }
+
+    // 顯示報工生產單位 Modal
+    function showReportingUnitModal(data) {
+        // 重置表單
+        $('#unitForm')[0].reset();
+
+        if (data) {
+            // 編輯模式
+            $('#unitModalLabel').text('編輯報工生產單位');
+            $('#unitId').val(data.id);
+            $('#unitName').val(data.unitName);
+            $('#unitStatus').val(data.status);
+        } else {
+            // 新增模式
+            $('#unitModalLabel').text('新增報工生產單位');
+            $('#unitId').val('');
+            $('#unitStatus').val('1'); // 預設啟用
+        }
+
+        // 顯示 Modal
+        $('#unitModal').modal('show');
+    }
+
+    // 儲存報工生產單位
+    function saveReportingUnit() {
+        // 表單驗證
+        if (!$('#unitForm')[0].checkValidity()) {
+            $('#unitForm')[0].reportValidity();
+            return;
+        }
+
+        var isNew = !$('#unitId').val();
+        var url = isNew ?
+            '@Url.Action("CreateProductionUnit", "ManpowerAuthorization")' :
+            '@Url.Action("UpdateProductionUnit", "ManpowerAuthorization")';
+
+        var data = {
+            單位ID: $('#unitId').val() ? parseInt($('#unitId').val()) : 0,
+            單位名稱: $('#unitName').val(),
+            啟用: $('#unitStatus').val() === '1'
+        };
+
+        Swal.fire({
+            title: isNew ? '確認新增?' : '確認編輯?',
+            text: isNew ? "是否確定要新增此報工生產單位?" : "是否確定要編輯此報工生產單位?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '確定',
+            cancelButtonText: '取消'
+        }).then(function(result) {
+            if (result.value) {
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: data,
+                    dataType: 'json',
+                    success: function (result) {
+                        if (result.success) {
+                            $('#unitModal').modal('hide');
+                            Swal.fire({
+                                title: '成功',
+                                text: isNew ? '新增報工生產單位成功' : '更新報工生產單位成功',
+                                icon: 'success'
+                            }).then(function () {
+                                loadReportingUnitsWithPaging();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: '錯誤',
+                                text: result.message || (isNew ? '新增報工生產單位失敗' : '更新報工生產單位失敗'),
+                                icon: 'error'
+                            });
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 403) {
+                            Swal.fire({
+                                title: '權限不足',
+                                text: '您沒有權限執行此操作',
+                                icon: 'error'
+                            });
+                        } else {
+                            Swal.fire({
+                                title: '錯誤',
+                                text: isNew ? '新增報工生產單位失敗' : '更新報工生產單位失敗',
+                                icon: 'error'
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    // 確認刪除報工生產單位
+    function confirmDeleteReportingUnit(id) {
+        Swal.fire({
+            title: '確認刪除',
+            text: '您確定要刪除此報工生產單位嗎？',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '是，刪除',
+            cancelButtonText: '取消'
+        }).then(function (result) {
+            if (result.value) {
+                deleteReportingUnit(id);
+            }
+        });
+    }
+
+    // 刪除報工生產單位
+    function deleteReportingUnit(id) {
+        $.ajax({
+            url: '@Url.Action("DeleteProductionUnit", "ManpowerAuthorization")',
+            type: 'POST',
+            data: { 單位ID: id },
+            dataType: 'json',
+            success: function (result) {
+                if (result.success) {
+                    Swal.fire({
+                        title: '成功',
+                        text: '刪除報工生產單位成功',
+                        icon: 'success'
+                    }).then(function () {
+                        loadReportingUnitsWithPaging();
+                    });
+                } else {
+                    Swal.fire({
+                        title: '錯誤',
+                        text: result.message || '刪除報工生產單位失敗',
+                        icon: 'error'
+                    });
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 403) {
+                    Swal.fire({
+                        title: '權限不足',
+                        text: '您沒有權限執行此操作',
+                        icon: 'error'
+                    });
+                } else {
+                    Swal.fire({
+                        title: '錯誤',
+                        text: '刪除報工生產單位失敗',
+                        icon: 'error'
+                    });
+                }
+            }
+        });
+    }
+
+    });
+
+    </script>
+
+    <!-- 添加 Select2 和 SweetAlert2 資源 -->
+    <link href="~/Content/select2/select2.min.css" rel="stylesheet" />
+    <script src="~/Scripts/select2/select2.min.js"></script>
+    <script src="~/Scripts/sweetalert2.all.min.js"></script>
+
+}
