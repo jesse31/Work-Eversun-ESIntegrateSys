@@ -1,0 +1,28 @@
+﻿@model IEnumerable<ESIntegrateSys.Models.ES_QuoteUploadFiles>
+
+<p style="color:palevioletred">IE僅能看見IE上傳資料;業務可看全部資料!</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>文件名稱</th>
+            <th>上傳時間</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var file in Model)
+        {
+            <tr>
+                <td>@file.FileName</td>
+                <td>@file.UploadTime</td>
+                <td>
+                    <a href="@Url.Action("Download", "QuoteSchedule", new { sno = file.sno })" class="btn btn-primary">下載</a>
+                    @if (file.DeptNo == ViewBag.dept)
+                        {
+                            <a href="@Url.Action("DelDownload", "QuoteSchedule", new { sno = file.sno ,rcode=@ViewBag.no})" class="btn btn-warning">  刪除</a>
+                        }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
