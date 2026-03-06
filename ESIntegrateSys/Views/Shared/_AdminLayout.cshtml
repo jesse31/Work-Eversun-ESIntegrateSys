@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title  昶亨科技整合系統</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+</head>
+@{ // 取得 AppVersion 的設定值
+    string appVersion = System.Configuration.ConfigurationManager.AppSettings["ESIVersion"];}
+<body>
+    <div class="navbar navbar-default navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                @Html.ActionLink("昶亨整合式系統", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-left">
+                    @*<li>@Html.ActionLink("共同首頁", "Index", "Home")</li>*@
+                    <li>@Html.ActionLink("人力配置系統", "Index", "ManpowerAllocation")</li>
+                    <li>@Html.ActionLink("料槍管理", "MaterialGun", "MaterialGun")</li>
+                    <li>@Html.ActionLink("電子報價", "QuotesView", "QuoteSchedule")</li>
+                    <li>@Html.ActionLink("工時統計", "WoTS", "WoTimeSheet")</li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li>@Html.ActionLink("權限維護", "MemberMaintain", "Maintain")</li>
+                    <li>@Html.ActionLink("密碼變更", "Edit_Password", "Maintain")</li>
+                    <li>@Html.ActionLink("登出", "Logout", "Home")</li>
+                    <li><a href="#">@Session["WelCome"]</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="container body-content">
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.Now.Year - 昶亨科技整合系統 - @appVersion</p>
+        </footer>
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+</body>
+</html>

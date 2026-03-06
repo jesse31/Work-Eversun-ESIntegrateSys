@@ -1,0 +1,176 @@
+@* 人力配置授權功能選單 *@
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div style="position: relative;">
+            <div class="drawer-toggle mb-2">
+                <i class="bi bi-list"></i>
+            </div>
+            <div class="drawer-menu">
+                <a href="@Url.Action("生產單位", "ManpowerAuthorization")" class="drawer-menu-item">
+                    <i class="bi bi-building"></i> 生產單位設定
+                </a>
+                <a href="@Url.Action("報工生產單位", "ManpowerAuthorization")" class="drawer-menu-item">
+                    <i class="bi bi-building"></i> 報工生產單位設定
+                </a>
+                <a href="@Url.Action("權限設定", "ManpowerAuthorization")" class="drawer-menu-item">
+                    <i class="bi bi-shield-lock"></i> 報工生產單位權限設定
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 背景遮罩層 -->
+<div class="drawer-backdrop"></div>
+
+<!-- 功能選單的 CSS 樣式 -->
+<style>
+    .drawer-toggle {
+        cursor: pointer;
+        font-size: 18px;
+        background-color: #337ab7;
+        color: white;
+        padding: 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 2000; /* 增加 z-index 確保按鈕始終在選單上方 */
+    }
+
+    /* 側邊滑出式選單樣式 */
+    .drawer-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 250px;
+        background-color: white;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        z-index: 1500;
+        padding: 10px 0;
+        border-radius: 0 0 4px 4px;
+        max-height: 80vh;
+        overflow-y: auto;
+        transform: translateY(-20px);
+        opacity: 0;
+        visibility: hidden;
+        transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+    }
+
+    .drawer-menu.open {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .drawer-menu-item {
+        display: block;
+        padding: 10px 15px;
+        color: #333;
+        text-decoration: none;
+        transition: background-color 0.2s;
+    }
+
+    .drawer-menu-item:hover {
+        background-color: #f5f5f5;
+        text-decoration: none;
+    }
+
+    .drawer-menu-item.active {
+        background-color: #e9f2fa;
+        font-weight: bold;
+    }
+
+    .drawer-menu-item i {
+        margin-right: 10px;
+    }
+
+    .drawer-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1400; /* 降低 z-index 值，確保不會阻擋表格內容 */
+        display: none;
+    }
+
+    .drawer-backdrop.open {
+        display: block;
+    }
+</style>
+
+<!-- 功能選單的 JavaScript 代碼 -->
+<script>
+    $(document).ready(function() {
+        // 初始化功能選單
+        initDrawerMenu();
+        
+        // 設置當前頁面對應的選單項目為活躍狀態
+        setActiveMenuItem();
+    });
+    
+    // 初始化功能選單
+    function initDrawerMenu() {
+        // 綁定功能選單按鈕點擊事件
+        $('.drawer-toggle').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $('.drawer-menu').toggleClass('open');
+            $('.drawer-backdrop').toggleClass('open');
+            console.log('功能選單按鈕被點擊');
+        });
+
+        // 綁定背景遮罩點擊事件，點擊時關閉選單
+        $('.drawer-backdrop').off('click').on('click', function() {
+            $('.drawer-menu').removeClass('open');
+            $('.drawer-backdrop').removeClass('open');
+        });
+
+        // 綁定選單項目點擊事件
+        bindDrawerMenuItems();
+        
+        // 點擊頁面其他區域關閉選單
+        $(document).off('click.drawer').on('click.drawer', function(e) {
+            if (!$(e.target).closest('.drawer-menu, .drawer-toggle').length && $('.drawer-menu').hasClass('open')) {
+                $('.drawer-menu').removeClass('open');
+                $('.drawer-backdrop').removeClass('open');
+            }
+        });
+    }
+
+    // 綁定選單項目點擊事件
+    function bindDrawerMenuItems() {
+        $('.drawer-menu-item').off('click').on('click', function(e) {
+            // 直接跳轉到對應頁面
+            var url = $(this).attr('href');
+            var menuText = $(this).text().trim();
+            
+            console.log('選單項目被點擊:', menuText);
+            console.log('跳轉到頁面:', url);
+            
+            // 關閉抽屜式選單
+            $('.drawer-menu').removeClass('open');
+            $('.drawer-backdrop').removeClass('open');
+        });
+    }
+    
+    // 設置當前頁面對應的選單項目為活躍狀態
+    function setActiveMenuItem() {
+        var currentUrl = window.location.pathname;
+        
+        $('.drawer-menu-item').each(function() {
+            var menuUrl = $(this).attr('href');
+            if (menuUrl && currentUrl.indexOf(menuUrl) !== -1) {
+                $(this).addClass('active');
+            } else {
+                $(this).removeClass('active');
+            }
+        });
+    }
+</script>

@@ -1,0 +1,38 @@
+﻿@{
+    ViewBag.Title = "未授權存取";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // 檢查用戶是否已登入
+    var member = Session["Member"] as ESIntegrateSys.ViewModels.MemberViewModels;
+    if (member == null)
+    {
+        // 用戶未登入，重定向到登入頁面
+        string returnUrl = Request.RawUrl;
+        Response.Redirect(Url.Action("Login", "Home", new { ReturnUrl = returnUrl }));
+        return;
+    }
+}
+
+<div class="container" style="margin-top: 50px;">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h3 class="panel-title">未授權存取</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="text-center">
+                        <i class="fa fa-exclamation-triangle" style="font-size: 60px; color: #d9534f; margin-bottom: 20px;"></i>
+                        <h4>您沒有權限存取此頁面</h4>
+                        <p>您目前的帳號沒有權限執行此操作或存取此頁面。</p>
+                        <p>如果您認為這是錯誤，請聯絡系統管理員。</p>
+                        <hr />
+                        <a href="@Url.Action("Index", "Home")" class="btn btn-primary">
+                            <i class="fa fa-home"></i> 返回首頁
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
