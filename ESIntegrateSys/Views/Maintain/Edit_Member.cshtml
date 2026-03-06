@@ -1,0 +1,155 @@
+﻿@model List<ESIntegrateSys.ViewModels.MemberViewModels>
+@{ViewBag.Title = "";}
+@{ 
+    string fUserId = "", fName = "", ROLE_ID = "", ROLE_DESC = "";
+    foreach (var item in Model)
+    {
+        fUserId = item.fUserId;
+        fName = item.fName;
+        ROLE_ID = item.ROLE_ID;
+        ROLE_DESC = item.ROLE_DESC;
+    }
+
+    // 取得 `fItem` 的所有值並轉換為 JavaScript 陣列
+    var selectedItems = Model.Select(m => m.Func).ToArray();
+}
+<h2></h2>
+<script src="~/Scripts/jquery-3.4.1.min.js"></script>
+<link href="~/Content/bootstrap.css" rel="stylesheet" />
+<link href="~/Content/PagedList.css" rel="stylesheet" />
+<script>
+    $(document).ready(function () {
+        const selectedRoleId = "@ROLE_ID"; // 把 Razor 中的 ROLE_ID 值傳給 JavaScript
+        $.ajax({
+                url: '@Url.Action("MemberLeveldrop", "Maintain")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#ROLE_ID').empty();
+                    // 在選擇器中動態增加選項
+                    $.each(data, function (index, item) {
+                        $('#ROLE_ID').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                    // 設置之前選中的值（確保選項加載完成後再執行）
+                    if (selectedRoleId) {
+                        $('#ROLE_ID').val(selectedRoleId);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+
+        var selectedItems = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(selectedItems)); // 將 `fItem` 的值轉換為 JavaScript 陣列
+        $.ajax({
+            url: '@Url.Action("MemberFuncdrop", "Maintain")',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                // 清空原有的選項
+                $('#fItem').empty();
+
+                // 動態生成 checkbox 選項
+                $.each(data, function (index, item) {
+                    // 為每個選項創建一個 checkbox 和 label
+                    var checkbox = $('<input>', {
+                        type: 'checkbox',
+                        name: 'fItem',  // name 保持相同，便於提交為多選項
+                        value: item.Value,
+                        id: 'fItem_' + item.Value
+                    });
+
+                    var label = $('<label>', {
+                        for: 'fItem_' + item.Value,
+                        text: item.Text,
+                        style: 'margin-right: 10px;'  // 控制間距
+                    });
+                    // 檢查是否需要勾選
+                    if (selectedItems.includes(item.Value)) {
+                        checkbox.prop("checked", true); // 如果 `selectedItems` 包含此值，則勾選
+                    }
+                    // 添加 checkbox 和 label 到容器中
+                    $('#fItem').append(checkbox).append(label);
+                });
+
+            },
+            error: function (xhr, status, error) {
+                console.log('Ajax request failed. Status:', status);
+                console.log('Error:', error);
+                console.log('XHR object:', xhr);
+                alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+            }
+        });
+    });
+</script>
+<h2>人員編輯</h2>
+<p></p>
+@using (Html.BeginForm())
+    {
+        <div class="form-horizontal">
+
+            @*@Html.HiddenFor(model => model[0].fId)*@
+            <div class="form-group">
+                <label class="control-label col-md-2">員工編號</label>
+                <div class="col-md-10">
+                    <input class="form-control" value="@fUserId" name="fUserId" readonly="readonly" />                    
+                </div>
+            </div>
+
+
+            <div class="form-group">
+                <label class="control-label col-md-2">人員名稱</label>
+                <div class="col-md-10">
+                    <input class="form-control" value="@fName" name="fName"  autocomplete="off"/>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label col-md-2">系統選項</label>
+                <div class="col-md-10" id="fItem">
+                    <!-- 動態插入 checkbox 選項 -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label col-md-2">權限描述</label>
+                <div class="col-md-10">
+                    <span>@ROLE_DESC</span>
+                </div>
+            </div>
+
+            @*<div class="form-group">
+                <label class="control-label col-md-2">權限代號</label>
+                <div class="col-md-10">
+                    <select id="ROLE_ID" name="ROLE_ID" class="form-control">
+                        <option value="A">A | 管理者,不可刪除CT</option>
+                        <option value="E">E | 僅可編輯</option>
+                        <option value="V">V | 僅可查閱</option>
+                        <option value="D">D | 管理者,可刪除CT</option>
+                    </select>
+                </div>
+            </div>*@
+
+            <div class="form-group">
+                <label class="control-label col-md-2">權限設定</label>
+                <div class="col-md-10">
+                    <select id="ROLE_ID" name="ROLE_ID" class="form-control"></select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="submit" value="權限變更" class="btn btn-outline-primary" />
+                </div>
+            </div>
+        </div>
+    }
+<div>
+    <a href="javascript:history.go(-1);" class="btn btn-default">返回上一頁</a>
+</div>

@@ -1,0 +1,179 @@
+﻿<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <link href="~/Content/PagedList.css" rel="stylesheet" />
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid black;
+        }
+
+        th {
+            background-color: #ddd;
+        }
+
+        #fItem {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            #fItem label {
+                display: inline-block;
+                margin-right: 10px;
+            }
+
+
+        @@media print {
+            table, th, td {
+                border: 1px solid black;
+            }
+        }
+    </style>
+    <script>
+        function submitForm() {
+            var fUserIdField = document.getElementById('fUserId');
+            var fUserIdValue = fUserIdField.value;
+
+            if (fUserIdValue.length < 5) {
+                while (fUserIdValue.length < 5) {
+                    fUserIdValue = '0' + fUserIdValue;
+                }
+                fUserIdField.value = fUserIdValue;
+            }
+
+            // 提交表單
+            document.forms[0].submit();
+        }
+
+        var message = @Html.Raw(Json.Encode(TempData["ErrorMessage"]));
+        var selection = @Html.Raw(Json.Encode(TempData["ROLE_ID"]));
+        if (message != null) {
+            alert(message);
+            document.getElementById('ROLE_ID').value = selection;
+        }
+
+
+        $.ajax({
+                url: '@Url.Action("MemberLeveldrop", "Maintain")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#Level').empty();
+                    // 在選擇器中動態增加選項
+                    $.each(data, function (index, item) {
+                        $('#Level').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+
+        $.ajax({
+            url: '@Url.Action("MemberFuncdrop", "Maintain")',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                // 清空原有的選項
+                $('#fItem').empty();
+
+                // 動態生成 checkbox 選項
+                $.each(data, function (index, item) {
+                    // 為每個選項創建一個 checkbox 和 label
+                    var checkbox = $('<input>', {
+                        type: 'checkbox',
+                        name: 'fItem',  // name 保持相同，便於提交為多選項
+                        value: item.Value,
+                        id: 'fItem_' + item.Value
+                    });
+
+                    var label = $('<label>', {
+                        for: 'fItem_' + item.Value,
+                        text: item.Text,
+                        style: 'margin-right: 10px;'  // 控制間距
+                    });
+
+                    // 添加 checkbox 和 label 到容器中
+                    $('#fItem').append(checkbox).append(label);
+                });
+            },
+            error: function (xhr, status, error) {
+                console.log('Ajax request failed. Status:', status);
+                console.log('Error:', error);
+                console.log('XHR object:', xhr);
+                alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+            }
+        });
+
+    </script>
+</head>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+<div class="form-horizontal">
+    <hr />
+    <h4>新增人員名單</h4>
+    <hr />
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+    <div class="form-group">
+        <label class="control-label col-md-2">員工編號</label>
+        <div class="col-md-10">
+            <input class="form-control" id="fUserId" name="fUserId" autocomplete="off" maxlength="5" value="@TempData["fUserId"]" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-md-2">員工姓名</label>
+        <div class="col-md-10">
+            <input class="form-control" id="fName" name="fName" autocomplete="off" value="@TempData["fName"]" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-md-2">E-Mail</label>
+        <div class="col-md-10">
+            <input class="form-control" id="email" name="email" autocomplete="off" value="@TempData["fName"]" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-md-2">系統選項</label>
+        <div class="col-md-10" id="fItem">
+            <!-- 動態插入 checkbox 選項 -->
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-md-2">權限設定</label>
+        <div class="col-md-10">
+            <select id="Level" name="Level" class="form-control"></select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">
+            <button type="button" onclick="submitForm()" class="btn btn-default">新增送出</button>
+            <label class="text-danger">@ViewBag.msg</label>
+        </div>
+    </div>
+
+</div>
+}
+
