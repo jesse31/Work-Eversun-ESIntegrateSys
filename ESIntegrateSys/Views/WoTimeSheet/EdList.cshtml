@@ -1,0 +1,67 @@
+﻿@using PagedList
+@using PagedList.Mvc
+@model System.Data.DataTable
+
+@{
+    ViewBag.Title = "WoTimeSheet";
+}
+
+<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#exportB').click(function (event) {
+
+                var wono = $("input[name='wono']").val();
+                var indate = $("input[name='indate']").val();
+                var indate2 = $("input[name='indate2']").val();
+
+                if (wono == "" && indate == "" && indate2 == "") {
+                    alert("請先查詢再匯出資料!");
+                    event.preventDefault();
+                    return;
+                }
+            });
+        });
+    </script>
+</head>
+<h2>開工資料異動</h2>
+@using (Html.BeginForm())
+{
+    <div class="form-inline">
+        <label>工單號碼:</label>
+        @Html.TextBox("wono", null, new { @class = "form-control mr-2", @id = "wono", @name = "wono", style = "display:inline-block; width: 120px;" })
+        <label>日期:</label>
+        @Html.TextBox("indate", null, new { @type = "date", @class = "form-control mr-2", @id = "indate", @name = "indate", @placeholder = "YYYY-MM-DD", style = "display:inline-block; width: 150px;" })
+        <label>～</label>
+        @Html.TextBox("indate2", null, new { @type = "date", @class = "form-control mr-2", @id = "indate2", @name = "indate2", @placeholder = "YYYY-MM-DD", style = "display:inline-block; width: 150px;" })
+        <button type="submit" class="btn btn-default" id="btnSearch" name="btnSearch">查詢</button>
+    </div>
+}
+
+<h1>@Html.ActionLink("Excel", "ExportEditExcel", new { WoNo = Request["wono"], Indate = Request["indate"], Indate2 = Request["indate2"] }, new { id = "exportB" })</h1>
+<p></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>工單</th>
+            <th>開工日</th>
+            <th>修改日</th>
+            <th>修改人員</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Rows.Count > 0)
+        {
+            foreach (System.Data.DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["WO_NO"]</td>
+                    <td>@row["OPEN_TIME"]</td>
+                    <td>@row["UPDATE_DATE"]</td>
+                    <td>@row["USER_NAME"]</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
