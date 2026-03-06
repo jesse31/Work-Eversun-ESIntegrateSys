@@ -1,0 +1,545 @@
+﻿@{
+    ViewBag.Title = "新增人員明細";
+    Layout = "~/Views/Shared/_ManpowerAllocationLayout.cshtml";
+}
+
+<head>
+
+    @*/** SweetAlert2 **********************************************************************************************************/*@
+    <script src="~/Scripts/sweetalert2.all.min.js"></script>
+
+    <!-- 引入 Bootstrap Icons 樣式表 -->
+    <link href="~/Content/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+
+    <!-- 引入 共用 樣式表 -->
+    <link href="~/Content/manpower-allocation.css" rel="stylesheet" />
+
+</head>
+
+<div class="container-fluid">
+    <div class="page-header">
+        <h2>人力配置管理系統</h2>
+        <ol class="breadcrumb">
+            <li>
+                <a href="@Url.Action("Index", "ManpowerAllocation")" class="btn btn-success">
+                    <i class="bi bi-arrow-return-left"></i> 人力配置
+                </a>
+            </li>
+
+        </ol>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-blue">
+                <div class="panel-heading">
+                    <h3 class="panel-title">新增人員明細</h3>
+                </div>
+                <div class="panel-body">
+                    <form id="addEmployeeForm">
+                        @Html.AntiForgeryToken()
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="add-reporting-unit" class="required-field" style="width:100%">報工生產單位</label>                                       
+                                    <select class="form-control" id="add-reporting-unit" name="str報工生產單位名稱" required></select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="add-production-unit" class="required-field" style="width: 100%;">生產單位名稱</label>
+                                    <select class="form-control" id="add-production-unit" name="str生產單位名稱" required>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="add-shift" class="required-field">班別名稱</label>
+                                    <select class="form-control" id="add-shift" name="str班別名稱" required>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="add-attendance-type" class="required-field">出勤類型</label>
+                                    <select class="form-control" id="add-attendance-type" name="str出勤類型" required>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="add-employee-no" class="required-field">作業人員工號</label>
+                                    <input type="text" class="form-control" id="add-employee-no" name="str作業人員工號" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="add-employee-name" class="required-field">作業人員姓名</label>
+                                    <input type="text" class="form-control" id="add-employee-name" name="str作業人員姓名" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div style="width: 100%; padding: 0 15px;">
+                                <div class="form-group">
+                                    <label for="add-remarks" style="display: block;">備註</label>
+                                    <textarea class="form-control" id="add-remarks" name="str備註" rows="5" style="width: 100% !important; max-width: 100% !important; display: block; resize:vertical;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <button type="button" class="btn btn-success" id="save-new-employee">
+                                    <i class="bi bi-save"></i> 儲存
+                                </button>
+                                <button type="button" class="btn btn-danger" id="cancel-button">
+                                    <i class="bi bi-x-circle"></i> 取消
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        // 全局 AJAX 設定，處理未授權請求
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    // 處理未授權狀態
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '登入過期',
+                        text: '您的登入狀態已過期，請重新登入。',
+                        confirmButtonText: '確定'
+                    }).then(() => {
+                        window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                    });
+                },
+                403: function() {
+                    // 處理禁止訪問狀態
+                    Swal.fire({
+                        icon: 'error',
+                        title: '拒絕存取',
+                        text: '您沒有權限執行此操作。',
+                        confirmButtonText: '確定'
+                    }).then(() => {
+                        window.location.href = '@Url.Action("Index", "Home")';
+                    });
+                }
+            }
+        });
+
+        $(document).ready(function () {
+            // 初始化下拉選單
+            initDropdowns();
+
+            // 儲存按鈕點擊事件
+            $("#save-new-employee").click(function () {
+                // 驗證表單
+                if (!$("#addEmployeeForm")[0].checkValidity()) {
+                    $("#addEmployeeForm")[0].reportValidity();
+                    return;
+                }
+
+                // 獲取表單數據
+                var formData = {
+                    __RequestVerificationToken: $("input[name='__RequestVerificationToken']").val(),
+                    str報工生產單位名稱: $("#add-reporting-unit").val(),
+                    str生產單位名稱: $("#add-production-unit").val(),
+                    str班別名稱: $("#add-shift").val(),
+                    str出勤類型: $("#add-attendance-type").val(),
+                    str作業人員工號: $("#add-employee-no").val(),
+                    str作業人員姓名: $("#add-employee-name").val(),
+                    str備註: $("#add-remarks").val()
+                };
+
+                // 提交新增請求
+                $.ajax({
+                    url: '@Url.Action("AddEmployeeDetail", "ManpowerAllocation")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '成功',
+                                text: response.message,
+                                confirmButtonText: '確定'
+                            }).then((result) => {
+                                // 返回人力配置首頁
+                                window.location.href = '@Url.Action("Index", "ManpowerAllocation")';
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '錯誤',
+                                text: response.message,
+                                confirmButtonText: '確定'
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        // 處理未授權/重定向
+                        if (xhr.status === 401 || xhr.status === 302) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '登入過期',
+                                text: '您的登入狀態已過期，請重新登入。',
+                                confirmButtonText: '確定'
+                            }).then(() => {
+                                // 重定向到登入頁面，通常會帶上 ReturnUrl
+                                window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                            });
+                            return;
+                        }
+
+                        // 處理 JSON 回應中的授權錯誤
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response && response.requireLogin) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: '登入過期',
+                                    text: response.message || '您的登入狀態已過期，請重新登入。',
+                                    confirmButtonText: '確定'
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                                });
+                                return;
+                            }
+                        } catch (e) {
+                            // 解析 JSON 失敗，忽略
+                        }
+
+                        // 一般錯誤處理
+                        Swal.fire({
+                            icon: 'error',
+                            title: '錯誤',
+                            text: "新增資料失敗：" + (xhr.responseJSON?.message || error),
+                            confirmButtonText: '確定'
+                        });
+                    }
+                });
+            });
+
+            // 取消按鈕點擊事件
+            $("#cancel-button").click(function () {
+                // 確認是否取消
+                Swal.fire({
+                    title: '確定要取消嗎？',
+                    text: "您輸入的資料將不會被儲存",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: '是，取消',
+                    cancelButtonText: '否，繼續編輯'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // 返回人力配置首頁
+                        window.location.href = '@Url.Action("Index", "ManpowerAllocation")';
+                    }
+                });
+            });
+
+            // 初始化下拉選單
+            function initDropdowns() {
+                // 初始化 Select2
+                $("#add-reporting-unit, #add-production-unit, #add-shift, #add-attendance-type").select2({
+                    placeholder: "請選擇...",
+                    allowClear: true,
+                    language: {
+                        noResults: function() {
+                            return "查無資料";
+                        }
+                    }
+                });
+
+                // 初始化報表單位下拉選單
+               $.ajax({
+                    url: '@Url.Action("Get報工生產單位List", "ManpowerAllocation")',
+                    type: 'GET',
+                    success: function (data) {
+                        var $productionSelect = $("#add-reporting-unit");
+                        $productionSelect.empty();
+                        $productionSelect.append('<option value="">請選擇...</option>');
+                        $.each(data, function (i, unit) {
+                            $productionSelect.append('<option value="' + unit.Guid + '">' + unit.Name + '</option>');
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        // 處理未授權/重定向
+                        if (xhr.status === 401 || xhr.status === 302) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '登入過期',
+                                text: '獲取生產單位資料需要登入，請重新登入。',
+                                confirmButtonText: '確定'
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                            });
+                            return;
+                        }
+
+                        // 處理 JSON 回應中的授權錯誤
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response && response.requireLogin) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: '登入過期',
+                                    text: response.message || '您的登入狀態已過期，請重新登入。',
+                                    confirmButtonText: '確定'
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                                });
+                                return;
+                            }
+                        } catch (e) {
+                            // 解析 JSON 失敗，忽略
+                        }
+
+                        console.error("獲取報工生產單位失敗：" + error);
+                        // 使用預設值
+                        var reportingUnit = ["AP","SMT表面貼焊","系統組裝,系統包裝","系統測試","板卡包裝","板卡後製程_前段","板卡後製程_後段","板卡測試"];
+                        var $productionSelect = $("#add-reporting-unit");
+                        $productionSelect.empty();
+                        $productionSelect.append('<option value="">請選擇...</option>');
+
+                        $.each(reportingUnit, function (i, unit) {
+                            $productionSelect.append('<option value="' + unit + '">' + unit + '</option>');
+                        });
+                    }
+                });
+
+                // 生產單位下拉選單
+                $.ajax({
+                    url: '@Url.Action("GetProductionUnits", "ManpowerAllocation")',
+                    type: 'GET',
+                    success: function (data) {
+                        var $productionSelect = $("#add-production-unit");
+                        $productionSelect.empty();
+                        $productionSelect.append('<option value="">請選擇...</option>');
+                        $.each(data, function (i, unit) {
+                            $productionSelect.append('<option value="' + unit.Guid + '">' + unit.Name + '</option>');
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        // 處理未授權/重定向
+                        if (xhr.status === 401 || xhr.status === 302) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '登入過期',
+                                text: '獲取生產單位資料需要登入，請重新登入。',
+                                confirmButtonText: '確定'
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                            });
+                            return;
+                        }
+
+                        // 處理 JSON 回應中的授權錯誤
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response && response.requireLogin) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: '登入過期',
+                                    text: response.message || '您的登入狀態已過期，請重新登入。',
+                                    confirmButtonText: '確定'
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                                });
+                                return;
+                            }
+                        } catch (e) {
+                            // 解析 JSON 失敗，忽略
+                        }
+
+                        console.error("獲取生產單位失敗：" + error);
+                        // 使用預設值
+                        var defaultUnits = ["AP", "ASSY", "ASSY-Test", "COT", "DIP", "MI", "PACKING", "Pre-pro", "SMD", "TA", "TB", "TEST"];
+                        var $productionSelect = $("#add-production-unit");
+                        $productionSelect.empty();
+                        $productionSelect.append('<option value="">請選擇...</option>');
+
+                        $.each(defaultUnits, function (i, unit) {
+                            $productionSelect.append('<option value="' + unit + '">' + unit + '</option>');
+                        });
+                    }
+                });
+
+                // 班別下拉選單
+                $.ajax({
+                    url: '@Url.Action("GetShifts", "ManpowerAllocation")',
+                    type: 'GET',
+                    success: function (data) {
+                        var $shiftSelect = $("#add-shift");
+                        $shiftSelect.empty();
+                        $shiftSelect.append('<option value="">請選擇...</option>');
+
+                        $.each(data, function (i, shift) {
+                            $shiftSelect.append('<option value="' + shift.Guid + '">' + shift.Name + '</option>');
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        // 處理未授權/重定向
+                        if (xhr.status === 401 || xhr.status === 302) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '登入過期',
+                                text: '獲取班別資料需要登入，請重新登入。',
+                                confirmButtonText: '確定'
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                            });
+                            return;
+                        }
+
+                        // 處理 JSON 回應中的授權錯誤
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response && response.requireLogin) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: '登入過期',
+                                    text: response.message || '您的登入狀態已過期，請重新登入。',
+                                    confirmButtonText: '確定'
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                                });
+                                return;
+                            }
+                        } catch (e) {
+                            // 解析 JSON 失敗，忽略
+                        }
+
+                        console.error("獲取班別失敗：" + error);
+                        // 使用預設值
+                        var defaultShifts = ["日班", "小夜班", "大夜班"];
+                        var $shiftSelect = $("#add-shift");
+                        $shiftSelect.empty();
+                        $shiftSelect.append('<option value="">請選擇...</option>');
+                        $.each(defaultShifts, function (i, shift) {
+                            $shiftSelect.append('<option value="' + shift + '">' + shift + '</option>');
+                        });
+                    }
+                });
+
+                // 出勤類型下拉選單
+                $.ajax({
+                    url: '@Url.Action("GetAttendanceTypes", "ManpowerAllocation")',
+                    type: 'GET',
+                    success: function (data) {
+                        var $typeSelect = $("#add-attendance-type");
+                        $typeSelect.empty();
+                        $typeSelect.append('<option value="">請選擇...</option>');
+
+                        $.each(data, function (i, type) {
+                            $typeSelect.append('<option value="' + type.Guid + '">' + type.Name + '</option>');
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        // 處理未授權/重定向
+                        if (xhr.status === 401 || xhr.status === 302) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '登入過期',
+                                text: '獲取出勤類型資料需要登入，請重新登入。',
+                                confirmButtonText: '確定'
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                            });
+                            return;
+                        }
+
+                        // 處理 JSON 回應中的授權錯誤
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response && response.requireLogin) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: '登入過期',
+                                    text: response.message || '您的登入狀態已過期，請重新登入。',
+                                    confirmButtonText: '確定'
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                                });
+                                return;
+                            }
+                        } catch (e) {
+                            // 解析 JSON 失敗，忽略
+                        }
+
+                        console.error("獲取出勤類型失敗：" + error);
+                        // 使用預設值
+                        var defaultTypes = ["間接出勤", "線外出勤", "直接出勤", "留停"];
+                        var $typeSelect = $("#add-attendance-type");
+                        $typeSelect.empty();
+                        $typeSelect.append('<option value="">請選擇...</option>');
+
+                        $.each(defaultTypes, function (i, type) {
+                            $typeSelect.append('<option value="' + type + '">' + type + '</option>');
+                        });
+                    }
+                });
+            }
+
+
+            /*** 過滤下拉預設值 *********************************************************************/
+            function getSelectValue(val) {
+                return (val === "請選擇..." || val === null) ? "" : val;
+            }
+        });
+    </script>
+
+
+    @*/** Select2 **********************************************************************************************************/*@
+    <link href="~/Content/select2/select2.min.css" rel="stylesheet" />
+    <script src="~/Scripts/select2/select2.min.js"></script>
+
+
+    <!--  Select2 樣式調整 -->
+    <style>
+        /* 確保 Select2 容器佔用 100% 寬度 */
+        .select2-container {
+            width: 100% !important;
+        }
+
+            /* 針對 Select2 渲染後的單選框，也確保其寬度 */
+            .select2-container .select2-selection--single {
+                width: 100% !important;
+                height: 33px !important;
+            }
+
+        /* input寬度100% */
+        .col-md-4 .form-control {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            display: block !important;
+        }
+
+        .col-md-4 {
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+    </style>
+
+
+
+
+}
+
+

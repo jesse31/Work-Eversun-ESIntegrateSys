@@ -1,0 +1,569 @@
+﻿@model List<ESIntegrateSys.Models_ManpowerAllocation.人力配置明細>
+@{
+    ViewBag.Title = "人員明細資料";
+    Layout = "~/Views/Shared/_ManpowerAllocationLayout.cshtml";
+}
+
+@*/** SweetAlert2 **********************************************************************************************************/*@
+<script src="~/Scripts/sweetalert2.all.min.js"></script>
+
+<!-- 引入 Bootstrap Icons 樣式表 -->
+<link href="~/Content/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+
+<!-- 引入 共用 樣式表 -->
+<link href="~/Content/manpower-allocation.css" rel="stylesheet" />
+
+<style>
+
+    .panel-heading {
+        background-color: #f5f5f5;
+        border-bottom: 1px solid #ddd;
+        padding: 10px 15px;
+        border-top-left-radius: 3px;
+        border-top-right-radius: 3px;
+    }
+
+
+    .panel-title {
+        margin-top: 0;
+        margin-bottom: 0;
+        font-size: 16px;
+        color: inherit;
+    }
+
+    .table {
+        table-layout: fixed;
+        width: 100%;
+        margin-bottom: 20px;
+        border-collapse: collapse;
+    }
+
+        .table thead th {
+            text-align: center;
+            white-space: nowrap;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+        }
+
+        .table tbody td {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            vertical-align: middle;
+        }
+
+    .table-striped > tbody > tr:nth-of-type(odd) {
+        background-color: #f9f9f9;
+    }
+
+    .table > tbody > tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    /** 垂直置中 */
+    #employeeTableBody td {
+        vertical-align: middle;
+        font-size: 16px;
+    }
+
+    .btn-group-inline {
+        display: flex;
+        gap: 5px;
+    }
+
+    .remark-cell {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .table th:last-child,
+    .table td:last-child {
+        min-width: 140px;
+        width: 140px;
+    }
+
+    /* 只針對人力配置按鈕的樣式 */
+    .breadcrumb .btn {
+        min-width: 150px;
+        padding: 6px 12px;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 38px; /*與其他表單元素高度一致 */
+        margin: 5px; /*添加外邊距 */
+    }
+
+    .btn {
+        min-width: 60px;
+        padding: 4px 8px;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .btn > bi-arrow-return-left {
+            min-width: 100px;
+            margin: 5px;
+        }
+
+        .btn i {
+            margin-right: 5px;
+        }
+
+    .alert-info {
+        background-color: #d9edf7;
+        border-color: #bce8f1;
+        color: #31708f;
+        padding: 15px;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+
+    .page-header {
+        padding-bottom: 9px;
+        margin: 20px 0 20px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .breadcrumb {
+        padding: 8px 15px;
+        margin-bottom: 20px;
+        list-style: none;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+    }
+
+        .breadcrumb > li {
+            display: inline-block;
+        }
+
+            .breadcrumb > li + li:before {
+                padding: 0 5px;
+                color: #ccc;
+                content: "/\00a0";
+            }
+</style>
+
+<div class="container-fluid">
+    <div class="page-header">
+        <h2>人力配置管理系統</h2>
+        <ol class="breadcrumb">
+            <li>
+                <a href="@Url.Action("Index", "ManpowerAllocation")" class="btn btn-success">
+                    <i class="bi bi-arrow-return-left"></i> 人力配置
+                </a>
+            </li>
+        </ol>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel">
+                <div class="panel-heading clearfix">
+                    <h4 class="panel-title pull-left">
+                        <i class="bi bi-card-list"></i> 人員明細資料
+                    </h4>
+                    <div class="pull-right">
+                        <a href="@Url.Action("Index", "ManpowerAllocation")">
+                        </a>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <span>生產單位：@ViewBag.ProductionUnit</span> <br />
+                                <span>班別：@ViewBag.Shift</span> <br />
+                                <span>出勤類型：@ViewBag.AttendanceType</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 人員明細資料內容 -->
+                    @Html.AntiForgeryToken()
+                    <div class="employee-data-container">
+                        @if (Model != null && Model.Count > 0)
+                        {
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>報工生產單位</th>
+                                        <th>生產單位名稱</th>
+                                        <th>班別名稱</th>
+                                        <th>出勤類型</th>
+                                        <th>作業人員工號</th>
+                                        <th>作業人員姓名</th>
+                                        <th>備註</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employeeTableBody">
+                                    @foreach (var row in Model)
+                                    {
+                                        <tr data-id="@row.strPK" class="employee-row">
+                                            <td>@(row?.str報工生產單位名稱 ?? "")</td>
+                                            <td>@(row?.str生產單位名稱 ?? "")</td>
+                                            <td>@(row?.str班別名稱 ?? "")</td>
+                                            <td>@(row?.str出勤類型 ?? "")</td>
+                                            <td>@(row?.str作業人員工號 ?? "")</td>
+                                            <td>@(row?.str作業人員姓名 ?? "")</td>
+                                            @{
+                                                var remark = row?.str備註 ?? "";
+                                                var shortRemark = remark.Length > 50 ? remark.Substring(0, 50) + "..." : remark;
+                                            }
+                                            <td class="remark-cell" title="@remark">@shortRemark</td>
+                                            <td>
+                                                @if (row?.blnIsEdDel == true)
+                                                {
+                                                    <div class="btn-group-inline">
+                                                        <a href="@Url.Action("UpdateEmployeeDetail", "ManpowerAllocation", new { id = row.strPK })" class="btn btn-primary btn-sm btn-edit">
+                                                            <i class="bi bi-pencil"></i> 編輯
+                                                        </a>
+                                                        <button class="btn btn-danger btn-sm btn-delete" data-id="@row.strPK">
+                                                            <i class="bi bi-trash"></i> 刪除
+                                                        </button>
+                                                    </div>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+
+                                </tbody>
+                            </table>
+                            <div class="text-center" style="margin-top: 10px;">
+                                <div class="btn-group" id="employeePagination">
+                                    <!-- 分頁按鈕將由JavaScript動態生成 -->
+                                </div>
+                                <div style="margin-top: 5px;">
+                                    <span id="pageInfo"></span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                無可用的人員明細資料
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            // 延遲初始化分頁功能，確保DOM完全載入
+            setTimeout(function() {
+                console.log('開始初始化分頁功能');
+                initPagination();
+            }, 500);
+
+            // 使用事件委派方式綁定刪除按鈕點擊事件，確保動態生成的元素也能正確綁定
+            $(document).on("click", ".btn-delete", function() {
+                var id = $(this).data("id");
+
+                Swal.fire({
+                    title: '確認刪除',
+                    text: '確定要刪除這筆人員明細資料嗎？此操作無法恢復。',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: '確認刪除',
+                    cancelButtonText: '取消'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // 用戶確認刪除，執行刪除操作
+                        deleteEmployee(id);
+                    }
+                });
+            });
+
+            // 刪除員工資料的函數
+            function deleteEmployee(id) {
+                console.log("準備刪除ID: " + id); // 添加日誌以便調試
+
+                // 添加防偽令牌
+                var token = $('input[name="__RequestVerificationToken"]').val();
+                console.log("防偽令牌: " + (token ? "已獲取" : "未獲取")); // 檢查令牌是否獲取成功
+
+                // 提交刪除請求
+                $.ajax({
+                    url: '@Url.Action("DeleteEmployeeDetail", "ManpowerAllocation")',
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        __RequestVerificationToken: token
+                    },
+                    success: function(response) {
+                        console.log("刪除請求成功返回:", response); // 添加日誌以便調試
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '成功',
+                                text: response.message,
+                                confirmButtonText: '確定'
+                            }).then(() => {
+                                // 重新載入頁面以更新資料
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '錯誤',
+                                text: response.message,
+                                confirmButtonText: '確定'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        //console.log("刪除請求失敗:", status, error); // 添加日誌以便調試
+                        //console.log("HTTP狀態碼:", xhr.status); // 顯示HTTP狀態碼
+
+                        // 處理未授權/重定向
+                        if (xhr.status === 401 || xhr.status === 302) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '登入過期',
+                                text: '您的登入狀態已過期，請重新登入。',
+                                confirmButtonText: '確定'
+                            }).then(() => {
+                                // 重定向到登入頁面
+                                window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                            });
+                            return;
+                        }
+
+                        // 處理禁止訪問
+                        if (xhr.status === 403) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '拒絕存取',
+                                text: '您沒有權限執行此操作。',
+                                confirmButtonText: '確定'
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Index", "Home")';
+                            });
+                            return;
+                        }
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: '刪除失敗',
+                            text: error,
+                            confirmButtonText: '確定'
+                        });
+                    }
+                });
+            } // 結束 deleteEmployee 函數
+
+            // 分頁相關變數
+            var currentPage = 1;
+            var rowsPerPage = 10;
+            var totalPages = 0;
+
+            // 初始化分頁功能
+            function initPagination() {
+                // 確保測試行不影響分頁
+                $('.test-row').removeClass('employee-row');
+
+                // 計算總頁數
+                var totalRows = $('.employee-row').length;
+                console.log('總資料行數: ' + totalRows);
+
+                // 檢查是否有資料行
+                if (totalRows === 0) {
+                    console.log('警告：沒有找到資料行！');
+                    // 檢查資料行元素
+                    console.log('資料行元素：', $('#employeeTableBody tr:not(.test-row)'));
+                    return;
+                }
+
+                totalPages = Math.ceil(totalRows / rowsPerPage);
+                console.log('總頁數: ' + totalPages);
+
+                // 顯示第一頁資料
+                showPage(1);
+
+                // 生成分頁按鈕
+                renderPagination();
+            }
+
+            // 顯示指定頁面的資料
+            function showPage(page) {
+                console.log('顯示頁面：', page);
+
+                // 確保頁碼在有效範圍內
+                if (page < 1) page = 1;
+                if (page > totalPages) page = totalPages;
+
+                currentPage = page;
+
+                // 計算要顯示的資料行範圍
+                var startIndex = (page - 1) * rowsPerPage;
+                var endIndex = startIndex + rowsPerPage - 1;
+                console.log('顯示範圍：', startIndex, '至', endIndex);
+
+                // 先顯示所有資料行，然後根據頁碼隱藏不需要的行
+                var $rows = $('.employee-row');
+                console.log('找到資料行數量：', $rows.length);
+
+                // 確保測試行始終可見
+                $('.test-row').show();
+
+                // 顯示當前頁的資料行，隱藏其他頁的資料行
+                $rows.each(function(index) {
+                    console.log('處理資料行：', index);
+                    if (index >= startIndex && index <= endIndex) {
+                        $(this).show();
+                        console.log('顯示資料行：', index);
+                    } else {
+                        $(this).hide();
+                        console.log('隱藏資料行：', index);
+                    }
+                });
+
+                // 如果沒有資料行被處理，顯示所有資料行
+                if ($rows.length === 0) {
+                    console.log('沒有資料行被處理，顯示所有資料行');
+                    $('#employeeTableBody tr:not(.test-row)').show();
+                }
+
+                // 更新分頁按鈕狀態
+                updatePaginationButtons();
+            }
+
+            // 生成分頁按鈕
+            function renderPagination() {
+                var $pagination = $('#employeePagination');
+                $pagination.empty();
+
+                // 如果總頁數小於等於1，不顯示分頁
+                if (totalPages <= 1) {
+                    $('#pageInfo').text('');
+                    return;
+                }
+
+                // 添加「上一頁」按鈕
+                $pagination.append(
+                    '<button type="button" class="btn btn-default" id="prevPage"><i class="fa fa-chevron-left"></i> 上一頁</button>'
+                );
+
+                // 添加頁碼按鈕（最多顯示5個頁碼）
+                var startPage = Math.max(1, currentPage - 2);
+                var endPage = Math.min(totalPages, startPage + 4);
+
+                if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+
+                for (var i = startPage; i <= endPage; i++) {
+                    var activeClass = (i === currentPage) ? ' btn-primary' : ' btn-default';
+                    $pagination.append(
+                        '<button type="button" class="btn' + activeClass + ' page-btn" data-page="' + i + '">' + i + '</button>'
+                    );
+                }
+
+                // 添加「下一頁」按鈕
+                $pagination.append(
+                    '<button type="button" class="btn btn-default" id="nextPage">下一頁 <i class="fa fa-chevron-right"></i></button>'
+                );
+
+                // 顯示頁碼資訊
+                $('#pageInfo').text('第 ' + currentPage + ' 頁 / 共 ' + totalPages + ' 頁');
+
+                // 綁定頁碼按鈕點擊事件
+                $('.page-btn').click(function() {
+                    var page = parseInt($(this).data('page'));
+                    showPage(page);
+                });
+
+                // 綁定「上一頁」按鈕點擊事件
+                $('#prevPage').click(function() {
+                    if (currentPage > 1) {
+                        showPage(currentPage - 1);
+                    } else {
+                        console.log('已經是第一頁，無法再往前');
+                    }
+                    return false; // 防止頁面跳轉
+                });
+
+                // 綁定「下一頁」按鈕點擊事件
+                $('#nextPage').click(function() {
+                    if (currentPage < totalPages) {
+                        showPage(currentPage + 1);
+                    } else {
+                        console.log('已經是最後一頁，無法再往後');
+                    }
+                    return false; // 防止頁面跳轉
+                });
+
+                // 更新分頁按鈕狀態
+                updatePaginationButtons();
+            }
+
+            // 更新分頁按鈕狀態
+            function updatePaginationButtons() {
+                // 更新頁碼按鈕的活動狀態
+                $('.page-btn').removeClass('btn-primary').addClass('btn-default');
+                $('.page-btn[data-page="' + currentPage + '"]').removeClass('btn-default').addClass('btn-primary');
+
+                // 更新「上一頁」按鈕的禁用狀態
+                if (currentPage === 1) {
+                    $('#prevPage').prop('disabled', true);
+                    $('#prevPage').addClass('disabled');
+                } else {
+                    $('#prevPage').prop('disabled', false);
+                    $('#prevPage').removeClass('disabled');
+                }
+
+                // 更新「下一頁」按鈕的禁用狀態
+                if (currentPage === totalPages || totalPages === 0) {
+                    $('#nextPage').prop('disabled', true);
+                    $('#nextPage').addClass('disabled');
+                } else {
+                    $('#nextPage').prop('disabled', false);
+                    $('#nextPage').removeClass('disabled');
+                }
+
+                // 更新頁碼資訊
+                $('#pageInfo').text('第 ' + currentPage + ' 頁 / 共 ' + totalPages + ' 頁');
+            }
+
+            /***** 編輯 ***************************************************************************/
+            $(document).on("click", ".btn-edit", function (e) {
+                e.preventDefault();
+                var url = $(this).attr("href");
+
+                $.get(url, function (data) {
+                    // 判斷回傳內容是否為 Locked.cshtml
+                    if (typeof data === "string" && data.indexOf("資料鎖定提示") !== -1) {
+                        // 從 HTML 取出被鎖定者名稱
+                        var match = data.match(/資料正在被 (.*?) 編輯中/);
+                        var lockedUser = match ? match[1] : "其他用戶";
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '資料鎖定中',
+                            text: '資料正在被 ' + lockedUser + ' 編輯中，請稍後再試',
+                            confirmButtonText: '確定'
+                        });
+                    } else {
+                        // 正常載入編輯畫面，可用 modal 或導頁
+                        // 例如：$('#yourModalSelector .modal-content').html(data); $('#yourModalSelector').modal('show');
+                        // 或 window.location.href = url; 若要直接跳頁
+                        window.location.href = url;
+                    }
+                });
+            });
+
+        });
+    </script>
+}
+
+

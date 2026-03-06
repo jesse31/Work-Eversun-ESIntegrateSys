@@ -1,0 +1,755 @@
+﻿@{
+    ViewBag.Title = "人力配置";
+    Layout = "~/Views/Shared/_ManpowerAllocationLayout.cshtml";
+}
+
+@Html.AntiForgeryToken()
+
+
+@*/** 書本圖示 **********************************************************************************************************/*@
+<link rel="stylesheet" href="~/Content/font-awesome/all.css">
+<script src="~/Content/font-awesome/fontawesome.min.js"></script>
+<script src="~/Content/font-awesome/solid.min.js"></script>
+
+@*/** SweetAlert2 **********************************************************************************************************/*@
+<script src="~/Scripts/sweetalert2.all.min.js"></script>
+
+<!-- 引入 Bootstrap Icons 樣式表 -->
+<link href="~/Content/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+
+<!-- 引入 共用 樣式表 -->
+<link href="~/Content/manpower-allocation.css" rel="stylesheet" />
+<style>
+    /** 書本圖示 起 **********************************************************************************************************/
+    /* 確保圖示可見的樣式 */
+    .me-mark-icon-wrapper {
+        display: inline-block;
+        margin-left: 5px;
+        vertical-align: middle;
+    }
+
+    .me-mark-icon {
+        cursor: pointer;
+        color: #007bff !important;
+        /*使用 !important來覆蓋可能的衝突樣式 display: inline-block !important;*/
+        font-size: 16px !important;
+        vertical-align: middle !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+        .me-mark-icon:hover {
+            color: #0056b3 !important;
+        }
+
+    /** 書本樣式 迄 **********************************************************************************************************/
+</style>
+
+<div class="page-header">
+    <h2>人力配置管理系統</h2>
+</div>
+
+<!-- 功能選單按鈕 -->
+@*@Html.Partial("~/Views/Shared/_FunctionMenuPartial.cshtml")*@
+<!-- 背景遮罩層 -->
+<div class="drawer-backdrop"></div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-blue" style="top:30px;">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-12">
+                        人力登錄系統
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="form-row">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>作業人員所屬生產單位</label>
+                                <select class="form-control" name="productionUnit" id="productionUnit">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>作業人員所屬班別</label>
+                                <select class="form-control" name="shift" id="shift">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>作業人員出勤類型</label>
+                                <select class="form-control" name="attendanceType" id="attendanceType">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="btn-group-container">
+                                <a href="@Url.Action("AddEmployeeDetail", "ManpowerAllocation")" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle"></i> 新增人員明細
+                                </a>
+                                @*  TODO 之後優化
+                                        <a href="@Url.Action("ManpowerAuthorization", "ManpowerAllocation")" class="btn btn-warning" id="btnAuthSetting">
+                                        <i class="bi bi-shield-lock"></i> 人力配置授權設定
+                                    </a>*@
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>作業人員工號</label>
+                            <input type="text" class="form-control" name="employeeId" id="employeeId">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>作業人員姓名</label>
+                            <input type="text" class="form-control" name="employeeName" id="employeeName">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <button class="btn btn-info btn-group-sm" role="button" style="margin-top: 24px;"><i class="bi bi-search"></i>查詢</button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <button type="button" class="btn btn-success btn-exit" id="btnExport" style="margin-top: 24px;">
+                                <i class="bi bi-box-arrow-up-right"></i> 匯出
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 人力配置統計 -->
+<div class="row">
+    <div class="col-md-12">
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>生產單位</th>
+                    <th>班別名稱</th>
+                    <th>間接出勤人數</th>
+                    <th>線外出勤人數</th>
+                    <th>直接出勤人數</th>
+                    <th>留停人數</th>
+                </tr>
+            </thead>
+            <tbody id="MAtable">
+            </tbody>
+        </table>
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center"></ul>
+        </nav>
+    </div>
+</div>
+
+
+@section scripts {
+    <script type="text/javascript">
+    // 全局 AJAX 設定，處理未授權請求
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                // 處理未授權狀態
+                Swal.fire({
+                    icon: 'warning',
+                    title: '登入過期',
+                    text: '您的登入狀態已過期，請重新登入。',
+                    confirmButtonText: '確定'
+                }).then(() => {
+                    window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                });
+            },
+            403: function() {
+                // 處理禁止訪問狀態
+                Swal.fire({
+                    icon: 'error',
+                    title: '拒絕存取',
+                    text: '您沒有權限執行此操作。',
+                    confirmButtonText: '確定'
+                }).then(() => {
+                    window.location.href = '@Url.Action("Index", "Home")';
+                });
+            }
+        }
+    });
+
+    $(document).ready(function () {
+
+        // 初始化 Select2 下拉選單
+        $("#productionUnit, #attendanceType, #shift").select2({
+            placeholder: "請選擇...",
+            allowClear: true,
+            language: {
+                noResults: function() {
+                    return "查無資料";
+                }
+            }
+        });
+
+        // 清除表單欄位的值，避免瀏覽器自動填充
+        clearFormFields();
+
+        // 頁面一載入就查詢一次
+        searchManpower(null,1,10);
+
+        // 查詢按鈕點擊事件
+        $(".btn-info").click(function () {
+            var q查詢條件 = {
+                str生產單位名稱: getSelectValue($('#productionUnit').val()),
+                str班別名稱: getSelectValue($('#shift').val()),
+                str出勤類型: getSelectValue($('#attendanceType').val()),
+                str作業人員工號: $('#employeeId').val(),
+                str作業人員姓名: $('#employeeName').val()
+            };
+
+            searchManpower(q查詢條件, 1, 10);
+        });
+
+        /**** 匯出EXCEL 起 ************************************************************************************************************************/
+        $(".btn-exit").click(function () {
+            // 檢查表格是否有資料
+            var tableRows = $('#MAtable tr').not(':has(td[colspan])');
+            if (tableRows.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '無法匯出',
+                    text: '目前查無資料，請先進行查詢並確保有資料後再匯出。',
+                    confirmButtonText: '確定'
+                });
+                return;
+            }
+
+            // 防止重複點擊
+            if ($(this).data('processing')) {
+                return;
+            }
+
+            $(this).data('processing', true);
+
+            var loadingMsg = '資料匯出處理中，請稍候...';
+            var exportData = {
+                str生產單位名稱: getSelectValue($('#productionUnit').val()),
+                str班別名稱: getSelectValue($('#shift').val()),
+                str出勤類型: getSelectValue($('#attendanceType').val()),
+                str作業人員工號: $('#employeeId').val(),
+                str作業人員姓名: $('#employeeName').val()
+            };
+
+            // 顯示處理中訊息
+            Swal.fire({
+                title: loadingMsg,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // 使用 Fetch API 下載檔案
+            fetch('/ManpowerAllocation/ExportExcelMAList', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(exportData)
+            })
+                .then(response => {
+                    // 重設處理狀態
+                $(".btn-exit").data('processing', false);
+
+
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('查無符合條件的資料可供匯出');
+                        } else {
+                            throw new Error('匯出失敗');
+                        }
+                    }
+
+                // 從 Content-Disposition header 取得檔名
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = '人力配置清單.xlsx';
+                if (contentDisposition) {
+                    const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)|filename\*=(?:UTF-8'')?([^;\n]*)/i);
+                    if (fileNameMatch) {
+                        filename = decodeURIComponent(fileNameMatch[3] || fileNameMatch[1].replace(/['"]/g, ''));
+                    }
+                }
+                return response.blob().then(blob => {
+                    // 建立下載連結
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    Swal.close();
+                });
+            })
+            .catch(error => {
+                console.error('匯出錯誤:', error);
+                // 重設處理狀態（確保在錯誤情況下也能重設）
+                $(".btn-exit").data('processing', false);
+                Swal.fire({
+                    icon: 'error',
+                    title: '匯出失敗',
+                    text: error.message || '請稍後再試'
+                });
+            });
+        });
+
+        /**** 匯出EXCEL 迄 ************************************************************************************************************************/
+
+
+        /** 點擊書本圖示查詢人員明細（依出勤類型）*****************************************************************************************/
+        $("tbody").on("click", ".me-mark-icon", function(event) {
+            event.stopPropagation(); // 防止同時觸發 tr 的點擊事件
+            var $icon = $(this);
+            var $row = $icon.closest("tr");
+            var productionUnit = $row.find("td:eq(0)").text();
+            var shift = $row.find("td:eq(1)").text();
+
+            // 查詢條件
+            var str作業人員姓名 = $('#employeeName').val();
+            var str作業人員工號=$('#employeeId').val();
+
+
+            // 根據圖示所在欄位自動判斷出勤類型
+            var attendanceType = "";
+            var colIndex = $icon.closest("td").index();
+            if (colIndex === 2) {
+                attendanceType = "間接出勤";
+            } else if (colIndex === 3) {
+                attendanceType = "線外出勤";
+            } else if (colIndex === 4) {
+                attendanceType = "直接出勤";
+            } else if (colIndex === 5) {
+                attendanceType = "留停";
+            }
+
+            if (!attendanceType) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '錯誤',
+                    text: '無法確定出勤類型',
+                    confirmButtonText: '確定'
+                });
+                return;
+            }
+            // 導航到人員明細頁面
+            var url = "@Url.Action("EmployeeDetails", "ManpowerAllocation")" + "?" + $.param({
+                productionUnit: productionUnit,
+                shift: shift,
+                attendanceType: attendanceType,
+                str作業人員姓名: str作業人員姓名,
+                str作業人員工號: str作業人員工號
+            });
+
+            // 在當前頁面導航，而不是開啟新視窗
+            window.location.href = url;
+        });
+
+        // 處理 AJAX 錯誤
+        $(document).ajaxError(function(event, xhr, settings, error) {
+                    // 處理未授權/重定向
+                    if (xhr.status === 401 || xhr.status === 302) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '登入過期',
+                            text: '您的登入狀態已過期，請重新登入。',
+                            confirmButtonText: '確定'
+                        }).then(() => {
+                            window.location.href = '@Url.Action("Login", "Home")?ReturnUrl=' + encodeURIComponent(window.location.href);
+                        });
+                        return;
+                    }
+
+                    // 處理禁止訪問
+                    if (xhr.status === 403) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '拒絕存取',
+                            text: '您沒有權限執行此操作。',
+                            confirmButtonText: '確定'
+                        }).then(() => {
+                            window.location.href = '@Url.Action("Index", "Home")';
+                        });
+                        return;
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: '錯誤',
+                        text: "獲取人員明細資料時發生錯誤: " + error,
+                        confirmButtonText: '確定'
+                    });
+            });
+
+    });
+
+
+
+    /** 查詢 *********************************************************************/
+
+    function searchManpower(q查詢條件, page, pageSize) {
+            var postData = {
+                查詢條件: q查詢條件,
+                page: page || 1,
+                pageSize: pageSize || 10
+            };
+
+            $.ajax({
+                url: '/ManpowerAllocation/GetManpowerAllocationList',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(postData),
+                success: function (res) {
+                    if (res.success) {
+                        renderTable(res.data);
+                        renderPagination(res.total, page, pageSize);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '查詢失敗',
+                            text: res.message,
+                            confirmButtonText: '確定'
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // 未授權和禁止訪問錯誤已由全局 AJAX 設定處理
+                    // 只需處理其他錯誤
+                    if (xhr.status !== 401 && xhr.status !== 403) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '查詢失敗',
+                            text: '請稍後再試。',
+                            confirmButtonText: '確定'
+                        });
+                    }
+                }
+            });
+        }
+
+
+     /** 載入統計資料 *********************************************************************/
+    function renderTable(data) {
+        var $tbody = $('#MAtable');
+        $tbody.empty();
+        if (!data || data.length === 0) {
+            $tbody.append('<tr><td colspan="6">查無資料</td></tr>');
+            return;
+        }
+        $.each(data, function (i, row) {
+            // 間接出勤人數欄位
+            var indirectTd = '<td>' + (row.int間接出勤人數 || 0);
+            if ((row.int間接出勤人數 || 0) != 0) {
+                indirectTd +=
+                    '<span class="me-mark-icon-wrapper">' +
+                    '<i class="fa fa-book me-mark-icon" data-toggle="tooltip" title="點擊查看間接出勤人數" data-me-mark="' + row.int間接出勤人數 + '"></i>' +
+                    '</span>';
+            }
+            indirectTd += '</td>';
+
+            // 線外出勤人數欄位
+            var outTd = '<td>' + (row.int線外出勤人數 || 0);
+            if ((row.int線外出勤人數 || 0) != 0) {
+                outTd +=
+                    '<span class="me-mark-icon-wrapper">' +
+                    '<i class="fa fa-book me-mark-icon" data-toggle="tooltip" title="點擊查看線外出勤人數" data-me-mark="' + row.int線外出勤人數 + '"></i>' +
+                    '</span>';
+            }
+            outTd += '</td>';
+
+            // 直接出勤人數欄位
+            var directTd = '<td>' + (row.int直接出勤人數 || 0);
+            if ((row.int直接出勤人數 || 0) != 0) {
+                directTd +=
+                    '<span class="me-mark-icon-wrapper">' +
+                    '<i class="fa fa-book me-mark-icon" data-toggle="tooltip" title="點擊查看直接出勤人數" data-me-mark="' + row.int直接出勤人數 + '"></i>' +
+                    '</span>';
+            }
+            directTd += '</td>';
+
+            // 留停人數欄位
+            var leaveTd = '<td>' + (row.int留停人數 || 0);
+            if ((row.int留停人數 || 0) != 0) {
+                leaveTd +=
+                    '<span class="me-mark-icon-wrapper">' +
+                    '<i class="fa fa-book me-mark-icon" data-toggle="tooltip" title="點擊查看留停人數" data-me-mark="' + row.int留停人數 + '"></i>' +
+                    '</span>';
+            }
+            leaveTd += '</td>';
+
+            $tbody.append(
+                '<tr>' +
+                '<td>' + (row.str生產單位 || '') + '</td>' +
+                '<td>' + (row.str班別名稱 || '') + '</td>' +
+                indirectTd +
+                outTd +
+                directTd +
+                leaveTd +
+                '</tr>'
+            );
+        });
+
+    }
+
+
+     /*** 過滤下拉預設值 *********************************************************************/
+    function getSelectValue(val) {
+        return (val === "請選擇..." || val === null) ? "" : val;
+    }
+
+     /** 換頁 *************************************************************************/
+    function renderPagination(total, currentPage, pageSize) {
+            var totalPages = Math.ceil(total / pageSize);
+            var $pagination = $('.pagination');
+            $pagination.empty();
+
+            if (totalPages <= 1) return;
+
+            // 前一頁
+            var prevClass = (currentPage === 1) ? "disabled" : "";
+            $pagination.append('<li class="page-item ' + prevClass + '"><a class="page-link" href="#" data-page="' + (currentPage - 1) + '">上一頁</a></li>');
+
+            // 頁碼
+            for (var i = 1; i <= totalPages; i++) {
+                var activeClass = (i === currentPage) ? "active" : "";
+                $pagination.append('<li class="page-item ' + activeClass + '"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+            }
+
+            // 下一頁
+            var nextClass = (currentPage === totalPages) ? "disabled" : "";
+            // 如果是最後一頁，將下一頁按鈕的連結移除，使其完全無法點擊
+            if (currentPage === totalPages) {
+                $pagination.append('<li class="page-item disabled"><span class="page-link">下一頁</span></li>');
+            } else {
+                $pagination.append('<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage + 1) + '">下一頁</a></li>');
+            }
+    }
+
+
+     // 綁定分頁點擊事件 ***********************************************************************************
+    $(document).on('click', '.page-link', function (e) {
+        e.preventDefault();
+        // 如果父元素有 disabled 或 active 類，直接返回不執行任何操作
+        if ($(this).parent().hasClass('disabled') || $(this).parent().hasClass('active')) {
+            return;
+        }
+
+        var page = parseInt($(this).data('page'));
+        if (!isNaN(page)) {
+            var q查詢條件 = {
+                str生產單位名稱: getSelectValue($('#productionUnit').val()),
+                str班別名稱: getSelectValue($('#shift').val()),
+                str出勤類型: getSelectValue($('#attendanceType').val()),
+                str作業人員工號: $('#employeeId').val(),
+                str作業人員姓名: $('#employeeName').val()
+            };
+            searchManpower(q查詢條件, page, 10); // 10 可改為你預設的 pageSize
+        }
+    });
+
+    /** 初始化生產單位下拉選單 *********************************************************************************************/
+    var $productionSelect = $("#productionUnit");
+    $productionSelect.empty();
+
+    @if (ViewBag.ProductionUnits != null)
+    {
+        @:var productionUnits = @Html.Raw(Json.Encode(ViewBag.ProductionUnits));
+        @:$.each(productionUnits, function(i, unit) {
+        @:    $productionSelect.append('<option value="' + unit.Guid + '">' + unit.Name + '</option>');
+        @:});
+    }
+    else
+    {
+        // 預設生產單位，value 與顯示文字皆為單位名稱
+        @:var defaultUnits = [
+        @:{ Guid: "AP", Name: "AP" },
+        @:{ Guid: "ASSY", Name: "ASSY" },
+        @:{ Guid: "ASSY-Test", Name: "ASSY-Test" },
+        @:{ Guid: "COT", Name: "COT" },
+        @:{ Guid: "DIP", Name: "DIP" },
+        @:{ Guid: "MI", Name: "MI" },
+        @:{ Guid: "PACKING", Name: "PACKING" },
+        @:{ Guid: "Pre-pro", Name: "Pre-pro" },
+        @:{ Guid: "SMD", Name: "SMD" },
+        @:{ Guid: "TA", Name: "TA" },
+        @:{ Guid: "TB", Name: "TB" },
+        @:{ Guid: "TEST", Name: "TEST" }
+        @:];
+        @:$.each(defaultUnits, function(i, unit) {
+        @:    $productionSelect.append('<option value="' + unit.Guid + '">' + unit.Name + '</option>');
+        @:});
+    }
+    /** 生產單位下拉選單 *********************************************************************************************/
+
+    /** 初始化班別下拉選單 起 *********************************************************************************************/
+    var $shiftSelect = $("#shift");
+    $shiftSelect.empty();
+
+    @if (ViewBag.Shifts != null)
+    {
+        @:var shifts = @Html.Raw(Json.Encode(ViewBag.Shifts));
+        @:$.each(shifts, function(i, shift) {
+        @:    $shiftSelect.append('<option value="' + shift.shiftID + '">' + shift.Name + '</option>');
+        @:});
+    }
+    else
+    {
+        // 預設班別，value 與顯示文字皆為班別名稱
+        @:var defaultShifts = [
+        @:{ shiftID: "日班", Name: "日班" },
+        @:{ shiftID: "小夜班", Name: "小夜班" },
+        @:{ shiftID: "大夜班", Name: "大夜班" }
+        @:];
+        @:$.each(defaultShifts, function(i, shift) {
+        @:    $shiftSelect.append('<option value="' + shift.shiftID + '">' + shift.Name + '</option>');
+        @:});
+    }
+    /** 初始化班別下拉選單 *********************************************************************************************/
+
+    /** 初始化出勤類型下拉選單 起 *********************************************************************************************/
+    var $typeSelect = $("#attendanceType");
+    $typeSelect.empty();
+
+    @if (ViewBag.AttendanceTypes != null)
+    {
+        @:var attendanceTypes = @Html.Raw(Json.Encode(ViewBag.AttendanceTypes));
+        @:$.each(attendanceTypes, function(i, type) {
+        @:    $typeSelect.append('<option value="' + type.Guid + '">' + type.Name + '</option>');
+        @:});
+    }
+    else
+    {
+        // 預設出勤類型，value 與顯示文字皆為類型名稱
+        @:var defaultTypes = [
+        @:{ Guid: "間接出勤", Name: "間接出勤" },
+        @:{ Guid: "線外出勤", Name: "線外出勤" },
+        @:{ Guid: "直接出勤", Name: "直接出勤" },
+        @:{ Guid: "留停", Name: "留停" }
+        @:];
+        @:$.each(defaultTypes, function(i, type) {
+        @:    $typeSelect.append('<option value="' + type.Guid + '">' + type.Name + '</option>');
+        @:});
+    }
+    /** 出勤類型下拉選單 迄 *********************************************************************************************/
+
+
+
+    // 清除表單欄位的值，避免瀏覽器自動填充
+    function clearFormFields() {
+        // 清除輸入框的值
+        $('#employeeId').val('');
+        $('#employeeName').val('');
+
+        // 重置下拉選單為預設值
+        $('#productionUnit').val(null).trigger('change');
+        $('#shift').val(null).trigger('change');
+        $('#attendanceType').val(null).trigger('change');
+
+        // 添加 autocomplete="off" 屬性到輸入框
+        $('#employeeId, #employeeName').attr('autocomplete', 'off');
+
+        // 避免瀏覽器快取的另一種方法
+        setTimeout(function() {
+            $('#employeeId, #employeeName').val('');
+        }, 100);
+    }
+
+    /** 功能選單開關 *********************************************************************************************/
+    function initDrawerMenu() {
+        // 綁定功能選單按鈕點擊事件
+        $('.drawer-toggle').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $('.drawer-menu').toggleClass('open');
+            $('.drawer-backdrop').toggleClass('open');
+            console.log('功能選單按鈕被點擊');
+        });
+
+        // 綁定背景遮罩點擊事件，點擊時關閉選單
+        $('.drawer-backdrop').on('click', function() {
+            $('.drawer-menu').removeClass('open');
+            $('.drawer-backdrop').removeClass('open');
+        });
+
+        // 綁定選單項目點擊事件
+        bindDrawerMenuItems();
+    }
+
+    // 綁定選單項目點擊事件
+    function bindDrawerMenuItems() {
+        $('.drawer-menu-item').on('click', function(e) {
+            // 直接跳轉到對應頁面
+            var url = $(this).attr('href');
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    // 頁面載入後初始化功能選單
+    //TODO 之後優化
+    //$(document).ready(function() {
+    //    initDrawerMenu();
+    //});
+    /** 功能選單開關 迄 *********************************************************************************************/
+
+    </script>
+
+    @*/** Select2 **********************************************************************************************************/*@
+    <link href="~/Content/select2/select2.min.css" rel="stylesheet" />
+    <script src="~/Scripts/select2/select2.min.js"></script>
+
+
+    <!--  Select2 樣式調整 -->
+    <style>
+        /* 確保 Select2 容器佔用 100% 寬度 */
+        .select2-container {
+            width: 100% !important;
+        }
+
+            /* 針對 Select2 渲染後的單選框，也確保其寬度 */
+            .select2-container .select2-selection--single  {
+                width: 100% !important;
+                height: 33px !important;
+            }
+
+        /* input寬度100% */
+        .col-md-3 .form-control {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            display: block !important;
+        }
+
+        .col-md-3 {
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+    </style>
+}
+
+

@@ -1,0 +1,15 @@
+﻿@{
+    var lockedUser = ViewBag.LockedUser as string;
+}
+
+@*/** SweetAlert2 **********************************************************************************************************/*@
+<script src="~/Scripts/sweetalert2.all.min.js"></script>
+
+<!-- 引入 Bootstrap Icons 樣式表 -->
+<link href="~/Content/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+
+<div>
+    <h3>資料鎖定提示</h3>
+    <p>資料正在被 @lockedUser 編輯中，請稍後再試</p>
+</div>
+
