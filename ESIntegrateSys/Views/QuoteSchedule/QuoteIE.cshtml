@@ -1,0 +1,204 @@
+﻿@model ESIntegrateSys.Models.ES_QuoteForSales
+
+@{
+    ViewBag.Title = "IE報價填寫";
+    var requDate = ViewBag.RequDate as string;
+    var iequoteDate = ViewBag.IEQuoteDate as string;
+    var iequoteTDate = ViewBag.IEQuoteTDate as string;
+}
+
+<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+            url: '@Url.Action("QuoteCust", "QuoteSchedule")',
+            type: 'GET',
+            dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#CustNo').empty();
+                    // 在選擇器中動態增加選項
+                    $.each(data, function (index, item) {
+                        $('#CustNo').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+
+                    // 設置下拉列表的值
+                    var custValue = '@ViewBag.Cust';
+                    if (custValue !== "99") {
+                        $('#CustNo').val(custValue);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+
+            $.ajax({
+                url: '@Url.Action("QuoteWoNoAttri", "QuoteSchedule")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 清空原有的選項
+                    $('#WoNoAttri').empty();
+                    // 在選擇器中動態增加選項
+                    $.each(data, function (index, item) {
+                        $('#WoNoAttri').append($('<option>', {
+                            value: item.Value,
+                            text: item.Text
+                        }));
+                    });
+                    // 設置之前選中的值
+                    $('#WoNoAttri').val('@ViewBag.WonoAttri');
+                },
+                error: function (xhr, status, error) {
+                    console.log('Ajax request failed. Status:', status);
+                    console.log('Error:', error);
+                    console.log('XHR object:', xhr);
+                    alert('Ajax request failed. Status: ' + status + '\nError: ' + error);
+                }
+            });
+
+            // Bind form submit event
+            $("#BtnSubmit").click(function (event) {
+                //var wono = $("#MaterialGun_Sno").val().trim();
+                var custno = $("#CustNo").val();
+                var rqdate = $("#RequDate").val();
+                var ieQDate = $('#IEQuoteDate').val();
+
+                // 將輸入的日期字符串轉換為 Date
+                var inputDate = new Date(ieQDate);
+                var today = new Date();
+                today.setHours(23, 59, 59, 999);
+
+                // 檢查輸入日期是否小於當前日期
+                if (inputDate > today) {
+                    alert("IE報價日期不能大於當日");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+
+                if (ieQDate === "") {
+                    alert("尚未輸入報價日期");
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                }
+
+            });
+
+        });
+    </script>
+</head>
+
+<h2>IE報價填寫</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <div class="form-group">
+            <label class="control-label col-md-2">客戶別</label>
+            <div class="col-md-10">
+                @if (ViewBag.Cust == "99")
+                {
+                    <input class="form-control" id="CustNoInput" name="CustNo" value="@ViewBag.Other" readonly="readonly" />
+                }
+                else
+                {
+                    <select id="CustNo" name="CustNo" class="form-control" disabled>
+                    </select>
+                }
+
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">業務單號</label>
+            <div class="col-md-10">
+                <input class="form-control" id="SalesNo" name="SalesNo" value="@ViewBag.SalesNo" readonly="readonly" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">工程編號</label>
+            <div class="col-md-10">
+                <input class="form-control" id="EngSr" name="EngSr" value="@ViewBag.Engsr" autocomplete="off" readonly="readonly"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">客戶料號</label>
+            <div class="col-md-10">
+                <input class="form-control" id="CustMaterial" name="CustMaterial" value="@ViewBag.CustMaterial" autocomplete="off" readonly="readonly"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">工單性質</label>
+            <div class="col-md-10">
+                <select id="WoNoAttri" name="WoNoAttri" class="form-control" disabled>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">需求日期</label>
+            <div class="col-md-10">
+                <input type="date" id="RequDate" name="RequDate" value="@requDate" class="form-control" readonly="readonly"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">備註</label>
+            <div class="col-md-10">
+                <input class="form-control" id="Mark" name="Mark" placeholder="@ViewBag.Mark" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">IE報價日期</label>
+            <div class="col-md-10">
+                <input type="date" id="IEQuoteDate" name="IEQuoteDate" value="@iequoteDate" class="form-control" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-md-2">IE測試報價日期</label>
+            <div class="col-md-10">
+                <input type="date" id="IEQuoteTDate" name="IEQuoteTDate" value="@iequoteTDate" class="form-control" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" name="UpdateMark" id="UpdateMark" value="備註更新" class="btn btn-default" />
+                
+                <input type="submit" name="BtnSubmit" id="BtnSubmit" value="確認報價" class="btn btn-success" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="javascript:history.go(-1);" class="btn-link btn-default">返回上一頁</a>
+</div>
+
+<script>
+    window.onbeforeunload = function () {
+            // 在使用者離開頁面時清除資料狀態
+            $.ajax({
+                url: '@Url.Action("ClearIEStatus", "QuoteSchedule")',
+                type: 'POST',
+                data: {
+                    sno: '@ViewBag.Sno' // 傳送當前資料的 Sno
+                },
+                headers: {
+                        'RequestVerificationToken': '@Html.AntiForgeryToken()' // 加上防偽令牌
+                    },
+                async: true 
+            });
+        };
+</script>
