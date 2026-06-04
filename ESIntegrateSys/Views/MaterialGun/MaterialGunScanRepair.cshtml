@@ -301,6 +301,11 @@
                                 this.isScanned = true;
                                 console.log('isScanned is now:', this.isScanned);
 
+                                // 延遲 1 秒檢查狀態是否被重置
+                                setTimeout(() => {
+                                    console.log('After 1 second, isScanned is:', this.isScanned);
+                                }, 1000);
+
                                 // 焦點進入 Classification 下拉框（scanInputRef 被禁用，無法聚焦）
                                 // 這樣能保持表單顯示狀態，避免焦點設定失敗導致狀態重置
                                 this.$nextTick(() => {
