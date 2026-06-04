@@ -290,6 +290,7 @@
                             
                             if (response.success && response.status === 'success') {
                                 // 查詢成功，帶出料槍資訊
+                                console.log('✓ Scan success, setting isScanned = true');
                                 this.gunInfo = {
                                     Eno: response.data.Eno,
                                     Sno: response.data.Sno,
@@ -298,6 +299,7 @@
                                 };
                                 this.formData.repairSno = response.data.repairSno;
                                 this.isScanned = true;
+                                console.log('isScanned is now:', this.isScanned);
 
                                 // 焦點進入 Classification 下拉框（scanInputRef 被禁用，無法聚焦）
                                 // 這樣能保持表單顯示狀態，避免焦點設定失敗導致狀態重置
@@ -324,6 +326,7 @@
                                 });
                             } else {
                                 // 其他查詢失敗情況
+                                console.log('✗ Scan failed, status:', response.status, 'setting isScanned = false');
                                 Swal.fire({
                                     icon: 'error',
                                     title: '查詢失敗',
