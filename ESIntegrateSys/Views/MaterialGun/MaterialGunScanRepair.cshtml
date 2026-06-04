@@ -362,6 +362,7 @@
                 },
                 // 清空表單並重置狀態
                 handleClear() {
+                    console.log('🔄 handleClear() called - resetting form');
                     this.scanInput = '';
                     this.isScanned = false;
                     this.gunInfo = { Eno: '', Sno: '', Trade: '', Size: '' };
