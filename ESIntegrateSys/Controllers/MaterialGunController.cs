@@ -357,13 +357,13 @@ namespace ESIntegrateSys.Controllers
         /// 掃碼維修頁面。
         /// </summary>
         /// <returns>掃碼維修檢視頁面</returns>
-        public ActionResult ScanRepair()
+        public ActionResult MaterialGunScanRepair()
         {
             if (!Login_Authentication())
             {
                 return RedirectToAction("Login", "Home");
             }
-            return View("ScanRepair", "_MaterialLayout");
+            return View("MaterialGunScanRepair", "_MaterialLayout");
         }
 
         /// <summary>
@@ -398,22 +398,22 @@ namespace ESIntegrateSys.Controllers
                     return Json(new { success = false, status = "error", message = $"查無料槍編號：{barcode}", data = (object)null });
                 }
 
-                // 第二步：查詢該料槍最新的未完修紀錄 (Chk=True=未完修)
+                // 第二步：查詢該料槍最新的未完修紀錄 (Chk=false=未完修)
                 var repairRecord = db.ES_MaterialGunRepair
-                    .Where(x => x.MaterialGun_Sno == normalizedBarcode && x.Chk == true)
+                    .Where(x => x.MaterialGun_Sno == normalizedBarcode && x.Chk == false)
                     .OrderByDescending(x => x.RepairDate)
                     .FirstOrDefault();
 
                 // 若無未完修紀錄，檢查是否為「已全部完修」
                 if (repairRecord == null)
                 {
-                    // 判斷是否存在任何維修紀錄
-                    var anyRecord = db.ES_MaterialGunRepair
-                        .FirstOrDefault(x => x.MaterialGun_Sno == normalizedBarcode);
+                    // 判斷是否存在已完修的紀錄（Chk=true）
+                    var completedRecord = db.ES_MaterialGunRepair
+                        .FirstOrDefault(x => x.MaterialGun_Sno == normalizedBarcode && x.Chk == true);
 
-                    if (anyRecord != null)
+                    if (completedRecord != null)
                     {
-                        // 存在維修紀錄但全部已完修（Chk=False）
+                        // 存在已完修紀錄（Chk=true）
                         return Json(new { success = false, status = "all_completed", message = $"此料槍已全部完修，無待維修紀錄", data = (object)null });
                     }
                     else

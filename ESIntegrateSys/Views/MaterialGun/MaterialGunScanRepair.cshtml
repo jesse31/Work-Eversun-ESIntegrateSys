@@ -9,10 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewBag.Title</title>
     <link href="~/Content/bootstrap.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.31/select2-bootstrap.min.css" rel="stylesheet" />
     <script src="~/Scripts/jquery-3.4.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
@@ -107,67 +104,6 @@
                     </div>
                 </div>
 
-                <!-- 料槍基本資訊區域 (自動帶出，disabled) -->
-                <div v-if="isScanned" class="panel panel-info" style="margin-top: 20px;">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">料槍資訊</h3>
-                    </div>
-                    <div class="panel-body">
-                        <!-- 設備編號 -->
-                        <div class="form-group">
-                            <label class="control-label col-md-3">設備編號</label>
-                            <div class="col-md-9">
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    :value="gunInfo.Eno"
-                                    disabled="disabled"
-                                />
-                            </div>
-                        </div>
-
-                        <!-- 料槍編號 -->
-                        <div class="form-group">
-                            <label class="control-label col-md-3">料槍編號</label>
-                            <div class="col-md-9">
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    :value="gunInfo.Sno"
-                                    disabled="disabled"
-                                    name="MaterialGun_Sno"
-                                />
-                            </div>
-                        </div>
-
-                        <!-- 廠商 -->
-                        <div class="form-group">
-                            <label class="control-label col-md-3">廠商</label>
-                            <div class="col-md-9">
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    :value="gunInfo.Trade"
-                                    disabled="disabled"
-                                />
-                            </div>
-                        </div>
-
-                        <!-- 型號 -->
-                        <div class="form-group">
-                            <label class="control-label col-md-3">型號</label>
-                            <div class="col-md-9">
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    :value="gunInfo.Size"
-                                    disabled="disabled"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- 維修資訊區域 (查詢成功後 enabled) -->
                 <div v-if="isScanned" class="panel panel-warning" style="margin-top: 20px;">
                     <div class="panel-heading">
@@ -185,6 +121,10 @@
                                     class="form-control"
                                     ref="classificationRef"
                                 >
+                                    <option value="">請選擇...</option>
+                                    <option v-for="item in classificationOptions" :key="item.Value" :value="item.Value">
+                                        {{ item.Text }}
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -201,6 +141,10 @@
                                     @@change="handleMaintenanceResultChange"
                                     ref="maintenanceResultRef"
                                 >
+                                    <option value="">請選擇...</option>
+                                    <option v-for="item in maintenanceResultOptions" :key="item.Value" :value="item.Value">
+                                        {{ item.Text }}
+                                    </option>
                                 </select>
                                 <input 
                                     v-if="formData.MaintenanceResult === '99' || formData.MaintenanceResult === 99"
@@ -291,30 +235,12 @@
                 };
             },
             mounted() {
-                // 頁面載入時先檢查 Select2 是否加載完成，再載入選項
-                this.initializeSelect2WithFallback();
                 // 頁面載入時焦點自動設定在輸入框
-                this.$nextTick(() => {
-                    this.$refs.scanInputRef.focus();
-                });
+                this.$refs.scanInputRef.focus();
+                // 載入下拉選項
+                this.loadDropdownOptions();
             },
             methods: {
-                // 檢查 jQuery 和 Select2 是否加載完成，若未完成則輪詢
-                initializeSelect2WithFallback() {
-                    if (window.$ && window.$.fn.select2) {
-                        // Select2 已加載，直接載入選項
-                        this.loadDropdownOptions();
-                    } else {
-                        // Select2 未加載，輪詢最多 3 次（每次延遲 100ms）
-                        setTimeout(() => {
-                            if (window.$ && window.$.fn.select2) {
-                                this.loadDropdownOptions();
-                            } else {
-                                console.warn('Select2 加載失敗，下拉選單將回退為原生 HTML select');
-                            }
-                        }, 100);
-                    }
-                },
                 // 載入分類和維修原因下拉選項
                 loadDropdownOptions() {
                     // 載入分類選項
@@ -325,16 +251,6 @@
                         context: this,
                         success: (data) => {
                             this.classificationOptions = data || [];
-                            this.$nextTick(() => {
-                                $('#Classification').select2({
-                                    allowClear: true,
-                                    placeholder: '請選擇...',
-                                    theme: 'bootstrap'
-                                });
-                                $('#Classification').on('change', (e) => {
-                                    this.formData.Classification = $(e.target).val();
-                                });
-                            });
                         }
                     });
 
@@ -346,17 +262,6 @@
                         context: this,
                         success: (data) => {
                             this.maintenanceResultOptions = data || [];
-                            this.$nextTick(() => {
-                                $('#MaintenanceResult').select2({
-                                    allowClear: true,
-                                    placeholder: '請選擇...',
-                                    theme: 'bootstrap'
-                                });
-                                $('#MaintenanceResult').on('change', (e) => {
-                                    this.formData.MaintenanceResult = $(e.target).val();
-                                    this.handleMaintenanceResultChange();
-                                });
-                            });
                         }
                     });
                 },
