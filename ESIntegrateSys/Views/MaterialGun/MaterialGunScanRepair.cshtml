@@ -81,7 +81,7 @@
         <h2>掃碼維修</h2>
         
         <div id="app">
-            <form  @@submit.prevent="handleSubmit" class="form-horizontal">
+            <form  class="form-horizontal">
                 @Html.AntiForgeryToken()
                 
                 <!-- 隱藏的維修紀錄 SNO -->
@@ -196,7 +196,7 @@
                     <button v-if="isScanned" type="button" @@click="handleClear" class="btn btn-default">
                         掃下一筆
                     </button>
-                    <button v-if="isScanned" type="submit" class="btn btn-success">
+                    <button v-if="isScanned" type="button" @@click="handleSubmit" class="btn btn-success">
                         儲存
                     </button>
                     <a href="@Url.Action("MaterialGunRepairView", "MaterialGun")" class="btn btn-default" style="padding: 12px; text-align: center;">
