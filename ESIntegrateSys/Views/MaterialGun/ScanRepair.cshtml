@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewBag.Title = "掃碼維修";
 }
 
@@ -84,7 +84,7 @@
         <h2>掃碼維修</h2>
         
         <div id="app">
-            <form @submit.prevent="handleSubmit" class="form-horizontal">
+            <form  @@submit.prevent="handleSubmit" class="form-horizontal">
                 @Html.AntiForgeryToken()
                 
                 <!-- 隱藏的維修紀錄 SNO -->
@@ -97,7 +97,7 @@
                         <input 
                             type="text" 
                             v-model="scanInput"
-                            @keydown.enter="queryGun"
+                            @@keydown.enter="queryGun"
                             :disabled="isScanned"
                             class="form-control scan-input"
                             placeholder="掃碼或輸入料槍編號，按 Enter"
@@ -198,7 +198,7 @@
                                     v-model="formData.MaintenanceResult"
                                     name="MaintenanceResult"
                                     class="form-control"
-                                    @change="handleMaintenanceResultChange"
+                                    @@change="handleMaintenanceResultChange"
                                     ref="maintenanceResultRef"
                                 >
                                 </select>
@@ -246,10 +246,10 @@
 
                 <!-- 按鈕組 -->
                 <div class="btn-group-bottom">
-                    <button v-if="!isScanned" type="button" @click="handleClear" class="btn btn-default">
+                    <button v-if="!isScanned" type="button" @@click="handleClear" class="btn btn-default">
                         重新開始
                     </button>
-                    <button v-if="isScanned" type="button" @click="handleClear" class="btn btn-default">
+                    <button v-if="isScanned" type="button" @@click="handleClear" class="btn btn-default">
                         掃下一筆
                     </button>
                     <button v-if="isScanned" type="submit" class="btn btn-success">
@@ -291,14 +291,30 @@
                 };
             },
             mounted() {
-                // 頁面載入時載入分類和維修原因下拉選項
-                this.loadDropdownOptions();
+                // 頁面載入時先檢查 Select2 是否加載完成，再載入選項
+                this.initializeSelect2WithFallback();
                 // 頁面載入時焦點自動設定在輸入框
                 this.$nextTick(() => {
                     this.$refs.scanInputRef.focus();
                 });
             },
             methods: {
+                // 檢查 jQuery 和 Select2 是否加載完成，若未完成則輪詢
+                initializeSelect2WithFallback() {
+                    if (window.$ && window.$.fn.select2) {
+                        // Select2 已加載，直接載入選項
+                        this.loadDropdownOptions();
+                    } else {
+                        // Select2 未加載，輪詢最多 3 次（每次延遲 100ms）
+                        setTimeout(() => {
+                            if (window.$ && window.$.fn.select2) {
+                                this.loadDropdownOptions();
+                            } else {
+                                console.warn('Select2 加載失敗，下拉選單將回退為原生 HTML select');
+                            }
+                        }, 100);
+                    }
+                },
                 // 載入分類和維修原因下拉選項
                 loadDropdownOptions() {
                     // 載入分類選項
@@ -365,7 +381,9 @@
                         data: { barcode: this.scanInput },
                         context: this,
                         success: (response) => {
-                            if (response.success) {
+                            this.isLoading = false;
+                            
+                            if (response.success && response.status === 'success') {
                                 // 查詢成功，帶出料槍資訊
                                 this.gunInfo = {
                                     Eno: response.data.Eno,
@@ -380,8 +398,23 @@
                                 this.$nextTick(() => {
                                     $('#Classification').focus();
                                 });
+                            } else if (response.status === 'all_completed') {
+                                // 料槍已全部完修 - 彈警告，不帶出表單
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: '此料槍已完修',
+                                    text: '此料槍已全部完修，無待維修紀錄',
+                                    confirmButtonText: '確定'
+                                }).then(() => {
+                                    // 清空輸入框，焦點回輸入框
+                                    this.scanInput = '';
+                                    this.isScanned = false;
+                                    this.$nextTick(() => {
+                                        this.$refs.scanInputRef.focus();
+                                    });
+                                });
                             } else {
-                                // 查詢失敗
+                                // 其他查詢失敗情況
                                 Swal.fire({
                                     icon: 'error',
                                     title: '查詢失敗',
@@ -390,6 +423,7 @@
                                 }).then(() => {
                                     // 清空輸入框，焦點回輸入框
                                     this.scanInput = '';
+                                    this.isScanned = false;
                                     this.$nextTick(() => {
                                         this.$refs.scanInputRef.focus();
                                     });

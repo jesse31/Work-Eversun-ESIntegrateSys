@@ -371,6 +371,11 @@ namespace ESIntegrateSys.Controllers
         /// </summary>
         /// <param name="barcode">掃入的料槍編號 (條碼)</param>
         /// <returns>JSON 結果：{ success: bool, message: string, data: { repairSno, Eno, Sno, Trade, Size } }</returns>
+        /// <summary>
+        /// 根據料槍條碼/編號查詢料槍資訊及待維修紀錄。支援三態回應：成功(status="success")、已完修(status="all_completed")、錯誤(status="error")。
+        /// </summary>
+        /// <param name="barcode">料槍條碼或編號</param>
+        /// <returns>JSON 結果，包含 success、status、message、data 欄位</returns>
         [HttpPost]
         public JsonResult GetGunByBarcode(string barcode)
         {
@@ -378,36 +383,51 @@ namespace ESIntegrateSys.Controllers
             {
                 if (string.IsNullOrWhiteSpace(barcode))
                 {
-                    return Json(new { success = false, message = "請輸入料槍編號" });
+                    return Json(new { success = false, status = "error", message = "請輸入料槍編號", data = (object)null });
                 }
 
                 // 標準化料槍編號（轉大寫、去空白等）
                 string normalizedBarcode = NormalizeMaterialGunSno(barcode);
 
-                // 第一步：查詢料槍是否存在於 ES_MaterialGunInfo
+                // 第一步：查詢料槍是否存在於 ES_MaterialGunInfo 及未報廢
                 var gunInfo = db.ES_MaterialGunInfo
                     .FirstOrDefault(x => x.MaterialGun_Sno == normalizedBarcode && !x.MaterialGunDiscard.Value);
 
                 if (gunInfo == null)
                 {
-                    return Json(new { success = false, message = $"查無料槍編號：{barcode}" });
+                    return Json(new { success = false, status = "error", message = $"查無料槍編號：{barcode}", data = (object)null });
                 }
 
-                // 第二步：查詢該料槍最新的未完修紀錄 (Chk=True)
+                // 第二步：查詢該料槍最新的未完修紀錄 (Chk=True=未完修)
                 var repairRecord = db.ES_MaterialGunRepair
                     .Where(x => x.MaterialGun_Sno == normalizedBarcode && x.Chk == true)
                     .OrderByDescending(x => x.RepairDate)
                     .FirstOrDefault();
 
+                // 若無未完修紀錄，檢查是否為「已全部完修」
                 if (repairRecord == null)
                 {
-                    return Json(new { success = false, message = $"料槍 {barcode} 無待維修紀錄或已全部完修" });
+                    // 判斷是否存在任何維修紀錄
+                    var anyRecord = db.ES_MaterialGunRepair
+                        .FirstOrDefault(x => x.MaterialGun_Sno == normalizedBarcode);
+                    
+                    if (anyRecord != null)
+                    {
+                        // 存在維修紀錄但全部已完修（Chk=False）
+                        return Json(new { success = false, status = "all_completed", message = $"此料槍已全部完修，無待維修紀錄", data = (object)null });
+                    }
+                    else
+                    {
+                        // 不存在任何維修紀錄
+                        return Json(new { success = false, status = "error", message = $"料槍 {barcode} 無維修紀錄", data = (object)null });
+                    }
                 }
 
                 // 第三步：回傳成功的 JSON 結果
                 return Json(new
                 {
                     success = true,
+                    status = "success",
                     message = "查詢成功",
                     data = new
                     {
@@ -421,7 +441,7 @@ namespace ESIntegrateSys.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"伺服器錯誤：{ex.Message}" });
+                return Json(new { success = false, status = "error", message = $"伺服器錯誤：{ex.Message}", data = (object)null });
             }
         }
 

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MVP 規格書：料槍維修條碼化輸入與權限控管變更</title>
+
+    <!-- 依賴 CDN 聲明：
+         1. Google Fonts (Inter, Noto Sans TC) 
+         2. Prism.js (用於程式碼高亮)
+         3. Mermaid.js (用於流程圖渲染) 
+         4. Vue.js 3 (依循全域規範，本頁面用於實作搜尋與目錄互動)
+    -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #0f172a;
+            --sidebar-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-main: #334155;
+            --text-light: #64748b;
+            --link-color: #2563eb;
+            --bg-color: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            background-color: var(--bg-color);
+            line-height: 1.6;
+        }
+
+        #app {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* 側邊欄 */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--link-color);
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-links li {
+            margin-bottom: 8px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            display: block;
+            padding: 6px 8px;
+            border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .nav-links a:hover {
+            background-color: #e2e8f0;
+            color: var(--link-color);
+        }
+
+        .nav-links .sub-nav {
+            padding-left: 15px;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        /* 內容區 */
+        .main-content {
+            margin-left: 280px;
+            padding: 40px 60px;
+            max-width: 1000px;
+            width: calc(100% - 280px);
+        }
+
+        .content-card {
+            background: #fff;
+            margin-bottom: 40px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: var(--primary-color);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 40px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin-top: 25px;
+        }
+
+        /* 表格響應式 */
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--sidebar-bg);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfcfc;
+        }
+
+        /* 程式碼區塊 */
+        pre[class*="language-"] {
+            border-radius: 8px;
+            margin: 1.5em 0;
+            padding: 1.2em;
+        }
+
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            background-color: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d926a9;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* 提示塊 */
+        .alert {
+            padding: 15px;
+            border-left: 4px solid var(--link-color);
+            background-color: #eff6ff;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* 搜尋高亮 */
+        mark.search-highlight {
+            background-color: #fef08a;
+            color: #000;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        /* 列印友善樣式 */
+        @media print {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 0;
+                max-width: none;
+            }
+
+            body {
+                background: white;
+            }
+
+            .content-card {
+                margin-bottom: 20px;
+                page-break-inside: avoid;
+            }
+
+            h2 {
+                page-break-after: avoid;
+            }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            a {
+                text-decoration: underline;
+                color: black;
+            }
+        }
+
+        /* 手機板響應式 */
+        @media (max-width: 768px) {
+            #app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 15px;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+
+    <!-- 側邊欄導航 -->
+    <aside class="sidebar" id="sidebar">
+        <h2>目錄導航</h2>
+        <div class="search-box">
+            <input type="text" v-model="searchQuery" @input="handleSearch" placeholder="搜尋規格書內容...">
+        </div>
+        <ul class="nav-links">
+            <li><a href="#section-1">1. MVP 目標與成功標準</a></li>
+            <li><a href="#section-2">2. 現況系統概述</a></li>
+            <li><a href="#section-3">3. 需求總覽</a></li>
+            <li><a href="#section-4">4. 使用者角色與權限</a></li>
+            <li><a href="#section-5">5. 功能需求詳細描述</a></li>
+            <li><a href="#section-6">6. 畫面與操作流程</a></li>
+            <li><a href="#section-7">7. 資料結構與 API</a></li>
+            <li><a href="#section-8">8. 技術債底線 (MVP 規範)</a></li>
+            <li><a href="#section-9">9. 擴充方向 (未來版本)</a></li>
+            <li><a href="#section-10">10. 驗收標準</a></li>
+        </ul>
+        <button onclick="window.print()"
+            style="margin-top:20px; padding:10px; background:var(--text-main); color:white; border:none; border-radius:4px; cursor:pointer;">列印為
+            PDF</button>
+    </aside>
+
+    <!-- 主要內容區 -->
+    <main class="main-content" id="content-body" v-html="highlightedContent">
+        <!-- Vue 會將處理後的內容注入此處 -->
+    </main>
+    </div>
+
+    <!-- 隱藏的原始內容範本 -->
+    <template id="raw-content">
+        <div class="content-card">
+            <h1>MVP 規格書：料槍維修條碼化輸入與權限控管變更</h1>
+            <p><strong>文件日期</strong>：2026-06-04<br>
+                <strong>版本</strong>：v1.0 (MVP)<br>
+                <strong>系統</strong>：昶亨整合式系統 (ESIntegrateSys)
+            </p>
+        </div>
+
+        <div class="content-card" id="section-1">
+            <h2>1. MVP 目標與成功標準</h2>
+            <h3>1.1 目標</h3>
+            <p>以最少的改動，解決料槍維修作業中「選錯料槍」的人為失誤問題，並鎖定特定人員才能對已完修資料進行再次編輯。</p>
+            <h3>1.2 成功標準</h3>
+            <ul>
+                <li><strong>防錯機制生效</strong>：掃描條碼自動帶出料槍資料；查無資料或已完修時，系統攔截並顯示錯誤提示。</li>
+                <li><strong>作業效率提升</strong>：操作人員不需手動輸入料槍編號，直接掃描即可解鎖編輯欄位。</li>
+                <li><strong>權限控管精確</strong>：非白名單人員無法在主頁清單中點擊/操作「已完修」狀態的維修按鈕。</li>
+                <li><strong>系統無痛整合</strong>：新頁面 (Vue 3 CDN) 與既有頁面 (jQuery) 共存，不破壞現有架構。</li>
+            </ul>
+        </div>
+
+        <div class="content-card" id="section-2">
+            <h2>2. 現況系統概述（簡要）</h2>
+            <ul>
+                <li><strong>架構</strong>：ASP.NET MVC 5.2.7 + .NET Framework 4.5</li>
+                <li><strong>前端</strong>：Bootstrap 3.4.1 + jQuery 3.4.1 + Razor Views</li>
+                <li><strong>資料庫</strong>：SQL Server (EF 6 Database First 用於 CRUD，ADO.NET 用於複雜查詢)</li>
+                <li><strong>痛點</strong>：
+                    <ul>
+                        <li>料槍維修需手動輸入編號，易選錯料槍。</li>
+                        <li>「已完修」的料槍維修按鈕任何人皆可點擊。</li>
+                        <li>權限控管機制不統一。</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="content-card" id="section-3">
+            <h2>3. 需求總覽</h2>
+            <h3>3.1 MVP 必須完成的功能</h3>
+            <ul>
+                <li>新增「掃碼維修」頁面 (<code>ScanRepair.cshtml</code>)。</li>
+                <li>條碼掃描後端驗證 API (<code>GetGunByBarcode</code>)。</li>
+                <li>掃描成功自動帶出基礎資料並解鎖編輯欄位。</li>
+                <li>統一錯誤提示 (SweetAlert2)。</li>
+                <li>主頁 (<code>MaterialGunRepairView.cshtml</code>) 新增「掃碼維修」入口按鈕。</li>
+                <li>針對「已完修」維修按鈕的前端顯示與後端權限控管 (基於 <code>Web.config</code> 白名單)。</li>
+            </ul>
+            <h3>3.2 MVP 絕對不做的功能</h3>
+            <ul>
+                <li>白名單後台動態管理頁面（初期僅使用 <code>appSettings</code>）。</li>
+                <li>開發專屬 App 或 PWA。</li>
+                <li>即時狀態推播通知。</li>
+                <li>維修流程的複雜狀態機或多階段審核。</li>
+                <li>歷史維修數據報表或圖表。</li>
+                <li>批次掃碼功能（一次處理多筆）。</li>
+                <li>全系統權限 (RBAC) 重構或 Serilog 統一日誌導入。</li>
+            </ul>
+        </div>
+
+        <div class="content-card" id="section-4">
+            <h2>4. 使用者角色與權限</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>角色</th>
+                            <th>權限範圍說明</th>
+                            <th>MVP 控管方式</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>一般操作員 / 維修員</td>
+                            <td>可進入「掃碼維修」頁面新增維修紀錄。只能操作「未完修」的料槍維修按鈕。</td>
+                            <td>前端隱藏/停用已完修按鈕，後端攔截非授權操作。</td>
+                        </tr>
+                        <tr>
+                            <td>特權維修員 (白名單)</td>
+                            <td>擁有一般權限，且<strong>可以</strong>點擊與操作「已完修」的料槍維修按鈕。</td>
+                            <td>比對 <code>Session["Member"].fUserId</code> 與 <code>Web.config</code> 的
+                                <code>RepairPrivilegedUsers</code> 設定。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="content-card" id="section-5">
+            <h2>5. 功能需求詳細描述</h2>
+            <h3>5.1 F1: 掃碼維修頁面 (<code>ScanRepair.cshtml</code>)</h3>
+            <ul>
+                <li><strong>框架</strong>：使用 Vue.js 3 CDN (<code>createApp</code>) 管理狀態。</li>
+                <li><strong>行為</strong>：
+                    <ul>
+                        <li>頁面載入時，焦點 (Focus) 自動鎖定在「料槍條碼輸入框」。</li>
+                        <li>除條碼輸入框外，其餘編輯欄位 (檢修不良分類、原因、更換部品等) 預設為 <code>disabled</code>。</li>
+                    </ul>
+                </li>
+                <li><strong>防呆</strong>：若未掃描成功，無法手動解鎖欄位。</li>
+            </ul>
+
+            <h3>5.2 F2 & F3: 條碼驗證與欄位自動帶出</h3>
+            <ul>
+                <li><strong>觸發</strong>：監聽輸入框的 <code>Enter</code> 鍵 (<code>@keydown.enter</code>)。</li>
+                <li><strong>流程</strong>：
+                    <ol>
+                        <li>前端阻擋空白提交。</li>
+                        <li>呼叫 API <code>POST /MaterialGun/GetGunByBarcode</code>。</li>
+                        <li>API 回傳成功：解鎖編輯欄位，自動將回傳的 JSON 資料綁定 (v-model) 至畫面欄位。</li>
+                        <li>API 回傳失敗：觸發 F4 錯誤提示。</li>
+                    </ol>
+                </li>
+            </ul>
+
+            <h3>5.3 F4: 統一錯誤提示</h3>
+            <ul>
+                <li><strong>套件</strong>：SweetAlert2 (<code>Swal.fire</code>)。</li>
+                <li><strong>情境</strong>：
+                    <ul>
+                        <li>查無此料槍。</li>
+                        <li>該料槍已處於維修中或已完修狀態 (視業務邏輯限制)。</li>
+                    </ul>
+                </li>
+                <li><strong>後續動作</strong>：關閉提示後，自動清空輸入框並重新 <code>focus()</code>。</li>
+            </ul>
+
+            <h3>5.4 F5 & F6: 儲存與主頁入口</h3>
+            <ul>
+                <li><strong>入口</strong>：在 <code>MaterialGunRepairView.cshtml</code> 的上方工具列加入 <code>[ 掃碼維修 ]</code>
+                    按鈕，連結至 <code>ScanRepair</code>。</li>
+                <li><strong>儲存</strong>：在 <code>ScanRepair.cshtml</code> 點擊儲存，呼叫
+                    <code>POST /MaterialGun/ScanRepairSave</code>，成功後 <code>Swal.fire</code> 提示並於 1.5 秒後跳轉回
+                    <code>MaterialGunRepairView</code> 主頁。</li>
+            </ul>
+
+            <h3>5.5 F7 & F8: 特權維修權限控管</h3>
+            <ul>
+                <li><strong>前端 (F8)</strong>：在 <code>MaterialGunRepairView.cshtml</code> 渲染資料列時，判斷若 <code>Chk</code> 為 0
+                    (已完修) 且當前登入者不在白名單內，則不渲染維修 <code>&lt;a&gt;</code> 連結，或將其改為唯讀樣式 (如 <code>disabled</code>)。</li>
+                <li><strong>後端 (F7)</strong>：在接收已完修資料的編輯/儲存請求時 (對應的原 Action)，需讀取
+                    <code>ConfigurationManager.AppSettings["RepairPrivilegedUsers"]</code>，若當前 Session 者不在白名單中，回傳
+                    <code>403 Forbidden</code> 或錯誤視窗。</li>
+            </ul>
+        </div>
+
+        <div class="content-card" id="section-6">
+            <h2>6. 畫面與操作流程</h2>
+            <h3>6.1 掃碼維修流程</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as 操作員
+                participant V as ScanRepair (Vue 3)
+                participant C as Controller (API)
+
+                U->>V: 進入頁面
+                V-->>U: 游標鎖定在條碼輸入框 (其他 disabled)
+                U->>V: 條碼掃描槍掃入 (自帶 Enter)
+                V->>C: POST /GetGunByBarcode
+                alt 成功
+                C-->>V: { success: true, data: { ... } }
+                V-->>U: 解鎖欄位，帶出資料
+                U->>V: 填寫維修紀錄並點擊儲存
+                V->>C: POST /ScanRepairSave
+                C-->>V: { success: true }
+                V-->>U: SweetAlert 成功提示並跳轉主頁
+                else 失敗
+                C-->>V: { success: false, message: '錯誤原因' }
+                V-->>U: SweetAlert 錯誤提示，清空並重新 focus
+                end
+            </div>
+        </div>
+
+        <div class="content-card" id="section-7">
+            <h2>7. 資料結構與 API</h2>
+            <h3>7.1 API: <code>GetGunByBarcode</code></h3>
+            <ul>
+                <li><strong>Method</strong>: POST</li>
+                <li><strong>URL</strong>: <code>/MaterialGun/GetGunByBarcode</code></li>
+                <li><strong>Request</strong>:
+                    <pre><code class="language-json">{ "barcode": "string" }</code></pre>
+                </li>
+                <li><strong>Response</strong>:
+                    <pre><code class="language-json">{
+  "success": true,
+  "message": "",
+  "data": {
+    "MaterialGun_Eno": "EQ-001",
+    "MaterialGun_Sno": "SN123",
+    "MaterialGun_Trade": "BrandX",
+    "MaterialGun_Size": "TypeA"
+  }
+}</code></pre>
+                </li>
+            </ul>
+
+            <h3>7.2 API: <code>ScanRepairSave</code></h3>
+            <ul>
+                <li><strong>Method</strong>: POST</li>
+                <li><strong>URL</strong>: <code>/MaterialGun/ScanRepairSave</code></li>
+                <li><strong>Request</strong>: 表單 ViewModel 或 JSON</li>
+                <li><strong>Response</strong>:
+                    <pre><code class="language-json">{ "success": true, "message": "儲存成功" }</code></pre>
+                </li>
+            </ul>
+        </div>
+
+        <div class="content-card" id="section-8">
+            <h2>8. 技術債底線 (MVP 規範)</h2>
+            <div class="alert">
+                <strong>8.1 絕對不能的做法</strong>
+                <ol>
+                    <li><strong>不能硬編碼密碼或鍵值</strong>：絕對禁止在 C# 中寫死 <code>if (userId == "02898")</code>。</li>
+                    <li><strong>不能省略後端權限驗證</strong>：不能只在 Razor 視圖中使用 <code>if</code> 隱藏按鈕，後端 Action 必須同步檢查。</li>
+                    <li><strong>不能使用不安全 SQL</strong>：禁止字串拼接 SQL，防範 SQL Injection。</li>
+                    <li><strong>不能缺少錯誤處理</strong>：API 發生錯誤不能直接拋出 500 YSOD (Yellow Screen of Death)。</li>
+                </ol>
+            </div>
+            <div class="alert" style="border-left-color: #10b981; background-color: #ecfdf5;">
+                <strong>8.2 必須遵守的規範</strong>
+                <ol>
+                    <li><strong>必須使用設定檔</strong>：權限白名單必須寫在 <code>Web.config</code> 的
+                        <code>&lt;appSettings&gt;</code>，以逗號分隔。</li>
+                    <li><strong>必須使用參數化查詢</strong>：新增的 API 查詢必須使用 Dapper 的 <code>@Param</code> 語法或 Entity Framework。
+                    </li>
+                    <li><strong>必須統一日誌</strong>：即使未導入 Serilog，所有的 catch 區塊必須將 Exception 紀錄至現有的 <code>Logs/</code> 機制。
+                    </li>
+                    <li><strong>統一回傳格式</strong>：所有 AJAX API 必須回傳標準 <code>{ success, message, data }</code> 結構。</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="content-card" id="section-9">
+            <h2>9. 擴充方向 (未來版本 v1.1+)</h2>
+            <ol>
+                <li><strong>白名單動態管理</strong>：開發專屬後台頁面，將 <code>appSettings</code> 移至 DB 管理。</li>
+                <li><strong>全面 RBAC 整合</strong>：將此特權邏輯整合至 <code>ES_MemberRole</code> 與 <code>ES_MemberFunction</code>。
+                </li>
+                <li><strong>保養排程連動</strong>：掃碼維修後，自動重算並更新 <code>MaintainNexDate</code>。</li>
+                <li><strong>全域前端升級</strong>：以此頁面為基礎，逐步將其他 jQuery 頁面改寫為 Vue 3 CDN。</li>
+            </ol>
+        </div>
+
+        <div class="content-card" id="section-10">
+            <h2>10. 驗收標準</h2>
+            <ol>
+                <li><strong>環境準備</strong>：配置好 USB/藍牙條碼掃描槍 (設定為後綴帶 Enter)。</li>
+                <li><strong>測試案例 1 (正常掃碼)</strong>：
+                    <ul>
+                        <li>進入 <code>/MaterialGun/ScanRepair</code>。</li>
+                        <li>掃入存在且可維修的條碼。</li>
+                        <li>預期：無錯誤彈窗，欄位解鎖並帶出正確資料。</li>
+                    </ul>
+                </li>
+                <li><strong>測試案例 2 (異常掃碼)</strong>：
+                    <ul>
+                        <li>掃入不存在的條碼。</li>
+                        <li>預期：SweetAlert 提示「查無料槍」，關閉後游標回到輸入框，欄位保持 disabled。</li>
+                    </ul>
+                </li>
+                <li><strong>測試案例 3 (權限驗證 - 白名單內)</strong>：
+                    <ul>
+                        <li>使用 <code>02898</code> 帳號登入。</li>
+                        <li>進入主頁查詢清單，找到已完修 (<code>Chk=0</code>) 資料。</li>
+                        <li>預期：可看見並點擊維修按鈕，後端儲存不報錯。</li>
+                    </ul>
+                </li>
+                <li><strong>測試案例 4 (權限驗證 - 白名單外)</strong>：
+                    <ul>
+                        <li>使用非 <code>02898</code> 帳號登入。</li>
+                        <li>預期：主頁查詢清單中，已完修資料的維修按鈕不可見或為唯讀。若強行存取該記錄編輯網址，後端回傳 403 錯誤。</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+    </template>
+
+    <!-- Prism.js 核心腳本與語言支援 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+
+    <script>
+        // 初始化 Mermaid
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+
+        const { createApp, ref, computed, onMounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                const searchQuery = ref('');
+                const rawHtml = ref('');
+
+                onMounted(() => {
+                    const template = document.getElementById('raw-content');
+                    rawHtml.value = template.innerHTML;
+                    // 初始化時手動觸發 Prism 高亮
+                    nextTick(() => {
+                        Prism.highlightAll();
+                    });
+                });
+
+                const highlightedContent = computed(() => {
+                    if (!searchQuery.value) return rawHtml.value;
+
+                    const query = searchQuery.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`(${query})(?![^<]*>|[^<>]*<\/)(?![^{]*})`, 'gi');
+
+                    return rawHtml.value.replace(regex, '<mark class="search-highlight">$1</mark>');
+                });
+
+                const handleSearch = () => {
+                    nextTick(() => {
+                        Prism.highlightAll();
+                        mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                    });
+                };
+
+                return {
+                    searchQuery,
+                    highlightedContent,
+                    handleSearch
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

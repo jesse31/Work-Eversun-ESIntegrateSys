@@ -516,6 +516,7 @@
     <Content Include="Views\ManpowerAllocation\UpdateEmployeeDetail.cshtml" />
     <Content Include="Views\ManpowerAllocation\AddEmployeeDetail.cshtml" />
     <Content Include="Views\ManpowerAllocation\Locked.cshtml" />
+    <Content Include="Views\MaterialGun\ScanRepair.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
