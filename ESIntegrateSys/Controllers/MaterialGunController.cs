@@ -354,6 +354,78 @@ namespace ESIntegrateSys.Controllers
         }
 
         /// <summary>
+        /// 掃碼維修頁面。
+        /// </summary>
+        /// <returns>掃碼維修檢視頁面</returns>
+        public ActionResult ScanRepair()
+        {
+            if (!Login_Authentication())
+            {
+                return RedirectToAction("Login", "Home");
+            }
+            return View("ScanRepair", "_MaterialLayout");
+        }
+
+        /// <summary>
+        /// 根據料槍編號查詢料槍基本資訊及最新未完修維修紀錄 (AJAX API)。
+        /// </summary>
+        /// <param name="barcode">掃入的料槍編號 (條碼)</param>
+        /// <returns>JSON 結果：{ success: bool, message: string, data: { repairSno, Eno, Sno, Trade, Size } }</returns>
+        [HttpPost]
+        public JsonResult GetGunByBarcode(string barcode)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(barcode))
+                {
+                    return Json(new { success = false, message = "請輸入料槍編號" });
+                }
+
+                // 標準化料槍編號（轉大寫、去空白等）
+                string normalizedBarcode = NormalizeMaterialGunSno(barcode);
+
+                // 第一步：查詢料槍是否存在於 ES_MaterialGunInfo
+                var gunInfo = db.ES_MaterialGunInfo
+                    .FirstOrDefault(x => x.MaterialGun_Sno == normalizedBarcode && !x.MaterialGunDiscard.Value);
+
+                if (gunInfo == null)
+                {
+                    return Json(new { success = false, message = $"查無料槍編號：{barcode}" });
+                }
+
+                // 第二步：查詢該料槍最新的未完修紀錄 (Chk=True)
+                var repairRecord = db.ES_MaterialGunRepair
+                    .Where(x => x.MaterialGun_Sno == normalizedBarcode && x.Chk == true)
+                    .OrderByDescending(x => x.RepairDate)
+                    .FirstOrDefault();
+
+                if (repairRecord == null)
+                {
+                    return Json(new { success = false, message = $"料槍 {barcode} 無待維修紀錄或已全部完修" });
+                }
+
+                // 第三步：回傳成功的 JSON 結果
+                return Json(new
+                {
+                    success = true,
+                    message = "查詢成功",
+                    data = new
+                    {
+                        repairSno = repairRecord.sno,
+                        Eno = gunInfo.MaterialGun_Eno,
+                        Sno = gunInfo.MaterialGun_Sno,
+                        Trade = gunInfo.MaterialGun_Trade,
+                        Size = gunInfo.MaterialGun_Size
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"伺服器錯誤：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
         /// 料槍基本資料查詢畫面。
         /// </summary>
         /// <param name="page">分頁頁碼</param>

@@ -109,6 +109,7 @@
 <div class="row">
     <div class="col-md-12 text-right">
         @Html.ActionLink("料槍送修", "MaterialGunForRepair", null, new { @class = "btn btn-danger" })
+        @Html.ActionLink("掃碼維修", "ScanRepair", null, new { @class = "btn btn-primary" })
     </div>
     @*<div class="col-md-6 text-right">
             @Html.ActionLink("料槍維修", "MaterialGunRepair", null, new { @class = "btn btn-success" })
@@ -179,6 +180,7 @@
             });
         }
 
+        // 料槍維修防呆
         $(document).on("click", ".repairLink", function (e) {
             e.preventDefault(); // 防止連結的默認行為
 

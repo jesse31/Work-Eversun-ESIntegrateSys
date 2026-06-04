@@ -1,0 +1,525 @@
+@{
+    ViewBag.Title = "掃碼維修";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title</title>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.31/select2-bootstrap.min.css" rel="stylesheet" />
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            background-color: #f5f5f5;
+        }
+        .scan-container {
+            max-width: 700px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-control:disabled, .form-control[readonly] {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+        .scan-input {
+            font-size: 18px;
+            padding: 15px;
+        }
+        .btn-group-bottom {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-group-bottom button {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .status-text {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .select2-container--bootstrap .select2-selection {
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        .select2-container--bootstrap.select2-container--focus .select2-selection {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+    </style>
+</head>
+<body>
+    <div class="scan-container">
+        <h2>掃碼維修</h2>
+        
+        <div id="app">
+            <form @submit.prevent="handleSubmit" class="form-horizontal">
+                @Html.AntiForgeryToken()
+                
+                <!-- 隱藏的維修紀錄 SNO -->
+                <input type="hidden" v-model="formData.repairSno" name="sno" />
+                
+                <!-- 掃碼/輸入框 (Enter 鍵觸發) -->
+                <div class="form-group">
+                    <label class="control-label col-md-3">料槍編號</label>
+                    <div class="col-md-9">
+                        <input 
+                            type="text" 
+                            v-model="scanInput"
+                            @keydown.enter="queryGun"
+                            :disabled="isScanned"
+                            class="form-control scan-input"
+                            placeholder="掃碼或輸入料槍編號，按 Enter"
+                            ref="scanInputRef"
+                            autocomplete="off"
+                        />
+                    </div>
+                </div>
+
+                <!-- 料槍基本資訊區域 (自動帶出，disabled) -->
+                <div v-if="isScanned" class="panel panel-info" style="margin-top: 20px;">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">料槍資訊</h3>
+                    </div>
+                    <div class="panel-body">
+                        <!-- 設備編號 -->
+                        <div class="form-group">
+                            <label class="control-label col-md-3">設備編號</label>
+                            <div class="col-md-9">
+                                <input 
+                                    type="text" 
+                                    class="form-control"
+                                    :value="gunInfo.Eno"
+                                    disabled="disabled"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- 料槍編號 -->
+                        <div class="form-group">
+                            <label class="control-label col-md-3">料槍編號</label>
+                            <div class="col-md-9">
+                                <input 
+                                    type="text" 
+                                    class="form-control"
+                                    :value="gunInfo.Sno"
+                                    disabled="disabled"
+                                    name="MaterialGun_Sno"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- 廠商 -->
+                        <div class="form-group">
+                            <label class="control-label col-md-3">廠商</label>
+                            <div class="col-md-9">
+                                <input 
+                                    type="text" 
+                                    class="form-control"
+                                    :value="gunInfo.Trade"
+                                    disabled="disabled"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- 型號 -->
+                        <div class="form-group">
+                            <label class="control-label col-md-3">型號</label>
+                            <div class="col-md-9">
+                                <input 
+                                    type="text" 
+                                    class="form-control"
+                                    :value="gunInfo.Size"
+                                    disabled="disabled"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 維修資訊區域 (查詢成功後 enabled) -->
+                <div v-if="isScanned" class="panel panel-warning" style="margin-top: 20px;">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">維修資訊</h3>
+                    </div>
+                    <div class="panel-body">
+                        <!-- 分類 -->
+                        <div class="form-group">
+                            <label class="control-label col-md-3">檢修不良分類</label>
+                            <div class="col-md-9">
+                                <select 
+                                    id="Classification"
+                                    v-model="formData.Classification"
+                                    name="Classification"
+                                    class="form-control"
+                                    ref="classificationRef"
+                                >
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 維修原因 -->
+                        <div class="form-group">
+                            <label class="control-label col-md-3">檢修不良原因</label>
+                            <div class="col-md-9">
+                                <select 
+                                    id="MaintenanceResult"
+                                    v-model="formData.MaintenanceResult"
+                                    name="MaintenanceResult"
+                                    class="form-control"
+                                    @change="handleMaintenanceResultChange"
+                                    ref="maintenanceResultRef"
+                                >
+                                </select>
+                                <input 
+                                    v-if="formData.MaintenanceResult === '99' || formData.MaintenanceResult === 99"
+                                    type="text" 
+                                    v-model="formData.Other"
+                                    name="Other"
+                                    class="form-control"
+                                    placeholder="請輸入其他原因"
+                                    style="margin-top: 10px;"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- 更換部品名稱 -->
+                        <div class="form-group">
+                            <label class="control-label col-md-3">更換部品名稱</label>
+                            <div class="col-md-9">
+                                <input 
+                                    type="text" 
+                                    v-model="formData.ChangeItemName"
+                                    name="ChangeItemName"
+                                    class="form-control"
+                                    autocomplete="off"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- 更換部品料號 -->
+                        <div class="form-group">
+                            <label class="control-label col-md-3">更換部品料號</label>
+                            <div class="col-md-9">
+                                <input 
+                                    type="text" 
+                                    v-model="formData.ChangeItemNo"
+                                    name="ChangeItemNo"
+                                    class="form-control"
+                                    autocomplete="off"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 按鈕組 -->
+                <div class="btn-group-bottom">
+                    <button v-if="!isScanned" type="button" @click="handleClear" class="btn btn-default">
+                        重新開始
+                    </button>
+                    <button v-if="isScanned" type="button" @click="handleClear" class="btn btn-default">
+                        掃下一筆
+                    </button>
+                    <button v-if="isScanned" type="submit" class="btn btn-success">
+                        儲存
+                    </button>
+                    <a href="@Url.Action("MaterialGunRepairView", "MaterialGun")" class="btn btn-default" style="padding: 12px; text-align: center;">
+                        返回主頁
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    scanInput: '',
+                    isScanned: false,
+                    gunInfo: {
+                        Eno: '',
+                        Sno: '',
+                        Trade: '',
+                        Size: ''
+                    },
+                    formData: {
+                        repairSno: '',
+                        Classification: '',
+                        MaintenanceResult: '',
+                        Other: '',
+                        ChangeItemName: '',
+                        ChangeItemNo: ''
+                    },
+                    classificationOptions: [],
+                    maintenanceResultOptions: [],
+                    isLoading: false
+                };
+            },
+            mounted() {
+                // 頁面載入時載入分類和維修原因下拉選項
+                this.loadDropdownOptions();
+                // 頁面載入時焦點自動設定在輸入框
+                this.$nextTick(() => {
+                    this.$refs.scanInputRef.focus();
+                });
+            },
+            methods: {
+                // 載入分類和維修原因下拉選項
+                loadDropdownOptions() {
+                    // 載入分類選項
+                    $.ajax({
+                        url: '@Url.Action("Classification", "MaterialGun")',
+                        type: 'GET',
+                        dataType: 'json',
+                        context: this,
+                        success: (data) => {
+                            this.classificationOptions = data || [];
+                            this.$nextTick(() => {
+                                $('#Classification').select2({
+                                    allowClear: true,
+                                    placeholder: '請選擇...',
+                                    theme: 'bootstrap'
+                                });
+                                $('#Classification').on('change', (e) => {
+                                    this.formData.Classification = $(e.target).val();
+                                });
+                            });
+                        }
+                    });
+
+                    // 載入維修原因選項
+                    $.ajax({
+                        url: '@Url.Action("MResult", "MaterialGun")',
+                        type: 'GET',
+                        dataType: 'json',
+                        context: this,
+                        success: (data) => {
+                            this.maintenanceResultOptions = data || [];
+                            this.$nextTick(() => {
+                                $('#MaintenanceResult').select2({
+                                    allowClear: true,
+                                    placeholder: '請選擇...',
+                                    theme: 'bootstrap'
+                                });
+                                $('#MaintenanceResult').on('change', (e) => {
+                                    this.formData.MaintenanceResult = $(e.target).val();
+                                    this.handleMaintenanceResultChange();
+                                });
+                            });
+                        }
+                    });
+                },
+                // 查詢料槍資訊
+                queryGun() {
+                    if (this.isLoading) return;
+                    if (!this.scanInput || this.scanInput.trim() === '') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '提示',
+                            text: '請輸入料槍編號',
+                            confirmButtonText: '確定'
+                        });
+                        return;
+                    }
+
+                    this.isLoading = true;
+                    $.ajax({
+                        url: '@Url.Action("GetGunByBarcode", "MaterialGun")',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: { barcode: this.scanInput },
+                        context: this,
+                        success: (response) => {
+                            if (response.success) {
+                                // 查詢成功，帶出料槍資訊
+                                this.gunInfo = {
+                                    Eno: response.data.Eno,
+                                    Sno: response.data.Sno,
+                                    Trade: response.data.Trade,
+                                    Size: response.data.Size
+                                };
+                                this.formData.repairSno = response.data.repairSno;
+                                this.isScanned = true;
+
+                                // 焦點移到分類下拉
+                                this.$nextTick(() => {
+                                    $('#Classification').focus();
+                                });
+                            } else {
+                                // 查詢失敗
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '查詢失敗',
+                                    text: response.message,
+                                    confirmButtonText: '確定'
+                                }).then(() => {
+                                    // 清空輸入框，焦點回輸入框
+                                    this.scanInput = '';
+                                    this.$nextTick(() => {
+                                        this.$refs.scanInputRef.focus();
+                                    });
+                                });
+                            }
+                        },
+                        error: (xhr, status, error) => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '伺服器錯誤',
+                                text: `${status}: ${error}`,
+                                confirmButtonText: '確定'
+                            }).then(() => {
+                                this.scanInput = '';
+                                this.$nextTick(() => {
+                                    this.$refs.scanInputRef.focus();
+                                });
+                            });
+                        },
+                        complete: () => {
+                            this.isLoading = false;
+                        }
+                    });
+                },
+                // 清空表單並重置狀態
+                handleClear() {
+                    this.scanInput = '';
+                    this.isScanned = false;
+                    this.gunInfo = { Eno: '', Sno: '', Trade: '', Size: '' };
+                    this.formData = {
+                        repairSno: '',
+                        Classification: '',
+                        MaintenanceResult: '',
+                        Other: '',
+                        ChangeItemName: '',
+                        ChangeItemNo: ''
+                    };
+                    $('#Classification').val(null).trigger('change');
+                    $('#MaintenanceResult').val(null).trigger('change');
+
+                    this.$nextTick(() => {
+                        this.$refs.scanInputRef.focus();
+                    });
+                },
+                // 維修原因改變事件
+                handleMaintenanceResultChange() {
+                    // 如果維修原因是 99（其他），則顯示輸入框
+                    // Vue 的 v-if 會自動處理顯示隱藏邏輯
+                },
+                // 表單提交
+                handleSubmit() {
+                    // 驗證必填欄位
+                    if (!this.formData.Classification || this.formData.Classification === '') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '提示',
+                            text: '尚未選擇檢修不良分類',
+                            confirmButtonText: '確定'
+                        });
+                        return;
+                    }
+
+                    if (!this.formData.MaintenanceResult || this.formData.MaintenanceResult === '') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '提示',
+                            text: '尚未選擇檢修不良原因',
+                            confirmButtonText: '確定'
+                        });
+                        return;
+                    }
+
+                    if ((this.formData.MaintenanceResult === '99' || this.formData.MaintenanceResult === 99) && 
+                        (!this.formData.Other || this.formData.Other.trim() === '')) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '提示',
+                            text: '尚未輸入其他原因',
+                            confirmButtonText: '確定'
+                        });
+                        return;
+                    }
+
+                    // 提交表單至既有的 MaterialGunRepair POST Action
+                    const form = $('form')[0];
+                    const formData = new FormData(form);
+                    
+                    $.ajax({
+                        url: '@Url.Action("MaterialGunRepair", "MaterialGun")',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        context: this,
+                        success: () => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '儲存成功',
+                                text: '維修記錄已儲存，1.5 秒後返回主頁...',
+                                confirmButtonText: '確定',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
+                            }).then(() => {
+                                window.location.href = '@Url.Action("MaterialGunRepairView", "MaterialGun")';
+                            });
+                        },
+                        error: (xhr, status, error) => {
+                            let errorMsg = error;
+                            try {
+                                const responseText = xhr.responseText;
+                                if (responseText.includes('script') || responseText.includes('html')) {
+                                    errorMsg = '儲存失敗，請聯絡系統管理員';
+                                } else {
+                                    errorMsg = responseText || error;
+                                }
+                            } catch (e) {
+                                errorMsg = error;
+                            }
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: '儲存失敗',
+                                text: errorMsg,
+                                confirmButtonText: '確定'
+                            });
+                        }
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
