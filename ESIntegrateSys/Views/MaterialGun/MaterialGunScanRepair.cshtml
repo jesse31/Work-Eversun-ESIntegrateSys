@@ -299,9 +299,10 @@
                                 this.formData.repairSno = response.data.repairSno;
                                 this.isScanned = true;
 
-                                // 焦點移到分類下拉
+                                // 焦點不自動進入下拉，讓使用者自行填寫（避免觸發意外事件）
+                                // 如需焦點，改為自動進入掃碼框
                                 this.$nextTick(() => {
-                                    $('#Classification').focus();
+                                    this.$refs.scanInputRef.focus();
                                 });
                             } else if (response.status === 'all_completed') {
                                 // 料槍已全部完修 - 彈警告，不帶出表單
