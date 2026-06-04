@@ -299,10 +299,13 @@
                                 this.formData.repairSno = response.data.repairSno;
                                 this.isScanned = true;
 
-                                // 焦點不自動進入下拉，讓使用者自行填寫（避免觸發意外事件）
-                                // 如需焦點，改為自動進入掃碼框
+                                // 焦點進入 Classification 下拉框（scanInputRef 被禁用，無法聚焦）
+                                // 這樣能保持表單顯示狀態，避免焦點設定失敗導致狀態重置
                                 this.$nextTick(() => {
-                                    this.$refs.scanInputRef.focus();
+                                    const classificationEl = document.getElementById('Classification');
+                                    if (classificationEl) {
+                                        classificationEl.focus();
+                                    }
                                 });
                             } else if (response.status === 'all_completed') {
                                 // 料槍已全部完修 - 彈警告，不帶出表單
