@@ -410,7 +410,7 @@ namespace ESIntegrateSys.Controllers
                     // 判斷是否存在任何維修紀錄
                     var anyRecord = db.ES_MaterialGunRepair
                         .FirstOrDefault(x => x.MaterialGun_Sno == normalizedBarcode);
-                    
+
                     if (anyRecord != null)
                     {
                         // 存在維修紀錄但全部已完修（Chk=False）
