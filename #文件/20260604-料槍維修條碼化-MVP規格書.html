@@ -363,7 +363,7 @@
             <h2>3. 需求總覽</h2>
             <h3>3.1 MVP 必須完成的功能</h3>
             <ul>
-                <li>新增「掃碼維修」頁面 (<code>ScanRepair.cshtml</code>)。</li>
+                <li>新增「掃碼維修」頁面 (<code>MaterialGunScanRepair.cshtml</code>)。</li>
                 <li>條碼掃描後端驗證 API (<code>GetGunByBarcode</code>)。</li>
                 <li>掃描成功自動帶出基礎資料並解鎖編輯欄位。</li>
                 <li>統一錯誤提示 (SweetAlert2)。</li>
@@ -412,7 +412,7 @@
 
         <div class="content-card" id="section-5">
             <h2>5. 功能需求詳細描述</h2>
-            <h3>5.1 F1: 掃碼維修頁面 (<code>ScanRepair.cshtml</code>)</h3>
+            <h3>5.1 F1: 掃碼維修頁面 (<code>MaterialGunScanRepair.cshtml</code>)</h3>
             <ul>
                 <li><strong>框架</strong>：使用 Vue.js 3 CDN (<code>createApp</code>) 管理狀態。</li>
                 <li><strong>行為</strong>：
@@ -452,8 +452,8 @@
             <h3>5.4 F5 & F6: 儲存與主頁入口</h3>
             <ul>
                 <li><strong>入口</strong>：在 <code>MaterialGunRepairView.cshtml</code> 的上方工具列加入 <code>[ 掃碼維修 ]</code>
-                    按鈕，連結至 <code>ScanRepair</code>。</li>
-                <li><strong>儲存</strong>：在 <code>ScanRepair.cshtml</code> 點擊儲存，呼叫
+                    按鈕，連結至 <code>MaterialGunScanRepair</code>。</li>
+                <li><strong>儲存</strong>：在 <code>MaterialGunScanRepair.cshtml</code> 點擊儲存，呼叫
                     <code>POST /MaterialGun/ScanRepairSave</code>，成功後 <code>Swal.fire</code> 提示並於 1.5 秒後跳轉回
                     <code>MaterialGunRepairView</code> 主頁。</li>
             </ul>
@@ -474,7 +474,7 @@
             <div class="mermaid">
                 sequenceDiagram
                 participant U as 操作員
-                participant V as ScanRepair (Vue 3)
+                participant V as MaterialGunScanRepair (Vue 3)
                 participant C as Controller (API)
 
                 U->>V: 進入頁面
@@ -571,7 +571,7 @@
                 <li><strong>環境準備</strong>：配置好 USB/藍牙條碼掃描槍 (設定為後綴帶 Enter)。</li>
                 <li><strong>測試案例 1 (正常掃碼)</strong>：
                     <ul>
-                        <li>進入 <code>/MaterialGun/ScanRepair</code>。</li>
+                        <li>進入 <code>/MaterialGun/MaterialGunScanRepair</code>。</li>
                         <li>掃入存在且可維修的條碼。</li>
                         <li>預期：無錯誤彈窗，欄位解鎖並帶出正確資料。</li>
                     </ul>
@@ -652,3 +652,4 @@
 </body>
 
 </html>
+
