@@ -94,7 +94,7 @@
                         <input 
                             type="text" 
                             v-model="scanInput"
-                            @@keydown.enter="queryGun"
+                            @@keydown.enter.prevent="queryGun"
                             :disabled="isScanned"
                             class="form-control scan-input"
                             placeholder="掃碼或輸入料槍編號，按 Enter"
