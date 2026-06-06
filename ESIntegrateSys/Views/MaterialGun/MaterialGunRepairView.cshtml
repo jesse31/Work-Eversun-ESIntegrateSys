@@ -148,7 +148,8 @@
                 <td class="change-item-no word-break limited-width">@item.ChangeItemNo</td>
                 <td class="marks word-break limited-width">@item.Mark</td>
                 <td>
-                    @if (@ViewBag.RoleId != "V" && @ViewBag.RoleId != "FR")
+                    @if ((@ViewBag.RoleId != "V" && @ViewBag.RoleId != "FR" && !item.Chk) || 
+                         (@ViewBag.RoleId != "V" && @ViewBag.RoleId != "FR" && item.Chk && @ViewBag.IsWhitelisted))
                         {
                             @Html.ActionLink("料槍維修", "MaterialGunRepair", new { sno = item.Sno }, new { @class = "repairLink" })
                         }
@@ -158,46 +159,59 @@
         }
 </table>
 
-<script>
-    $(document).ready(function () {
-        // 檢查後端是否有傳來訊息 (TempData)
-        var serverMessage = '@Html.Raw(TempData["message"] ?? "")';
-        var showSuccess = '@(TempData["ShowSuccess"] ?? "false")';
-
-        if (showSuccess === 'True' || showSuccess === 'true') {
-            Swal.fire({
-                icon: 'success',
-                title: '送修開單成功',
-                text: '資料已成功儲存',
-                timer: 2500,
-                showConfirmButton: false
-            });
-        } else if (serverMessage) {
-            Swal.fire({
-                icon: 'info',
-                title: '訊息',
-                text: serverMessage
-            });
-        }
-
-        // 料槍維修防呆
-        $(document).on("click", ".repairLink", function (e) {
-            e.preventDefault(); // 防止連結的默認行為
-
-            var chk = $(this).closest("tr").data("chk"); // 取得 data-chk 屬性值
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+            // 從 ViewBag 取得白名單狀態
+            var isWhitelisted = @(ViewBag.IsWhitelisted ? "true" : "false");
             
-            // 轉型為字串比較，確保相容性
-            if (String(chk) === "True") {                
+            // 檢查後端是否有傳來訊息 (TempData)
+            var serverMessage = '@Html.Raw(TempData["message"] ?? "")';
+            var showSuccess = '@(TempData["ShowSuccess"] ?? "false")';
+
+            if (showSuccess === 'True' || showSuccess === 'true') {
                 Swal.fire({
-                    icon: 'warning',
-                    title: '注意',
-                    text: '料槍已維修，不可重複維修！'
+                    icon: 'success',
+                    title: '送修開單成功',
+                    text: '資料已成功儲存',
+                    timer: 2500,
+                    showConfirmButton: false
                 });
-            } else {
-                // 進行料槍維修操作，這裡可以導向維修頁面或執行其他操作
-                window.location.href = this.href;
+            } else if (serverMessage) {
+                Swal.fire({
+                    icon: 'info',
+                    title: '訊息',
+                    text: serverMessage
+                });
             }
+
+            // 料槍維修防呆
+            $(document).on("click", ".repairLink", function (e) {
+                e.preventDefault(); // 防止連結的默認行為
+
+                var chk = $(this).closest("tr").data("chk"); // 取得 data-chk 屬性值
+                
+                // 轉型為字串比較，確保相容性
+                if (String(chk) === "True" || chk === true) {
+                    // 已完成維修（Chk=1），檢查白名單
+                    if (!isWhitelisted) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '注意',
+                            text: '此料槍已完成維修，無法修改。無權進行此操作。'
+                        });
+                    } else {
+                        // 白名單人員，允許進入編輯頁面
+                        window.location.href = this.href;
+                    }
+                } else {
+                    // 未維修料槍，允許進行料槍維修操作
+                    window.location.href = this.href;
+                }
+            });
         });
-    });
-</script>
+    </script>
+}
+
 

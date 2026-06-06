@@ -5,11 +5,18 @@
 }
 <h2>料槍維修作業</h2>
 
-<head>
-    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
-    <script src="~/Scripts/jquery-3.4.1.js"></script>
-    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+@section scripts {
     <script>
+        // 動態切換 Other 欄位可見性
+        function toggleOtherField() {
+            var selectedValue = $('#MaintenanceResult').val();
+            if (parseInt(selectedValue) === 99) {
+                $('#Other').show();
+            } else {
+                $('#Other').hide();
+            }
+        }
+
         $(document).ready(function () {
             var selectedClassification = '@ViewBag.Classic';
             var selectedMaintenanceResult = '@ViewBag.Results';
@@ -56,6 +63,8 @@
                     // 设置之前选中的值
                     if (selectedMaintenanceResult) {
                         $('#MaintenanceResult').val(selectedMaintenanceResult);
+                        // 設定後立即執行可見性邏輯
+                        toggleOtherField();
                     }
                 },
                 error: function (xhr, status, error) {
@@ -66,7 +75,7 @@
                 }
             });
 
-            $("#BtnSubmit").click(function (event) {                
+            $("#BtnSubmit").click(function (event) {
                 var classification = $("#Classification").val();
                 var result = $("#MaintenanceResult").val(); // Corrected here
                 var other = $("#Other").val().trim();
@@ -81,16 +90,21 @@
                     alert("尚未選擇檢修不良原因");
                     event.preventDefault(); // Prevent form submission
                     return false;
-                }
-                else if (result === "99" && other === "") {
+                } else if (result === "99" && other === "") {
                     alert("尚未輸入原因");
                     event.preventDefault(); // Prevent form submission
                     return false;
                 }
             });
+
+            // 监听下拉列表的变化事件
+            $('#MaintenanceResult').change(function () {
+                toggleOtherField();
+            });
         });
     </script>
-</head>
+}
+
 
 @using (Html.BeginForm())
 {
@@ -106,7 +120,8 @@
                 @* 將料槍編號更改為隱藏欄位 *@
                 <input type="hidden" id="MaterialGun_Eno" name="MaterialGun_Eno" value="@ViewBag.Eno" />
                 @* 顯示料槍編號的值 *@
-                <input class="form-control" id="MaterialGun_Eno" name="MaterialGun_Eno" disabled="disabled" value="@ViewBag.Eno" />
+                <input class="form-control" id="MaterialGun_Eno" name="MaterialGun_Eno" disabled="disabled"
+                       value="@ViewBag.Eno" />
             </div>
         </div>
         <div class="form-group">
@@ -121,19 +136,22 @@
             <div class="col-md-10">
                 <select id="MaintenanceResult" name="MaintenanceResult" class="form-control">
                 </select>
-                <input class="form-control" id="Other" name="Other" autocomplete="off" style="display:none;" placeholder="請輸入其他原因" />
+                <input class="form-control" id="Other" name="Other" autocomplete="off" style="display:none;"
+                       placeholder="請輸入其他原因" value="@ViewBag.Other" />
             </div>
         </div>
         <div class="form-group">
             <label class="control-label col-md-2">更換部品名稱</label>
             <div class="col-md-10">
-                <input class="form-control" id="ChangeItemName" name="ChangeItemName" autocomplete="off" />
+                <textarea class="form-control" id="ChangeItemName" name="ChangeItemName" autocomplete="off" rows="2"
+                          style="resize: vertical;">@ViewBag.ChangeItemName</textarea>
             </div>
         </div>
         <div class="form-group">
             <label class="control-label col-md-2">更換部品料號</label>
             <div class="col-md-10">
-                <input class="form-control" id="ChangeItemNo" name="ChangeItemNo" autocomplete="off" />
+                <textarea class="form-control" id="ChangeItemNo" name="ChangeItemNo" autocomplete="off" rows="2"
+                          style="resize: vertical;">@ViewBag.ChangeItemNo</textarea>
             </div>
         </div>
         <div class="form-group">
@@ -141,24 +159,10 @@
                 <input type="submit" value="維修完成" class="btn btn-success" id="BtnSubmit" name="BtnSubmit" />
 
                 <input type="submit" value="等待材料" id="b_Chk" name="b_Chk" class="btn btn-danger" />
-            </div>            
+            </div>
         </div>
     </div>
 }
 <div>
     <a href="javascript:history.go(-1);" class="btn btn-default">返回上一頁</a>
 </div>
-
-<script>
-    $(document).ready(function () {       
-        // 监听下拉列表的变化事件
-        $('#MaintenanceResult').change(function () {
-            var selectedValue = $(this).val();
-            if (selectedValue == 99) { // 如果选择的是“其他”
-                $('#Other').show(); // 显示输入框
-            } else {
-                $('#Other').hide(); // 隐藏输入框
-            }
-        });
-    });
-</script>

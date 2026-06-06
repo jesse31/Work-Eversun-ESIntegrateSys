@@ -4,12 +4,17 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Web.Mvc;
+using ESIntegrateSys.Helpers;
 using ESIntegrateSys.Models;
 using ESIntegrateSys.Models_MGun;
 using ESIntegrateSys.ViewModels;
+using NPOI.SS.Formula.Functions;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using PagedList;
+using Serilog;
+using Log = Serilog.Log;
+
 
 namespace ESIntegrateSys.Controllers
 {
@@ -116,63 +121,99 @@ namespace ESIntegrateSys.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult CreateMaintainWork(bool isTrue, string itemgun)
         {
-            // 強制轉大寫並去除空白，確保資料一致性
-            itemgun = NormalizeMaterialGunSno(itemgun);
-
-            // 取得目前使用者的ID
-            string uId = (Session["Member"] as MemberViewModels).fUserId;
-            string lockKey = $"{itemgun}_{uId}";
-
-            // ⚡ 效能關鍵:使用 lock 確保執行緒安全,同時進行時間窗口檢查
-            lock (_maintainLock)
+            try
             {
-                // 檢查 5 秒內是否有相同提交 (Dictionary 查詢,O(1) 時間複雜度)
-                if (_recentSubmissions.TryGetValue(lockKey, out DateTime lastSubmitTime))
+                // 強制轉大寫並去除空白，確保資料一致性
+                itemgun = NormalizeMaterialGunSno(itemgun);
+
+                // 安全地取得目前使用者的 ID
+                var member = Session["Member"] as MemberViewModels;
+                if (member == null)
                 {
-                    var timeDiff = (DateTime.Now - lastSubmitTime).TotalSeconds;
-                    if (timeDiff < 5)
+                    Log.Warning("Session[\"Member\"] is null in CreateMaintainWork - user not authenticated");
+                    return RedirectToAction("Login", "Home");
+                }
+                string uId = member.fUserId;
+                string userDept = member.UDeptNo;
+                string lockKey = $"{itemgun}_{uId}";
+
+                // ⚡ 效能關鍵:使用 lock 確保執行緒安全,同時進行時間窗口檢查
+                lock (_maintainLock)
+                {
+                    // 檢查 5 秒內是否有相同提交 (Dictionary 查詢,O(1) 時間複雜度)
+                    if (_recentSubmissions.TryGetValue(lockKey, out DateTime lastSubmitTime))
                     {
-                        TempData["message"] = $"請勿在 5 秒內重複提交! (距離上次提交僅 {timeDiff:F1} 秒)";
-                        return RedirectToAction("CreateMaintainWork");
+                        var timeDiff = (DateTime.Now - lastSubmitTime).TotalSeconds;
+                        if (timeDiff < 5)
+                        {
+                            TempData["message"] = $"請勿在 5 秒內重複提交! (距離上次提交僅 {timeDiff:F1} 秒)";
+                            return RedirectToAction("CreateMaintainWork");
+                        }
+                    }
+
+                    // 記錄本次提交時間
+                    _recentSubmissions[lockKey] = DateTime.Now;
+
+                    // ⚡ 效能優化:每 100 次提交才清理一次過期記錄
+                    if (_recentSubmissions.Count % 100 == 0)
+                    {
+                        CleanupExpiredRecords();
                     }
                 }
 
-                // 記錄本次提交時間
-                _recentSubmissions[lockKey] = DateTime.Now;
-
-                // ⚡ 效能優化:每 100 次提交才清理一次過期記錄
-                if (_recentSubmissions.Count % 100 == 0)
+                // 檢查該料槍本月是否已保養 (防止同月重複 Key 入)
+                int currentYear = DateTime.Now.Year;
+                int currentMonth = DateTime.Now.Month;
+                bool isDuplicate = db.ES_MaintainWork.Any(x => x.MaterialGun_Sno == itemgun &&
+                                                              x.MaintainTime != null &&
+                                                              x.MaintainTime.Value.Year == currentYear &&
+                                                              x.MaintainTime.Value.Month == currentMonth);
+                if (isDuplicate)
                 {
-                    CleanupExpiredRecords();
+                    TempData["message"] = $"料槍 {itemgun} 本月 ({currentYear}/{currentMonth}) 已完成保養，請勿重複輸入！";
+                    return RedirectToAction("CreateMaintainWork");
                 }
-            }
 
-            // 檢查該料槍本月是否已保養 (防止同月重複 Key 入)
-            int currentYear = DateTime.Now.Year;
-            int currentMonth = DateTime.Now.Month;
-            bool isDuplicate = db.ES_MaintainWork.Any(x => x.MaterialGun_Sno == itemgun &&
-                                                          x.MaintainTime != null &&
-                                                          x.MaintainTime.Value.Year == currentYear &&
-                                                          x.MaintainTime.Value.Month == currentMonth);
-            if (isDuplicate)
+                // 交易保護：確保 MaintainWork 操作的原子性
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        // 建立料槍保養物件，傳入資料庫操作物件 (在 lock 外執行,減少鎖定時間)
+                        MaintainGun maintainGun = new MaintainGun(db);
+                        // 執行料槍保養開單作業
+                        bool isSaved = maintainGun.MaintainWork(itemgun, uId);
+
+                        if (!isSaved)
+                        {
+                            transaction.Rollback();
+                            TempData["message"] = $"新增保養失敗！請確認料槍編號 [{itemgun}] 是否正確，或該料槍是否已報廢。";
+                            return RedirectToAction("CreateMaintainWork");
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch (Exception txEx)
+                    {
+                        transaction.Rollback();
+                        throw txEx;
+                    }
+                }
+
+                // 保養完成後導向料槍保養查詢頁面，並帶入參數以觸發篩選與提示
+                return RedirectToAction("MaterialGunMaintain", new { itemgun = itemgun, type = "new" });
+            }
+            catch (Exception ex)
             {
-                TempData["message"] = $"料槍 {itemgun} 本月 ({currentYear}/{currentMonth}) 已完成保養，請勿重複輸入！";
+                Log.ForContext("UserId", (Session["Member"] as MemberViewModels)?.fUserId ?? "Unknown")
+                   .ForContext("UDeptNo", (Session["Member"] as MemberViewModels)?.UDeptNo ?? "Unknown")
+                   .ForContext("MaterialGunSno", itemgun)
+                   .ForContext("Operation", "CreateMaintainWork")
+                   .Error(ex, "CreateMaintainWork failed for material gun: {MaterialGunSno}", itemgun);
+
+                TempData["message"] = "系統處理發生錯誤，請聯繫管理員";
                 return RedirectToAction("CreateMaintainWork");
             }
-
-            // 建立料槍保養物件，傳入資料庫操作物件 (在 lock 外執行,減少鎖定時間)
-            MaintainGun maintainGun = new MaintainGun(db);
-            // 執行料槍保養開單作業
-            bool isSaved = maintainGun.MaintainWork(itemgun, uId);
-
-            if (!isSaved)
-            {
-                TempData["message"] = $"新增保養失敗！請確認料槍編號 [{itemgun}] 是否正確，或該料槍是否已報廢。";
-                return RedirectToAction("CreateMaintainWork");
-            }
-
-            // 保養完成後導向料槍保養查詢頁面，並帶入參數以觸發篩選與提示
-            return RedirectToAction("MaterialGunMaintain", new { itemgun = itemgun, type = "new" });
         }
 
         /// <summary>
@@ -183,33 +224,44 @@ namespace ESIntegrateSys.Controllers
         [HttpPost]
         public JsonResult CheckMaintainStatus(string itemgun)
         {
-            if (string.IsNullOrWhiteSpace(itemgun))
+            try
             {
+                if (string.IsNullOrWhiteSpace(itemgun))
+                {
+                    return Json(new { isDuplicate = false });
+                }
+
+                // 強制轉大寫並去除空白，確保資料一致性
+                itemgun = NormalizeMaterialGunSno(itemgun);
+
+
+                int currentYear = DateTime.Now.Year;
+                int currentMonth = DateTime.Now.Month;
+
+                // 檢查本月是否已有保養紀錄
+                bool isDuplicate = db.ES_MaintainWork.Any(x => x.MaterialGun_Sno == itemgun &&
+                                                              x.MaintainTime != null &&
+                                                              x.MaintainTime.Value.Year == currentYear &&
+                                                              x.MaintainTime.Value.Month == currentMonth);
+
+                if (isDuplicate)
+                {
+                    return Json(new {
+                        isDuplicate = true,
+                        message = $"料槍 {itemgun} 本月 ({currentYear}/{currentMonth}) 已完成保養，請勿重複輸入！"
+                    });
+                }
+
                 return Json(new { isDuplicate = false });
             }
-
-            // 強制轉大寫並去除空白，確保資料一致性
-            itemgun = NormalizeMaterialGunSno(itemgun);
-
-
-            int currentYear = DateTime.Now.Year;
-            int currentMonth = DateTime.Now.Month;
-
-            // 檢查本月是否已有保養紀錄
-            bool isDuplicate = db.ES_MaintainWork.Any(x => x.MaterialGun_Sno == itemgun &&
-                                                          x.MaintainTime != null &&
-                                                          x.MaintainTime.Value.Year == currentYear &&
-                                                          x.MaintainTime.Value.Month == currentMonth);
-
-            if (isDuplicate)
+            catch (Exception ex)
             {
-                return Json(new {
-                    isDuplicate = true,
-                    message = $"料槍 {itemgun} 本月 ({currentYear}/{currentMonth}) 已完成保養，請勿重複輸入！"
-                });
-            }
+                Log.ForContext("MaterialGunSno", itemgun)
+                   .ForContext("Operation", "CheckMaintainStatus")
+                   .Error(ex, "CheckMaintainStatus failed for material gun: {MaterialGunSno}", itemgun);
 
-            return Json(new { isDuplicate = false });
+                return Json(new { isDuplicate = false, message = "系統處理發生錯誤，請聯繫管理員" });
+            }
         }
 
         /// <summary>
@@ -242,6 +294,14 @@ namespace ESIntegrateSys.Controllers
                 // 若未登入則導向登入頁面
                 return RedirectToAction("Login", "Home");
             }
+
+            // 檢查使用者是否在料槍維修白名單中
+            MemberViewModels currentMember = Session["Member"] as MemberViewModels;
+            string userId = currentMember?.fUserId ?? string.Empty;
+            string userDept = currentMember?.UDeptNo ?? string.Empty;
+            bool isWhitelisted = IsRepairWhitelisted(userId, userDept);
+            ViewBag.IsWhitelisted = isWhitelisted;
+
             // 設定目前頁碼，若小於 1 則設為 1
             int currentPage = page < 1 ? 1 : page;
             // 建立 RepairGun 物件，並傳入資料庫操作物件
@@ -277,33 +337,68 @@ namespace ESIntegrateSys.Controllers
         /// <param name="Mark">備註</param>
         /// <returns>導向維修主畫面或顯示錯誤訊息</returns>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult MaterialGunForRepair(string uId, string MaterialGun_Sno, int BadDescription, string Mark)
         {
-            // 強制轉大寫並去除空白，確保資料一致性
-            MaterialGun_Sno = NormalizeMaterialGunSno(MaterialGun_Sno);
-
-            // 取得目前使用者的ID
-            string Id = (Session["Member"] as MemberViewModels).fUserId;
-            // 檢查是否有尚未維修的料槍資料
-            bool foundData = db.ES_MaterialGunRepair.Any(o => o.MaterialGun_Sno == MaterialGun_Sno && o.MaintenanceResult == null);
-            if (foundData)
+            try
             {
-                // 若有尚未維修的資料，顯示錯誤訊息並回到送修開單畫面
-                TempData["message"] = "料槍尚未維修，請勿重複開單！";
-                return View("MaterialGunForRepair", "_MaterialLayout");
+                // 強制轉大寫並去除空白，確保資料一致性
+                MaterialGun_Sno = NormalizeMaterialGunSno(MaterialGun_Sno);
+
+                // 安全地取得目前使用者的 ID
+                var member = Session["Member"] as MemberViewModels;
+                if (member == null)
+                {
+                    Log.Warning("Session[\"Member\"] is null in MaterialGunForRepair - user not authenticated");
+                    return RedirectToAction("Login", "Home");
+                }
+                string Id = member.fUserId;
+                string userDept = member.UDeptNo;
+
+                // 檢查是否有尚未維修的料槍資料
+                bool foundData = db.ES_MaterialGunRepair.Any(o => o.MaterialGun_Sno == MaterialGun_Sno && o.MaintenanceResult == null);
+                if (foundData)
+                {
+                    // 若有尚未維修的資料，顯示錯誤訊息並回到送修開單畫面
+                    TempData["message"] = "料槍尚未維修，請勿重複開單！";
+                    return View("MaterialGunForRepair", "_MaterialLayout");
+                }
+
+                // 交易保護：確保 ForRepairWork 操作的原子性
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        // 建立 RepairGun 物件並執行送修作業
+                        RepairGun repair = new RepairGun(db);
+                        // 執行送修作業
+                        repair.ForRepairWork(Id, MaterialGun_Sno, BadDescription, Mark);
+                        transaction.Commit();
+
+                        // 設定成功標記 (傳遞給 View 顯示 SweetAlert2)
+                        TempData["ShowSuccess"] = true;
+
+                        // 送修完成後導向維修主畫面
+                        return RedirectToAction("MaterialGunRepairView");
+                    }
+                    catch (Exception txEx)
+                    {
+                        transaction.Rollback();
+                        throw txEx;
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // 若無重複開單，建立 RepairGun 物件並執行送修作業
-                RepairGun repair = new RepairGun(db);
-                // 執行送修作業
-                repair.ForRepairWork(Id, MaterialGun_Sno, BadDescription, Mark);
+                Log.ForContext("UserId", (Session["Member"] as MemberViewModels)?.fUserId ?? "Unknown")
+                   .ForContext("UDeptNo", (Session["Member"] as MemberViewModels)?.UDeptNo ?? "Unknown")
+                   .ForContext("MaterialGunSno", MaterialGun_Sno)
+                   .ForContext("BadDescription", BadDescription)
+                   .ForContext("Operation", "MaterialGunForRepair")
+                   .Error(ex, "MaterialGunForRepair failed for material gun: {MaterialGunSno}", MaterialGun_Sno);
 
-                // 設定成功標記 (傳遞給 View 顯示 SweetAlert2)
-                TempData["ShowSuccess"] = true;
-
-                // 送修完成後導向維修主畫面
-                return RedirectToAction("MaterialGunRepairView");
+                TempData["message"] = "系統處理發生錯誤，請聯繫管理員";
+                return View("MaterialGunForRepair", "_MaterialLayout");
             }
         }
 
@@ -320,14 +415,89 @@ namespace ESIntegrateSys.Controllers
                 // 若未登入則導向登入頁面
                 return RedirectToAction("Login", "Home");
             }
+
             // 依據維修單號取得料槍維修資料
-            var result = db.ES_MaterialGunRepair.Find(sno);
+            var repairRecord = db.ES_MaterialGunRepair.Find(sno);
+
+            // 取得當前使用者資訊
+            MemberViewModels currentMember = Session["Member"] as MemberViewModels;
+            string userId = currentMember?.fUserId ?? "Unknown";
+            string userDept = currentMember?.UDeptNo ?? "Unknown";
+
+            // 檢查維修記錄是否存在
+            if (repairRecord == null)
+            {
+                TempData["message"] = "維修記錄不存在";
+                return RedirectToAction("MaterialGunRepairView", new { page = 1 });
+            }
+
+            string materialGunSno = repairRecord.MaterialGun_Sno ?? "Unknown";
+
+            // 【檢查順序 1】權限檢查：若維修已完成 (Chk=1)，檢查白名單
+            if (repairRecord.Chk == true)
+            {
+                (bool isWhitelisted, string authReason) = IsRepairWhitelistedWithReason(userId, userDept);
+                if (!isWhitelisted)
+                {
+                    // 非白名單使用者無權進入已完成維修記錄
+                    Log.ForContext("UserId", userId)
+                       .ForContext("UDeptNo", userDept)
+                       .ForContext("MaterialGunSno", materialGunSno)
+                       .ForContext("Sno", sno)
+                       .Warning("User {UserId} (Dept: {UDeptNo}) denied access to repair record {Sno}: {AuthorizationReason}", userId, userDept, sno, authReason);
+
+                    TempData["message"] = "此料槍已完成維修，無權修改";
+                    return RedirectToAction("MaterialGunRepairView", new { page = 1 });
+                }
+            }
+
+            // 【檢查順序 2】報廢檢查：若料槍已報廢，擋下存取
+            // 從 ES_MaterialGunInfo 取得料槍的報廢狀態（早期架構，查槍狀態要去槍表）
+            var gunInfo = db.ES_MaterialGunInfo
+                .FirstOrDefault(x => x.MaterialGun_Sno == repairRecord.MaterialGun_Sno);
+            
+            if (gunInfo == null)
+            {
+                Log.ForContext("UserId", userId)
+                   .ForContext("UDeptNo", userDept)
+                   .ForContext("MaterialGunSno", materialGunSno)
+                   .ForContext("Sno", sno)
+                   .Warning("Access denied to repair record {Sno}: gun info not found", sno);
+
+                TempData["message"] = $"查無料槍編號：{materialGunSno}";
+                return RedirectToAction("MaterialGunRepairView", new { page = 1 });
+            }
+
+            if (gunInfo.MaterialGunDiscard == true)
+            {
+                Log.ForContext("UserId", userId)
+                   .ForContext("UDeptNo", userDept)
+                   .ForContext("MaterialGunSno", materialGunSno)
+                   .ForContext("Sno", sno)
+                   .Warning("Access denied to repair record {Sno}: gun is discarded", sno);
+
+                TempData["message"] = "此料槍已報廢，無法編輯";
+                return RedirectToAction("MaterialGunRepairView", new { page = 1 });
+            }
+
+            // 所有檢查通過，記錄成功進入的日誌
+            Log.ForContext("UserId", userId)
+               .ForContext("UDeptNo", userDept)
+               .ForContext("MaterialGunSno", materialGunSno)
+               .Information("User {UserId} (Dept: {UDeptNo}) accessed repair record for MaterialGun Sno {Sno}", userId, userDept, materialGunSno);
+
             // 將料槍編號存入 ViewBag
-            ViewBag.Eno = result.MaterialGun_Sno;
+            ViewBag.Eno = repairRecord.MaterialGun_Sno;
             // 將分類代碼存入 ViewBag
-            ViewBag.Classic = result.Classification;
+            ViewBag.Classic = repairRecord.Classification;
             // 將維修結果代碼存入 ViewBag
-            ViewBag.Results = result.MaintenanceResult;
+            ViewBag.Results = repairRecord.MaintenanceResult;
+            // 將其他原因存入 ViewBag
+            ViewBag.Other = repairRecord.Other;
+            // 將更換部品名稱存入 ViewBag
+            ViewBag.ChangeItemName = repairRecord.ChangeItemName;
+            // 將更換部品料號存入 ViewBag
+            ViewBag.ChangeItemNo = repairRecord.ChangeItemNo;
             // 回傳維修作業畫面
             return View("MaterialGunRepair", "_MaterialLayout");
         }
@@ -345,13 +515,100 @@ namespace ESIntegrateSys.Controllers
         /// <param name="b_Chk">是否勾選</param>
         /// <returns>導向維修主畫面</returns>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult MaterialGunRepair(int sno, string MaterialGun_Sno, int Classification, int MaintenanceResult, string Other, string ChangeItemName, string ChangeItemNo, string b_Chk)
         {
-            string Id = (Session["Member"] as MemberViewModels).fUserId;
-            RepairGun repairGun = new RepairGun(db);
-            repairGun.RepairWork(Id, sno, Classification, MaintenanceResult, Other, ChangeItemName, ChangeItemNo, b_Chk);
-            return RedirectToAction("MaterialGunRepairView");
+            try
+            {
+                // 安全地取得目前使用者資訊
+                var currentMember = Session["Member"] as MemberViewModels;
+                if (currentMember == null)
+                {
+                    Log.Warning("Session[\"Member\"] is null in MaterialGunRepair - user not authenticated");
+                    return Json(new { success = false, msg = "使用者會話已過期，請重新登入" });
+                }
+                string userId = currentMember.fUserId;
+                string userDept = currentMember.UDeptNo;
+
+                // 檢查該維修記錄是否已完成（Chk=1）
+                var repairRecord = db.ES_MaterialGunRepair.Find(sno);
+                if (repairRecord == null)
+                {
+                    return Json(new { success = false, msg = "維修記錄不存在" });
+                }
+
+                if (repairRecord.Chk == true)
+                {
+                    // 已完成維修，檢查白名單
+                    (bool isWhitelisted, string authReason) = IsRepairWhitelistedWithReason(userId, userDept);
+                    if (!isWhitelisted)
+                    {
+                        // 白名單驗證失敗，記錄 Warning 日誌並返回錯誤
+                        Log.ForContext("UserId", userId)
+                           .ForContext("UDeptNo", userDept)
+                           .ForContext("MaterialGunSno", MaterialGun_Sno)
+                           .ForContext("Sno", sno)
+                           .Warning("User {UserId} (Dept: {UDeptNo}) denied access to repair record {Sno}: {AuthorizationReason}", userId, userDept, sno, authReason);
+
+                        return Json(new { success = false, msg = "此料槍已完成維修，無法修改。無權進行此操作。" });
+                    }
+                }
+
+                // 交易保護：確保 RepairWork 操作的原子性
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        // 執行維修作業
+                        RepairGun repairGun = new RepairGun(db);
+                        repairGun.RepairWork(userId, sno, Classification, MaintenanceResult, Other, ChangeItemName, ChangeItemNo, b_Chk);
+                        transaction.Commit();
+                    }
+                    catch (Exception txEx)
+                    {
+                        transaction.Rollback();
+                        throw txEx;
+                    }
+                }
+
+                // 記錄成功日誌
+                if (repairRecord.Chk == true)
+                {
+                    (bool _, string authReason) = IsRepairWhitelistedWithReason(userId, userDept);
+                    Log.ForContext("UserId", userId)
+                       .ForContext("UDeptNo", userDept)
+                       .ForContext("MaterialGunSno", MaterialGun_Sno)
+                       .ForContext("Sno", sno)
+                       .ForContext("AuthorizationReason", authReason)
+                       .Information("User {UserId} (Dept: {UDeptNo}) authorized to edit repair {Sno} - Reason: {AuthorizationReason}. Changes: Classification={Classification}, MaintenanceResult={MaintenanceResult}",
+                           userId, userDept, sno, authReason, Classification, MaintenanceResult);
+                }
+                else
+                {
+                    Log.ForContext("UserId", userId)
+                       .ForContext("UDeptNo", userDept)
+                       .ForContext("MaterialGunSno", MaterialGun_Sno)
+                       .ForContext("Sno", sno)
+                       .Information("User {UserId} (Dept: {UDeptNo}) updated repair record {Sno}. Changes: Classification={Classification}, MaintenanceResult={MaintenanceResult}",
+                           userId, userDept, sno, Classification, MaintenanceResult);
+                }
+
+                return RedirectToAction("MaterialGunRepairView");
+            }
+            catch (Exception ex)
+            {
+                var member = Session["Member"] as MemberViewModels;
+                Log.ForContext("UserId", member?.fUserId ?? "Unknown")
+                   .ForContext("UDeptNo", member?.UDeptNo ?? "Unknown")
+                   .ForContext("MaterialGunSno", MaterialGun_Sno)
+                   .ForContext("Sno", sno)
+                   .ForContext("Operation", "MaterialGunRepair")
+                   .Error(ex, "MaterialGunRepair failed for repair record: {Sno}", sno);
+
+                return Json(new { success = false, msg = "系統處理發生錯誤，請聯繫管理員" });
+            }
         }
+
 
         /// <summary>
         /// 掃碼維修頁面。
@@ -441,7 +698,8 @@ namespace ESIntegrateSys.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, status = "error", message = $"伺服器錯誤：{ex.Message}", data = (object)null });
+                Log.Error(ex, "GetGunByBarcode failed for barcode: {Barcode}", barcode);
+                return Json(new { success = false, status = "error", message = "系統處理發生錯誤，請聯繫管理員", data = (object)null });
             }
         }
 
@@ -492,14 +750,25 @@ namespace ESIntegrateSys.Controllers
         [HttpPost]
         public JsonResult CheckData(string input)
         {
-            // 強制轉大寫並去除空白，確保資料一致性
-            input = NormalizeMaterialGunSno(input);
+            try
+            {
+                // 強制轉大寫並去除空白，確保資料一致性
+                input = NormalizeMaterialGunSno(input);
 
-            // 檢查該料槍是否有「尚未維修」的送修資料
-            bool hasUnrepaired = db.ES_MaterialGunRepair.Any(o => o.MaterialGun_Sno == input && !o.MaintenanceResult.HasValue);
+                // 檢查該料槍是否有「尚未維修」的送修資料
+                bool hasUnrepaired = db.ES_MaterialGunRepair.Any(o => o.MaterialGun_Sno == input && !o.MaintenanceResult.HasValue);
 
-            // 若有尚未維修，回傳 "未維修"，否則回傳空字串
-            return Json(new { result = hasUnrepaired ? "未維修" : "" });
+                // 若有尚未維修，回傳 "未維修"，否則回傳空字串
+                return Json(new { result = hasUnrepaired ? "未維修" : "" });
+            }
+            catch (Exception ex)
+            {
+                Log.ForContext("MaterialGunSno", input)
+                   .ForContext("Operation", "CheckData")
+                   .Error(ex, "CheckData failed for material gun: {MaterialGunSno}", input);
+
+                return Json(new { result = "", error = "系統處理發生錯誤，請聯繫管理員" });
+            }
         }
 
         /// <summary>
@@ -551,12 +820,52 @@ namespace ESIntegrateSys.Controllers
         /// <param name="Mark">備註</param>
         /// <returns>導向料槍基本資料頁</returns>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Discard(string Sno, bool isTrue, int DiscardDescription, string Mark)
         {
-            string Id = (Session["Member"] as MemberViewModels).fUserId;
-            MaterialGunInfo D_material = new MaterialGunInfo(db);
-            D_material.DiscardWork(Sno, isTrue, DiscardDescription, Mark, Id);
-            return RedirectToAction("MaterialGunInfoView");
+            try
+            {
+                // 安全地取得目前使用者的 ID
+                var member = Session["Member"] as MemberViewModels;
+                if (member == null)
+                {
+                    Log.Warning("Session[\"Member\"] is null in Discard - user not authenticated");
+                    return RedirectToAction("Login", "Home");
+                }
+                string Id = member.fUserId;
+                string userDept = member.UDeptNo;
+
+                // 交易保護：確保 DiscardWork 操作的原子性
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        MaterialGunInfo D_material = new MaterialGunInfo(db);
+                        D_material.DiscardWork(Sno, isTrue, DiscardDescription, Mark, Id);
+                        transaction.Commit();
+                    }
+                    catch (Exception txEx)
+                    {
+                        transaction.Rollback();
+                        throw txEx;
+                    }
+                }
+
+                return RedirectToAction("MaterialGunInfoView");
+            }
+            catch (Exception ex)
+            {
+                var member = Session["Member"] as MemberViewModels;
+                Log.ForContext("UserId", member?.fUserId ?? "Unknown")
+                   .ForContext("UDeptNo", member?.UDeptNo ?? "Unknown")
+                   .ForContext("Sno", Sno)
+                   .ForContext("DiscardDescription", DiscardDescription)
+                   .ForContext("Operation", "Discard")
+                   .Error(ex, "Discard failed for material gun: {Sno}", Sno);
+
+                TempData["message"] = "系統處理發生錯誤，請聯繫管理員";
+                return RedirectToAction("MaterialGunInfoView");
+            }
         }
 
         /// <summary>
@@ -566,9 +875,35 @@ namespace ESIntegrateSys.Controllers
         /// <returns>導向料槍基本資料頁</returns>
         public ActionResult ManagerCheck(string Sno)
         {
-            MaterialGunInfo D_material = new MaterialGunInfo(db);
-            D_material.DiscardCheck(Sno);
-            return RedirectToAction("MaterialGunInfoView");
+            try
+            {
+                // 交易保護：確保 DiscardCheck 操作的原子性
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        MaterialGunInfo D_material = new MaterialGunInfo(db);
+                        D_material.DiscardCheck(Sno);
+                        transaction.Commit();
+                    }
+                    catch (Exception txEx)
+                    {
+                        transaction.Rollback();
+                        throw txEx;
+                    }
+                }
+
+                return RedirectToAction("MaterialGunInfoView");
+            }
+            catch (Exception ex)
+            {
+                Log.ForContext("Sno", Sno)
+                   .ForContext("Operation", "ManagerCheck")
+                   .Error(ex, "ManagerCheck failed for material gun: {Sno}", Sno);
+
+                TempData["message"] = "系統處理發生錯誤，請聯繫管理員";
+                return RedirectToAction("MaterialGunInfoView");
+            }
         }
 
         /// <summary>
@@ -619,22 +954,66 @@ namespace ESIntegrateSys.Controllers
         /// <param name="MaintainCycle">保養週期</param>
         /// <returns>導向料槍基本資料頁</returns>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult MaterialGunCreate(string MaterialGun_Eno, string MaterialGun_Sno, string MaterialGun_Trade, string MaterialGun_Size, int MaintainCycle)
         {
-            string uId = (Session["Member"] as MemberViewModels).fUserId;
-            ES_MaterialGunInfo gunAdd = new ES_MaterialGunInfo();
-            //gunAdd.MaterialGun_Eno = MaterialGun_Eno;
-            gunAdd.MaterialGun_Sno = MaterialGun_Sno;
-            gunAdd.MaterialGun_Trade = MaterialGun_Trade;
-            gunAdd.MaterialGun_Size = MaterialGun_Size;
-            gunAdd.MaintainCycle = MaintainCycle;
-            gunAdd.MaterialGunDiscard = false;
-            gunAdd.DiscardCheck = false;
-            gunAdd.CreateTime = DateTime.Now;
-            gunAdd.CreateUserId = uId;
-            db.ES_MaterialGunInfo.Add(gunAdd);
-            db.SaveChanges();
-            return RedirectToAction("MaterialGunInfoView");
+            try
+            {
+                // 安全地取得目前使用者的 ID
+                var member = Session["Member"] as MemberViewModels;
+                if (member == null)
+                {
+                    Log.Warning("Session[\"Member\"] is null in MaterialGunCreate - user not authenticated");
+                    return RedirectToAction("Login", "Home");
+                }
+                string uId = member.fUserId;
+                string userDept = member.UDeptNo;
+
+                // 交易保護：確保新增料槍的原子性
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        ES_MaterialGunInfo gunAdd = new ES_MaterialGunInfo();
+                        gunAdd.MaterialGun_Sno = MaterialGun_Sno;
+                        gunAdd.MaterialGun_Trade = MaterialGun_Trade;
+                        gunAdd.MaterialGun_Size = MaterialGun_Size;
+                        gunAdd.MaintainCycle = MaintainCycle;
+                        gunAdd.MaterialGunDiscard = false;
+                        gunAdd.DiscardCheck = false;
+                        gunAdd.CreateTime = DateTime.Now;
+                        gunAdd.CreateUserId = uId;
+                        db.ES_MaterialGunInfo.Add(gunAdd);
+                        db.SaveChanges();
+                        transaction.Commit();
+                    }
+                    catch (Exception txEx)
+                    {
+                        transaction.Rollback();
+                        throw txEx;
+                    }
+                }
+
+                Log.ForContext("UserId", uId)
+                   .ForContext("UDeptNo", userDept)
+                   .ForContext("MaterialGunSno", MaterialGun_Sno)
+                   .ForContext("Operation", "MaterialGunCreate")
+                   .Information("Material gun created: {MaterialGunSno}", MaterialGun_Sno);
+
+                return RedirectToAction("MaterialGunInfoView");
+            }
+            catch (Exception ex)
+            {
+                var member = Session["Member"] as MemberViewModels;
+                Log.ForContext("UserId", member?.fUserId ?? "Unknown")
+                   .ForContext("UDeptNo", member?.UDeptNo ?? "Unknown")
+                   .ForContext("MaterialGunSno", MaterialGun_Sno)
+                   .ForContext("Operation", "MaterialGunCreate")
+                   .Error(ex, "MaterialGunCreate failed for material gun: {MaterialGunSno}", MaterialGun_Sno);
+
+                TempData["message"] = "系統處理發生錯誤，請聯繫管理員";
+                return RedirectToAction("MaterialGunInfoView");
+            }
         }
 
         /// <summary>
@@ -720,43 +1099,56 @@ namespace ESIntegrateSys.Controllers
         [HttpGet]
         public ActionResult BadDesc()
         {
-            // 1. 取得原始中文資料
-            var rawList = db.ES_MaterialGunBadDesc.AsNoTracking().ToList();
-
-            // 2. 嘗試取得越南文翻譯資源 (使用原始 SQL 避免 EDMX 未更新問題)
-            List<AppMultiLanguageResource> viResources = new List<AppMultiLanguageResource>();
             try
             {
-                // 檢查資料表是否存在並讀取
-                string sql = @"
-                    SELECT ResourceId, ResourceValue 
-                    FROM AppMultiLanguageResources 
-                    WHERE ResourceType = 'ES_MaterialGunBadDesc' 
-                    AND CultureCode = 'vi'";
+                // 1. 取得原始中文資料
+                var rawList = db.ES_MaterialGunBadDesc.AsNoTracking().ToList();
 
-                viResources = db.Database.SqlQuery<AppMultiLanguageResource>(sql).ToList();
+                // 2. 嘗試取得越南文翻譯資源 (使用原始 SQL 避免 EDMX 未更新問題)
+                List<AppMultiLanguageResource> viResources = new List<AppMultiLanguageResource>();
+                try
+                {
+                    // 檢查資料表是否存在並讀取
+                    string sql = @"
+                        SELECT ResourceId, ResourceValue 
+                        FROM AppMultiLanguageResources 
+                        WHERE ResourceType = 'ES_MaterialGunBadDesc' 
+                        AND CultureCode = 'vi'";
+
+                    viResources = db.Database.SqlQuery<AppMultiLanguageResource>(sql).ToList();
+                }
+                catch (Exception multiLangEx)
+                {
+                    // 若資料表不存在或查詢失敗，僅記錄但不阻擋流程，維持顯示中文
+                    Log.ForContext("Operation", "BadDesc_MultiLanguage")
+                       .Warning(multiLangEx, "多語系資源讀取失敗，將僅顯示中文");
+                }
+
+                // 3. 合併顯示資料
+                var descriptions = rawList.Select(a => {
+                    // 嘗試比對翻譯 (ResourceId 對應 KeyWorld)
+                    var viText = viResources.FirstOrDefault(r => r.ResourceId == a.KeyWorld.ToString())?.ResourceValue;
+
+                    // 組合顯示文字：若有翻譯則顯示 "中文 (越南文)"，否則僅顯示 "中文"
+                    var displayText = string.IsNullOrEmpty(viText)
+                        ? a.BadDescription
+                        : $"{a.BadDescription} ({viText})";
+
+                    return new { Value = a.KeyWorld, Text = displayText };
+                }).ToList();
+
+                descriptions.Insert(0, new { Value = 0, Text = "請選擇... (Vui lòng chọn...)" });
+                return Json(descriptions, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                // 若資料表不存在或查詢失敗，僅記錄但不阻擋流程，維持顯示中文
-                // System.Diagnostics.Debug.WriteLine($"多語系資源讀取失敗: {ex.Message}");
+                Log.ForContext("Operation", "BadDesc")
+                   .Error(ex, "BadDesc query failed");
+
+                // 返回包含通用錯誤訊息的最小有效響應
+                var fallback = new[] { new { Value = 0, Text = "請選擇..." } };
+                return Json(fallback, JsonRequestBehavior.AllowGet);
             }
-
-            // 3. 合併顯示資料
-            var descriptions = rawList.Select(a => {
-                // 嘗試比對翻譯 (ResourceId 對應 KeyWorld)
-                var viText = viResources.FirstOrDefault(r => r.ResourceId == a.KeyWorld.ToString())?.ResourceValue;
-
-                // 組合顯示文字：若有翻譯則顯示 "中文 (越南文)"，否則僅顯示 "中文"
-                var displayText = string.IsNullOrEmpty(viText)
-                    ? a.BadDescription
-                    : $"{a.BadDescription} ({viText})";
-
-                return new { Value = a.KeyWorld, Text = displayText };
-            }).ToList();
-
-            descriptions.Insert(0, new { Value = 0, Text = "請選擇... (Vui lòng chọn...)" });
-            return Json(descriptions, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
@@ -766,9 +1158,20 @@ namespace ESIntegrateSys.Controllers
         [HttpGet]
         public ActionResult Classification()
         {
-            var descriptions = db.ES_MaterialGunRepairClass.Select(a => new { Value = a.KeyWorld, Text = a.Classification }).ToList();
-            descriptions.Insert(0, new { Value = 0, Text = "請選擇..." });
-            return Json(descriptions, JsonRequestBehavior.AllowGet);
+            try
+            {
+                var descriptions = db.ES_MaterialGunRepairClass.Select(a => new { Value = a.KeyWorld, Text = a.Classification }).ToList();
+                descriptions.Insert(0, new { Value = 0, Text = "請選擇..." });
+                return Json(descriptions, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Log.ForContext("Operation", "Classification")
+                   .Error(ex, "Classification query failed");
+
+                var fallback = new[] { new { Value = 0, Text = "請選擇..." } };
+                return Json(fallback, JsonRequestBehavior.AllowGet);
+            }
         }
 
         /// <summary>
@@ -778,10 +1181,21 @@ namespace ESIntegrateSys.Controllers
         [HttpGet]
         public ActionResult MResult()
         {
-            var descriptions = db.ES_MaterialGunMResult.Select(a => new { Value = a.KeyWorld, Text = a.MaintenanceResult }).ToList();
-            descriptions.Insert(0, new { Value = 0, Text = "請選擇..." });
-            descriptions.Add(new { Value = 99, Text = "其他" });
-            return Json(descriptions, JsonRequestBehavior.AllowGet);
+            try
+            {
+                var descriptions = db.ES_MaterialGunMResult.Select(a => new { Value = a.KeyWorld, Text = a.MaintenanceResult }).ToList();
+                descriptions.Insert(0, new { Value = 0, Text = "請選擇..." });
+                descriptions.Add(new { Value = 99, Text = "其他" });
+                return Json(descriptions, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Log.ForContext("Operation", "MResult")
+                   .Error(ex, "MResult query failed");
+
+                var fallback = new[] { new { Value = 0, Text = "請選擇..." }, new { Value = 99, Text = "其他" } };
+                return Json(fallback, JsonRequestBehavior.AllowGet);
+            }
         }
 
         /// <summary>
@@ -791,9 +1205,20 @@ namespace ESIntegrateSys.Controllers
         [HttpGet]
         public ActionResult MGunInfoTrade()
         {
-            var descriptions = db.ES_MaterialGunInfo.Distinct().Select(a => new { Value = a.MaterialGun_Trade, Text = a.MaterialGun_Trade }).Distinct().ToList();
-            descriptions.Insert(0, new { Value = "0", Text = "請選擇..." });
-            return Json(descriptions, JsonRequestBehavior.AllowGet);
+            try
+            {
+                var descriptions = db.ES_MaterialGunInfo.Distinct().Select(a => new { Value = a.MaterialGun_Trade, Text = a.MaterialGun_Trade }).Distinct().ToList();
+                descriptions.Insert(0, new { Value = "0", Text = "請選擇..." });
+                return Json(descriptions, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Log.ForContext("Operation", "MGunInfoTrade")
+                   .Error(ex, "MGunInfoTrade query failed");
+
+                var fallback = new[] { new { Value = "0", Text = "請選擇..." } };
+                return Json(fallback, JsonRequestBehavior.AllowGet);
+            }
         }
 
         /// <summary>
@@ -803,9 +1228,20 @@ namespace ESIntegrateSys.Controllers
         [HttpGet]
         public ActionResult MGunInfoSize()
         {
-            var descriptions = db.ES_MaterialGunSize.OrderBy(a => a.sno).Select(a => new { Value = a.MaintenanceSize, Text = a.MaintenanceSize }).ToList();
-            descriptions.Insert(0, new { Value = "0", Text = "請選擇..." });
-            return Json(descriptions, JsonRequestBehavior.AllowGet);
+            try
+            {
+                var descriptions = db.ES_MaterialGunSize.OrderBy(a => a.sno).Select(a => new { Value = a.MaintenanceSize, Text = a.MaintenanceSize }).ToList();
+                descriptions.Insert(0, new { Value = "0", Text = "請選擇..." });
+                return Json(descriptions, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Log.ForContext("Operation", "MGunInfoSize")
+                   .Error(ex, "MGunInfoSize query failed");
+
+                var fallback = new[] { new { Value = "0", Text = "請選擇..." } };
+                return Json(fallback, JsonRequestBehavior.AllowGet);
+            }
         }
 
         /// <summary>
@@ -815,9 +1251,20 @@ namespace ESIntegrateSys.Controllers
         [HttpGet]
         public ActionResult MGunInfoCycle()
         {
-            var descriptions = db.ES_MaterialGunInfo.Select(a => new { Value = 1, Text = a.MaintainCycle.ToString() }).Distinct().ToList();
-            descriptions.Insert(0, new { Value = 0, Text = "請選擇..." });
-            return Json(descriptions, JsonRequestBehavior.AllowGet);
+            try
+            {
+                var descriptions = db.ES_MaterialGunInfo.Select(a => new { Value = 1, Text = a.MaintainCycle.ToString() }).Distinct().ToList();
+                descriptions.Insert(0, new { Value = 0, Text = "請選擇..." });
+                return Json(descriptions, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Log.ForContext("Operation", "MGunInfoCycle")
+                   .Error(ex, "MGunInfoCycle query failed");
+
+                var fallback = new[] { new { Value = 0, Text = "請選擇..." } };
+                return Json(fallback, JsonRequestBehavior.AllowGet);
+            }
         }
 
         /// <summary>
@@ -827,9 +1274,20 @@ namespace ESIntegrateSys.Controllers
         [HttpGet]
         public ActionResult DiscardDesc()
         {
-            var descriptions = db.ES_MaterialGunDiscardDesc.Select(a => new { Value = a.KeyWorld, Text = a.DiscardDescription }).ToList();
-            descriptions.Insert(0, new { Value = 0, Text = "請選擇..." });
-            return Json(descriptions, JsonRequestBehavior.AllowGet);
+            try
+            {
+                var descriptions = db.ES_MaterialGunDiscardDesc.Select(a => new { Value = a.KeyWorld, Text = a.DiscardDescription }).ToList();
+                descriptions.Insert(0, new { Value = 0, Text = "請選擇..." });
+                return Json(descriptions, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Log.ForContext("Operation", "DiscardDesc")
+                   .Error(ex, "DiscardDesc query failed");
+
+                var fallback = new[] { new { Value = 0, Text = "請選擇..." } };
+                return Json(fallback, JsonRequestBehavior.AllowGet);
+            }
         }
 
         #endregion
@@ -854,6 +1312,57 @@ namespace ESIntegrateSys.Controllers
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// 檢查使用者是否在料槍維修白名單中，只有白名單人員或授權部門的員工才能編輯已完成維修（Chk=1）的料槍記錄。
+        /// 使用 OR 邏輯：使用者帳號在白名單中 OR 使用者部門在部門白名單中。
+        /// </summary>
+        /// <param name="userId">使用者帳號</param>
+        /// <param name="userDept">使用者部門代碼</param>
+        /// <returns>true 表示在白名單中或部門授權，false 表示不在</returns>
+        private bool IsRepairWhitelisted(string userId, string userDept)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return false;
+            }
+
+            // OR 邏輯：帳號白名單 或 部門白名單
+            bool isUserWhitelisted = Helpers.MaterialGunConstants.RepairEditWhitelistUsers.Contains(userId);
+            bool isDeptWhitelisted = !string.IsNullOrWhiteSpace(userDept) &&
+                                      Helpers.MaterialGunConstants.RepairEditWhitelistDepts.Contains(userDept);
+
+            return isUserWhitelisted || isDeptWhitelisted;
+        }
+
+        /// <summary>
+        /// 檢查使用者是否在料槍維修白名單中，並返回授權原因以供審計記錄使用。
+        /// </summary>
+        /// <param name="userId">使用者帳號</param>
+        /// <param name="userDept">使用者部門代碼</param>
+        /// <returns>元組 (是否授權, 授權原因)。授權原因包括：帳號白名單、部門授權或無權限</returns>
+        private (bool isWhitelisted, string reason) IsRepairWhitelistedWithReason(string userId, string userDept)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return (false, "無效的使用者帳號");
+            }
+
+            bool isUserWhitelisted = Helpers.MaterialGunConstants.RepairEditWhitelistUsers.Contains(userId);
+            if (isUserWhitelisted)
+            {
+                return (true, "帳號白名單");
+            }
+
+            bool isDeptWhitelisted = !string.IsNullOrWhiteSpace(userDept) &&
+                                      Helpers.MaterialGunConstants.RepairEditWhitelistDepts.Contains(userDept);
+            if (isDeptWhitelisted)
+            {
+                return (true, "IT部門授權");
+            }
+
+            return (false, "無權進行此操作");
         }
         #endregion
 
