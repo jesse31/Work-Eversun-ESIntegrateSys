@@ -452,10 +452,10 @@ namespace ESIntegrateSys.Controllers
             }
 
             // 【檢查順序 2】報廢檢查：若料槍已報廢，擋下存取
-            // 從 ES_MaterialGunInfo 取得料槍的報廢狀態（早期架構，查槍狀態要去槍表）
+            // 從 ES_MaterialGunInfo 取得料槍的報廢狀態（早期架構，查槍狀態要去料槍基本資料表）
             var gunInfo = db.ES_MaterialGunInfo
-                .FirstOrDefault(x => x.MaterialGun_Sno == repairRecord.MaterialGun_Sno);
-            
+                .FirstOrDefault(x => x.MaterialGun_Sno == repairRecord.MaterialGun_Sno && !x.MaterialGunDiscard.Value);
+
             if (gunInfo == null)
             {
                 Log.ForContext("UserId", userId)
@@ -465,18 +465,6 @@ namespace ESIntegrateSys.Controllers
                    .Warning("Access denied to repair record {Sno}: gun info not found", sno);
 
                 TempData["message"] = $"查無料槍編號：{materialGunSno}";
-                return RedirectToAction("MaterialGunRepairView", new { page = 1 });
-            }
-
-            if (gunInfo.MaterialGunDiscard == true)
-            {
-                Log.ForContext("UserId", userId)
-                   .ForContext("UDeptNo", userDept)
-                   .ForContext("MaterialGunSno", materialGunSno)
-                   .ForContext("Sno", sno)
-                   .Warning("Access denied to repair record {Sno}: gun is discarded", sno);
-
-                TempData["message"] = "此料槍已報廢，無法編輯";
                 return RedirectToAction("MaterialGunRepairView", new { page = 1 });
             }
 
