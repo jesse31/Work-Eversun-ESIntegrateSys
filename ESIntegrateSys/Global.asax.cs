@@ -2,15 +2,16 @@ using ESIntegrateSys.Models;
 using ESIntegrateSys.Services.ManpowerAllocationServices;
 using Hangfire;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Web;
 using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
 using Autofac;
 using Autofac.Integration.Mvc;
+using Serilog;
+using System.IO;
+
 
 namespace ESIntegrateSys
 {
@@ -22,6 +23,9 @@ namespace ESIntegrateSys
 
         protected void Application_Start()
         {
+            // 配置 Serilog（WoTimeSheet 操作頻率監控）
+            ConfigureSerilog();
+
             AreaRegistration.RegisterAllAreas();
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
@@ -92,10 +96,50 @@ namespace ESIntegrateSys
             // --- Hangfire 設定結束 ---
         }
 
+        /// <summary>
+        /// 新增-記錄[工時統計]操作頻率-20260609 By Jesse
+        /// 配置 Serilog 用於 WoTimeSheet 操作頻率監控
+        /// </summary>
+        private void ConfigureSerilog()
+        {
+            try
+            {
+                // 確保 Logs 目錄存在
+                string logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+                if (!Directory.Exists(logDirectory))
+                {
+                    Directory.CreateDirectory(logDirectory);
+                }
+
+                // 配置 Serilog，記錄WoTimeSheet操作頻率，過濾掉 Department 為 IT 的日誌 By Jesse 20260609
+                Log.Logger = new LoggerConfiguration()
+                    .MinimumLevel.Information()
+                    .Filter.ByIncludingOnly(e =>
+                        e.Properties.ContainsKey("Function")
+                        //&& (!e.Properties.TryGetValue("Department", out var dept) ||
+                        //     dept.ToString().Trim('"') != "IT")
+                        )
+                    .WriteTo.File(
+                        path: Path.Combine(logDirectory, "WoTimeSheet-.txt"),
+                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff}|{UserId}|{Department}|{Function}|{Status}|{Duration}|{ClientIP}{NewLine}",
+                        rollingInterval: RollingInterval.Day,
+                        shared: true
+                    )
+                    .Enrich.FromLogContext()
+                    .CreateLogger();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Serilog 配置失敗: {ex.Message}. 請確保已安裝 Serilog.Sinks.File NuGet 套件。");
+            }
+        }
+
         protected void Application_End()
         {
             // 當應用程式關閉時，優雅地停止 Hangfire 伺服器
             _backgroundJobServer?.Dispose();
+            // 關閉 Serilog
+            Log.CloseAndFlush();
         }
         #endregion
     }

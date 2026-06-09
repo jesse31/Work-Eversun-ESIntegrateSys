@@ -5,8 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Web.Mvc;
 using ESIntegrateSys.Models;
+using ESIntegrateSys.ViewModels;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
+using Serilog;
+using Serilog.Context;
+using System.Diagnostics;
 
 namespace ESIntegrateSys.Controllers
 {
@@ -58,19 +62,32 @@ namespace ESIntegrateSys.Controllers
         [HttpPost]
         public ActionResult WoTS(string wono, string indate, string indate2)
         {
-            WoNo = wono; // 設定工單號碼
-            Indate = indate; // 設定查詢開始日期
-            Indate2 = indate2; // 設定查詢結束日期
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                WoNo = wono; // 設定工單號碼
+                Indate = indate; // 設定查詢開始日期
+                Indate2 = indate2; // 設定查詢結束日期
 
-            TempData["WoNo"] = wono; // 暫存工單號碼
-            TempData["Indate"] = indate; // 暫存查詢開始日期
-            TempData["Indate2"] = indate2; // 暫存查詢結束日期
+                TempData["WoNo"] = wono; // 暫存工單號碼
+                TempData["Indate"] = indate; // 暫存查詢開始日期
+                TempData["Indate2"] = indate2; // 暫存查詢結束日期
 
-            // 將查詢結果的資料表進行轉置處理
-            DataTable pivotedData = PivotDataTable(AdoNet().Item1);
+                // 將查詢結果的資料表進行轉置處理
+                DataTable pivotedData = PivotDataTable(AdoNet().Item1);
 
-            // 回傳工單工時查詢視圖，並帶入轉置後的資料表
-            return View("WoTS", "_WoTSLayout", pivotedData);
+                stopwatch.Stop();
+                LogOperationFrequency("WoTS", "SUCCESS", stopwatch.ElapsedMilliseconds);
+
+                // 回傳工單工時查詢視圖，並帶入轉置後的資料表
+                return View("WoTS", "_WoTSLayout", pivotedData);
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                LogOperationFrequency("WoTS", "ERROR", stopwatch.ElapsedMilliseconds, ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
@@ -96,21 +113,34 @@ namespace ESIntegrateSys.Controllers
         [HttpPost]
         public ActionResult StTS(string wono, string indate, string indate2)
         {
-            WoNo = wono;
-            Indate = indate;
-            Indate2 = indate2;
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                WoNo = wono;
+                Indate = indate;
+                Indate2 = indate2;
 
-            // 工單號碼
-            TempData["WoNo"] = wono;
-            // 查詢開始日期
-            TempData["Indate"] = indate;
-            // 查詢結束日期
-            TempData["Indate2"] = indate2;
+                // 工單號碼
+                TempData["WoNo"] = wono;
+                // 查詢開始日期
+                TempData["Indate"] = indate;
+                // 查詢結束日期
+                TempData["Indate2"] = indate2;
 
-            // 將數據表轉置
-            DataTable pivotedData = PivotDataTable(AdoNet().Item2);
+                // 將數據表轉置
+                DataTable pivotedData = PivotDataTable(AdoNet().Item2);
 
-            return View("StTS", "_WoTSLayout", pivotedData);
+                stopwatch.Stop();
+                LogOperationFrequency("StTS", "SUCCESS", stopwatch.ElapsedMilliseconds);
+
+                return View("StTS", "_WoTSLayout", pivotedData);
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                LogOperationFrequency("StTS", "ERROR", stopwatch.ElapsedMilliseconds, ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
@@ -137,55 +167,68 @@ namespace ESIntegrateSys.Controllers
         [HttpPost]
         public ActionResult EdList(string wono, string indate, string indate2)
         {
-
-            WoNo = wono;
-            Indate = indate;
-            Indate2 = indate2;
-
-            TempData["WoNo"] = wono;
-            TempData["Indate"] = indate;
-            TempData["Indate2"] = indate2;
-
-            string edSql = "select WO_NO,OPEN_TIME,UPDATE_DATE,b.USER_NAME from JH_WO_TIMESHEET a" +
-                            " left join JH_USER b on a.UPDATE_USERID = b.USER_ID" +
-                            " where datediff(day, OPEN_TIME, UPDATE_DATE) > 2";
-
-            if (!string.IsNullOrEmpty(WoNo))
+            var stopwatch = Stopwatch.StartNew();
+            try
             {
-                edSql += " and wo_no= @wono ";
+                WoNo = wono;
+                Indate = indate;
+                Indate2 = indate2;
+
+                TempData["WoNo"] = wono;
+                TempData["Indate"] = indate;
+                TempData["Indate2"] = indate2;
+
+                string edSql = "select WO_NO,OPEN_TIME,UPDATE_DATE,b.USER_NAME from JH_WO_TIMESHEET a" +
+                                " left join JH_USER b on a.UPDATE_USERID = b.USER_ID" +
+                                " where datediff(day, OPEN_TIME, UPDATE_DATE) > 2";
+
+                if (!string.IsNullOrEmpty(WoNo))
+                {
+                    edSql += " and wo_no= @wono ";
+                }
+                //開始有日期;結束沒有
+                if (!string.IsNullOrEmpty(Indate) && string.IsNullOrEmpty(Indate2))
+                {
+                    edSql += " and UPDATE_DATE =@indate ";
+                }
+                //開始沒有日期;結束有
+                if (string.IsNullOrEmpty(Indate) && !string.IsNullOrEmpty(Indate2))
+                {
+                    Indate2 = DateTime.Parse(Indate2).AddDays(1).ToString("yyyy-MM-dd");
+                    edSql += " and UPDATE_DATE =@indate2 ";
+                }
+
+                if (!string.IsNullOrEmpty(Indate) && !string.IsNullOrEmpty(Indate2))
+                {
+                    string dateLogi = @" and UPDATE_DATE between CAST(@indate AS DATETIME) + CAST('00:10:00' AS TIME)
+                                            and DATEADD(DAY, 1, CAST(@indate2 AS DATETIME)) + CAST('00:09:59' AS TIME)";
+                    edSql += dateLogi;
+                }
+
+                edSql += " order by UPDATE_DATE desc";
+
+                SqlParameter[] parm = new SqlParameter[]
+                {
+                    new SqlParameter("wono",WoNo),
+                    new SqlParameter("indate",Indate),
+                    new SqlParameter("indate2",Indate2),
+                };
+
+                // AMES 1.0 執行 SQL 查詢並取得結果資料表
+                DataTable Tdata = Db200.ExecuteDataTable(edSql, CommandType.Text, parm);
+
+                stopwatch.Stop();
+                LogOperationFrequency("EdList", "SUCCESS", stopwatch.ElapsedMilliseconds);
+
+                Session["EdList"] = Tdata;
+                return View("EdList", "_WoTSLayout", Tdata);
             }
-            //開始有日期;結束沒有
-            if (!string.IsNullOrEmpty(Indate) && string.IsNullOrEmpty(Indate2))
+            catch (Exception ex)
             {
-                edSql += " and UPDATE_DATE =@date1 ";
+                stopwatch.Stop();
+                LogOperationFrequency("EdList", "ERROR", stopwatch.ElapsedMilliseconds, ex.Message);
+                throw;
             }
-            //開始沒有日期;結束有
-            if (string.IsNullOrEmpty(Indate) && !string.IsNullOrEmpty(Indate2))
-            {
-                Indate2 = DateTime.Parse(Indate2).AddDays(1).ToString("yyyy-MM-dd");
-                edSql += " and UPDATE_DATE =@date2 ";
-            }
-
-            if (!string.IsNullOrEmpty(Indate) && !string.IsNullOrEmpty(Indate2))
-            {
-                string dateLogi = @" and UPDATE_DATE between CAST(@startDate AS DATETIME) + CAST('00:10:00' AS TIME) 
-                                        and DATEADD(DAY, 1, CAST(@endDate AS DATETIME)) + CAST('00:09:59' AS TIME)";
-                edSql += dateLogi;
-            }
-
-            edSql += " order by UPDATE_DATE desc";
-
-            SqlParameter[] parm = new SqlParameter[]
-            {
-                new SqlParameter("wono",WoNo),
-                new SqlParameter("startDate",Indate),
-                new SqlParameter("endDate",Indate2),
-            };
-
-            // AMES 1.0 執行 SQL 查詢並取得結果資料表
-            DataTable Tdata = Db200.ExecuteDataTable(edSql, CommandType.Text, parm);
-            Session["EdList"] = Tdata;
-            return View("EdList", "_WoTSLayout", Tdata);
         }
 
         /// <summary>
@@ -338,25 +381,25 @@ namespace ESIntegrateSys.Controllers
             //開始有日期;結束沒有
             if (!string.IsNullOrEmpty(Indate) && string.IsNullOrEmpty(Indate2))
             {
-                Tsql += " and a.OPEN_TIME =@date1 ";
-                Tsql2 += " and a.OPEN_TIME =@date1 ";
-                Tsql3 += " and a.OPEN_TIME =@date1 ";
-                Tsql4 += " and a.OPEN_TIME =@date1 ";
+                Tsql += " and a.OPEN_TIME =@indate ";
+                Tsql2 += " and a.OPEN_TIME =@indate ";
+                Tsql3 += " and a.OPEN_TIME =@indate ";
+                Tsql4 += " and a.OPEN_TIME =@indate ";
             }
             //開始沒有日期;結束日期有
             if (string.IsNullOrEmpty(Indate) && !string.IsNullOrEmpty(Indate2))
             {
                 Indate2 = DateTime.Parse(Indate2).AddDays(1).ToString("yyyy-MM-dd");
-                Tsql += " and a.OPEN_TIME =@date2 ";
-                Tsql2 += " and a.OPEN_TIME =@date2 ";
-                Tsql3 += " and a.OPEN_TIME =@date2 ";
-                Tsql4 += " and a.OPEN_TIME =@date2 ";
+                Tsql += " and a.OPEN_TIME =@indate2 ";
+                Tsql2 += " and a.OPEN_TIME =@indate2 ";
+                Tsql3 += " and a.OPEN_TIME =@indate2 ";
+                Tsql4 += " and a.OPEN_TIME =@indate2 ";
             }
             //開始日期;結束日期有
             if (!string.IsNullOrEmpty(Indate) && !string.IsNullOrEmpty(Indate2))
             {
-                string dateLogi = @" and CLOSE_TIME between CAST(@startDate AS DATETIME) + CAST('00:10:00' AS TIME) 
-                                                                and DATEADD(DAY, 1, CAST(@endDate AS DATETIME)) + CAST('00:09:59' AS TIME)";
+                string dateLogi = @" and CLOSE_TIME between CAST(@indate AS DATETIME) + CAST('00:10:00' AS TIME)
+                                                                and DATEADD(DAY, 1, CAST(@indate2 AS DATETIME)) + CAST('00:09:59' AS TIME)";
                 Tsql += dateLogi;
                 Tsql2 += dateLogi;
                 Tsql3 += dateLogi;
@@ -370,8 +413,8 @@ namespace ESIntegrateSys.Controllers
             SqlParameter[] parm = new SqlParameter[]
             {
                         new SqlParameter("wono",WoNo),
-                        new SqlParameter("startDate",Indate),
-                        new SqlParameter("endDate",Indate2),
+                        new SqlParameter("indate",Indate),
+                        new SqlParameter("indate2",Indate2),
             };
 
             #region AMES 1.0
@@ -451,8 +494,11 @@ namespace ESIntegrateSys.Controllers
         /// <returns>Excel 檔案下載結果。</returns>
         public ActionResult ExportExcel(string wono, string indate, string indate2)
         {
-            // 取得暫存的工單號碼
-            WoNo = TempData["WoNo"].ToString();
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                // 取得暫存的工單號碼
+                WoNo = TempData["WoNo"].ToString();
             // 取得暫存的查詢開始日期
             Indate = TempData["Indate"].ToString();
             // 取得暫存的查詢結束日期
@@ -513,8 +559,19 @@ namespace ESIntegrateSys.Controllers
                 workbook.Write(stream);
                 // 取得串流內容為 byte 陣列
                 var content = stream.ToArray();
+
+                stopwatch.Stop();
+                LogOperationFrequency("ExportExcel", "SUCCESS", stopwatch.ElapsedMilliseconds);
+
                 // 回傳 Excel 檔案下載，指定檔案類型與檔名
                 return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                LogOperationFrequency("ExportExcel", "ERROR", stopwatch.ElapsedMilliseconds, ex.Message);
+                throw;
             }
         }
 
@@ -527,8 +584,11 @@ namespace ESIntegrateSys.Controllers
         /// <returns>Excel 檔案下載結果。</returns>
         public ActionResult ExportEditExcel(string wono, string indate, string indate2)
         {
-            // 取得暫存的工單號碼
-            WoNo = TempData["WoNo"].ToString();
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                // 取得暫存的工單號碼
+                WoNo = TempData["WoNo"].ToString();
             // 取得暫存的查詢開始日期
             Indate = TempData["Indate"].ToString();
             // 取得暫存的查詢結束日期
@@ -566,7 +626,61 @@ namespace ESIntegrateSys.Controllers
             {
                 workbook.Write(stream); // 將 Excel 工作簿寫入串流
                 var content = stream.ToArray(); // 取得串流內容為位元組陣列
+
+                stopwatch.Stop();
+                LogOperationFrequency("ExportEditExcel", "SUCCESS", stopwatch.ElapsedMilliseconds);
+
                 return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName); // 回傳 Excel 檔案下載，指定檔案類型與檔名
+            }
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                LogOperationFrequency("ExportEditExcel", "ERROR", stopwatch.ElapsedMilliseconds, ex.Message);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 記錄 WoTimeSheet 操作頻率
+        /// </summary>
+        private void LogOperationFrequency(string functionName, string status, long duration, string errorMessage = null)
+        {
+            try
+            {
+                var member = Session["Member"] as MemberViewModels;
+                string userId = member?.fUserId ?? "UNKNOWN";
+                string department = member?.UDeptNo ?? "UNKNOWN";
+                string clientIP = Request.UserHostAddress;
+
+                string logMessage = $"{functionName}|{status}|{duration}ms|{clientIP}";
+
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    logMessage += $"|Error: {errorMessage}";
+                }
+
+                // 使用 Serilog 記錄，設定自定義屬性
+                using (LogContext.PushProperty("UserId", userId))
+                using (LogContext.PushProperty("Department", department))
+                using (LogContext.PushProperty("Function", $"/WoTimeSheet/{functionName}"))
+                using (LogContext.PushProperty("Status", status))
+                using (LogContext.PushProperty("Duration", duration))
+                using (LogContext.PushProperty("ClientIP", clientIP))
+                {
+                    if (status == "ERROR" && !string.IsNullOrEmpty(errorMessage))
+                    {
+                        Log.Error(logMessage);
+                    }
+                    else
+                    {
+                        Log.Information(logMessage);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"記錄操作頻率失敗: {ex.Message}");
             }
         }
     }
