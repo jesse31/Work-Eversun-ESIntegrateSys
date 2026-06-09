@@ -116,8 +116,8 @@ namespace ESIntegrateSys
                     .MinimumLevel.Information()
                     .Filter.ByIncludingOnly(e =>
                         e.Properties.ContainsKey("Function")
-                        //&& (!e.Properties.TryGetValue("Department", out var dept) ||
-                        //     dept.ToString().Trim('"') != "IT")
+                        && (!e.Properties.TryGetValue("Department", out var dept) ||
+                             dept.ToString().Trim('"') != "IT")
                         )
                     .WriteTo.File(
                         path: Path.Combine(logDirectory, "WoTimeSheet-.txt"),
