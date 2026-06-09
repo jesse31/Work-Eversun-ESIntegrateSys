@@ -35,5 +35,49 @@
         <h2>AMES 2.0</h2>
         <p></p>
         <p><a class="btn btn-default" href="http://192.168.4.109:8088/" target="_blank">點我進入 &raquo;</a></p>
-    </div>    
+    </div>
 </div>
+
+@section scripts {
+<script>
+    /// <summary>
+    /// 清理瀏覽器擴充程式注入的覆蓋層（如 _goober、immersive-translate 等）
+    /// </summary>
+    (function() {
+        function removeOverlayElements() {
+            // 移除 _goober 樣式注入的元素
+            document.querySelectorAll('[class*="go"]').forEach(function(el) {
+                if (el.classList.contains('go4109123758') || el.id.includes('goober')) {
+                    el.remove();
+                }
+            });
+
+            // 移除 immersive-translate 的 popup
+            var immersivePopup = document.getElementById('immersive-translate-popup');
+            if (immersivePopup) {
+                immersivePopup.style.display = 'none';
+                immersivePopup.style.pointerEvents = 'none';
+            }
+
+            // 強制隱藏任何疑似覆蓋層的元素（z-index 很高且無內容的 div）
+            document.querySelectorAll('div').forEach(function(div) {
+                var style = window.getComputedStyle(div);
+                var zIndex = parseInt(style.zIndex);
+                if (zIndex > 9000 && div.children.length === 0 && div.textContent.trim() === '') {
+                    div.style.display = 'none';
+                }
+            });
+        }
+
+        // 頁面加載完成後立即清理
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', removeOverlayElements);
+        } else {
+            removeOverlayElements();
+        }
+
+        // 定期檢查並清理（每 500ms 檢查一次，確保動態注入的元素被移除）
+        setInterval(removeOverlayElements, 500);
+    })();
+</script>
+}
