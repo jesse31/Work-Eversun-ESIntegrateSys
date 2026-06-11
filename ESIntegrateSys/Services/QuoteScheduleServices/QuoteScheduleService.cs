@@ -68,33 +68,55 @@ namespace ESIntegrateSys.Services.QuoteScheduleServices
                 from f in maintenanceUserJoin.DefaultIfEmpty()
                 join h in db.ES_QuoteUploadFiles on a.sno equals h.RecordId into filesJoin
                 from h in filesJoin.DefaultIfEmpty()
-                select new QuoteDataListDto
+                group new { a, b, c, d, e, f, h } by new
                 {
-                    Sno = a.sno,
-                    CustNo = a.CustNo,
+                    a.sno,
+                    a.CustNo,
                     CustName = a.CustNo == "99" ? a.OtherName : (b != null ? b.Customer : null),
-                    SalesNo = a.SalesNo,
-                    EngSr = a.EngSr,
-                    CustMaterial = a.CustMaterial,
+                    a.SalesNo,
+                    a.EngSr,
+                    a.CustMaterial,
                     WoNoAttri = c != null ? c.WoNoAttri : null,
                     AttriNo = c != null ? c.KeyWorld : 0,
                     RequDate = a.RequDate ?? DateTime.MinValue,
                     SalesName = e != null ? e.fName : null,
-                    SalesId = a.SalesId,
+                    a.SalesId,
                     IEonwer = f != null ? f.fName : null,
                     IEQuoteDate = d != null && d.IEQuoteDate.HasValue ? d.IEQuoteDate.Value : DateTime.MinValue,
                     IEQuoteTDate = d != null && d.IEQuoteTDate.HasValue ? d.IEQuoteTDate.Value : DateTime.MinValue,
                     CreateDate = a.CreateDate ?? DateTime.MinValue,
                     CancelChk = a.CancelChk ?? false,
-                    HasFiles = h != null && h.RecordId.HasValue,
-                    FRecordId = h != null ? h.RecordId : (int?)null,
-                    Mark = (d != null && !string.IsNullOrEmpty(d.IEMark) && !string.IsNullOrEmpty(a.Mark))
-                        ? a.Mark + "," + d.IEMark
-                        : (d != null && !string.IsNullOrEmpty(d.IEMark))
-                            ? d.IEMark
-                            : a.Mark,
-                    DeptNo = h != null ? h.DeptNo : null,
+                    a.Mark,
+                    IEMark = d != null ? d.IEMark : null,
                     IEStatus = d != null ? d.IEStatus : null
+                } into g
+                select new QuoteDataListDto
+                {
+                    Sno = g.Key.sno,
+                    CustNo = g.Key.CustNo,
+                    CustName = g.Key.CustName,
+                    SalesNo = g.Key.SalesNo,
+                    EngSr = g.Key.EngSr,
+                    CustMaterial = g.Key.CustMaterial,
+                    WoNoAttri = g.Key.WoNoAttri,
+                    AttriNo = g.Key.AttriNo,
+                    RequDate = g.Key.RequDate,
+                    SalesName = g.Key.SalesName,
+                    SalesId = g.Key.SalesId,
+                    IEonwer = g.Key.IEonwer,
+                    IEQuoteDate = g.Key.IEQuoteDate,
+                    IEQuoteTDate = g.Key.IEQuoteTDate,
+                    CreateDate = g.Key.CreateDate,
+                    CancelChk = g.Key.CancelChk,
+                    HasFiles = g.Any(x => x.h != null && x.h.RecordId.HasValue),
+                    FRecordId = g.Select(x => x.h.RecordId).FirstOrDefault(),
+                    Mark = (!string.IsNullOrEmpty(g.Key.IEMark) && !string.IsNullOrEmpty(g.Key.Mark))
+                        ? g.Key.Mark + "," + g.Key.IEMark
+                        : !string.IsNullOrEmpty(g.Key.IEMark)
+                            ? g.Key.IEMark
+                            : g.Key.Mark,
+                    DeptNo = g.Select(x => x.h.DeptNo).FirstOrDefault(),
+                    IEStatus = g.Key.IEStatus
                 };
 
             // 條件查詢
