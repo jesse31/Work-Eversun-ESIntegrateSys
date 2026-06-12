@@ -54,10 +54,14 @@ namespace ESIntegrateSys.Models
             using (var context = new ESIntegrateSysEntities())
             {
                 var query = from a in context.ES_Member
-                            join b in context.ES_MemberRole on a.fUserId equals b.USER_ID
-                            join c in context.ES_RoleClassification on b.ROLE_ID equals c.ROLE_ID
-                            join e in context.ES_MemberFunction on a.fId equals e.UserNo_sno
-                            join d in context.ES_FunctionItem on e.FunctionNo equals d.FunctionNo
+                            join b in context.ES_MemberRole on a.fUserId equals b.USER_ID into roleJoin
+                            from b in roleJoin.DefaultIfEmpty()
+                            join c in context.ES_RoleClassification on b.ROLE_ID equals c.ROLE_ID into roleDescJoin
+                            from c in roleDescJoin.DefaultIfEmpty()
+                            join e in context.ES_MemberFunction on a.fId equals e.UserNo_sno into funcJoin
+                            from e in funcJoin.DefaultIfEmpty()
+                            join d in context.ES_FunctionItem on e.FunctionNo equals d.FunctionNo into funcItemJoin
+                            from d in funcItemJoin.DefaultIfEmpty()
                             where a.fId == fId
                             orderby a.fUserId
                             select new MemberViewModels
@@ -67,7 +71,7 @@ namespace ESIntegrateSys.Models
                                 fName = a.fName,
                                 ROLE_DESC = c != null ? c.ROLE_DESC : null,
                                 ROLE_ID = b != null ? b.ROLE_ID : null,
-                                Func=d.FunctionNo
+                                Func = d != null ? d.FunctionNo : null
                             };
                 List<MemberViewModels> models = query.ToList();
                 return models;
@@ -78,13 +82,18 @@ namespace ESIntegrateSys.Models
         {
             //改名字
             var member = db.ES_Member.Where(m => m.fUserId == fUserId).FirstOrDefault();
+            if (member == null) throw new Exception($"找不到人員：{fUserId}");
             //member.fUserId = fUserId;
             member.fName = fName;
             db.SaveChanges();
 
             //改人員權限
             var member_Role = db.ES_MemberRole.Where(r => r.USER_ID == fUserId).FirstOrDefault();
-            member_Role.USER_ID = fUserId;
+            if (member_Role == null)
+            {
+                member_Role = new ES_MemberRole { USER_ID = fUserId };
+                db.ES_MemberRole.Add(member_Role);
+            }
             member_Role.ROLE_ID = ROLE_ID;
             member_Role.EXPIRED_DATE = DateTime.Now;
             db.SaveChanges();
@@ -100,7 +109,7 @@ namespace ESIntegrateSys.Models
 
                 List<ES_MemberFunction> memberFuncList = new List<ES_MemberFunction>();
 
-                foreach (var item in fItem)
+                foreach (var item in fItem ?? new List<string>())
                 {
                     var memberFunc = new ES_MemberFunction
                     {
