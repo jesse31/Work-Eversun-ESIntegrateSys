@@ -74,6 +74,7 @@ namespace ESIntegrateSys.Controllers
         public string Woatt(string subj, string[] bodys)
         {
             string body = string.Empty;
+            var baseUrl = System.Configuration.ConfigurationManager.AppSettings["QuoteScheduleBaseUrl"] ?? "http://192.168.4.133:8004";
             try
             {
                 switch (subj)
@@ -87,7 +88,7 @@ namespace ESIntegrateSys.Controllers
                             "<td>" + bodys[7] + "</td><td>" + bodys[0] + "</td><td>" + bodys[2] + "</td><td>" + bodys[1] + "</td>" +
                             "<td>" + bodys[3] + "</td><td>" + bodys[4] + "</td><td>" + bodys[5] + "</td><td>" + bodys[6] + "</td>" +
                             "</tr></tbody></table>";
-                        body += "<p>http://192.168.4.70/QuoteSchedule/QuotesView" + "?CustMaterial=" + bodys[3] + "&indate=" + bodys[5] + "</p>";
+                        body += "<p>" + baseUrl + "/QuoteSchedule/QuotesView" + "?CustMaterial=" + bodys[3] + "&indate=" + bodys[5] + "</p>";
                         break;
                     case "修改報價通知":
                         body = "<h1>序號 : " + bodys[10] + " 修改報價</h1>";
@@ -95,7 +96,7 @@ namespace ESIntegrateSys.Controllers
                         body +=
                             "<tr><td>異動前</td><td>" + bodys[11] + "</td><td>" + bodys[0] + "</td><td>" + bodys[2] + "</td><td>" + bodys[4] + "</td><td>" + bodys[6] + "</td><td>" + bodys[8] + "</td></tr>" +
                             "<tr style=background-color:#E2C2DE><td>異動後</td><td>" + bodys[11] + "</td><td>" + bodys[1] + "</td><td>" + bodys[3] + "</td><td>" + bodys[5] + "</td><td>" + bodys[7] + "</td><td>" + bodys[9] + "</td></tr></tbody></table>";
-                        body += "<p>http://192.168.4.70/QuoteSchedule/QuotesView" + "?Indate=" + HttpUtility.UrlEncode(bodys[7]) + "&CustMaterial=" + HttpUtility.UrlEncode(bodys[3]) + "</p>";
+                        body += "<p>" + baseUrl + "/QuoteSchedule/QuotesView" + "?Indate=" + HttpUtility.UrlEncode(bodys[7]) + "&CustMaterial=" + HttpUtility.UrlEncode(bodys[3]) + "</p>";
                         break;
                     case "取消報價通知":
                         body = "<h1>序號 : " + bodys[0] + " 取消報價</h1>";
@@ -104,12 +105,12 @@ namespace ESIntegrateSys.Controllers
                             "<td>" + bodys[1] + "</td><td>" + bodys[2] + "</td><td>" + bodys[3] + "</td><td>" + bodys[4] + "</td>" +
                             "<td>" + bodys[5] + "</td><td>" + bodys[6] + "</td><td>" + bodys[7] + "</td><td>" + bodys[8] + "</td>" +
                             "<td>" + bodys[9] + "</td></tr></tbody></table>";
-                        body += "<p>http://192.168.4.70/QuoteSchedule/QuotesView" + "?EngSr=" + HttpUtility.UrlEncode(bodys[5]) + "&CustMaterial=" + HttpUtility.UrlEncode(bodys[6]) + "&Indate=" + HttpUtility.UrlEncode(bodys[8]) + "</p>";
+                        body += "<p>" + baseUrl + "/QuoteSchedule/QuotesView" + "?EngSr=" + HttpUtility.UrlEncode(bodys[5]) + "&CustMaterial=" + HttpUtility.UrlEncode(bodys[6]) + "&Indate=" + HttpUtility.UrlEncode(bodys[8]) + "</p>";
                         break;
                     case "IE報價完成通知":
                         //item.EngSr, item.CustMaterial, item.RequDate.Value.ToShortDateString(), item.SalesId
                         body = "<h1>IE報價完成通知</h1>";
-                        body += "<p>http://192.168.4.70/QuoteSchedule/QuotesView" + "?EngSr=" + HttpUtility.UrlEncode(bodys[0]) + "&CustMaterial=" + HttpUtility.UrlEncode(bodys[1]) + "&Indate=" + HttpUtility.UrlEncode(bodys[2]) + "&SalesId=" + HttpUtility.UrlEncode(bodys[3]) + "</p>";
+                        body += "<p>" + baseUrl + "/QuoteSchedule/QuotesView" + "?EngSr=" + HttpUtility.UrlEncode(bodys[0]) + "&CustMaterial=" + HttpUtility.UrlEncode(bodys[1]) + "&Indate=" + HttpUtility.UrlEncode(bodys[2]) + "&SalesId=" + HttpUtility.UrlEncode(bodys[3]) + "</p>";
                         break;
                     default:
                         body = "<h1>序號 : " + bodys[0] + subj + "</h1>";
@@ -118,7 +119,7 @@ namespace ESIntegrateSys.Controllers
                             "<td>" + bodys[1] + "</td><td>" + bodys[2] + "</td><td>" + bodys[3] + "</td><td>" + bodys[4] + "</td>" +
                             "<td>" + bodys[5] + "</td><td>" + bodys[6] + "</td><td>" + bodys[7] + "</td><td>" + bodys[8] + "</td>" +
                             "</td></tr></tbody></table>";
-                        body += "<p>http://192.168.4.70/QuoteSchedule/QuotesView" + "?EngSr=" + HttpUtility.UrlEncode(bodys[5]) + "&CustMaterial=" + HttpUtility.UrlEncode(bodys[6]) + "&Indate=" + HttpUtility.UrlEncode(bodys[8]) + "</p>";
+                        body += "<p>" + baseUrl + "/QuoteSchedule/QuotesView" + "?EngSr=" + HttpUtility.UrlEncode(bodys[5]) + "&CustMaterial=" + HttpUtility.UrlEncode(bodys[6]) + "&Indate=" + HttpUtility.UrlEncode(bodys[8]) + "</p>";
                         break;
                 }
             }
