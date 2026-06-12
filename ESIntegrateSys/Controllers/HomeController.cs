@@ -74,6 +74,7 @@ namespace ESIntegrateSys.Controllers
             }
             Session["WelCome"] = $"員工 : {result.Member.fName}";
             Session["Member"] = result.Member;
+            Session["Admin"] = result.Member.ROLE_ID;
             if (!string.IsNullOrEmpty(result.RedirectUrl))
             {
                 return Redirect(result.RedirectUrl);

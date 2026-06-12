@@ -100,7 +100,7 @@ namespace ESIntegrateSys.Controllers
             if (!Login_Authentication())
             {
                 // 取得目前網址（包含查詢參數）
-                var currentUrl = Url.Action("QuotesView", "QuoteSchedule", new { page, SalesID, CustNo, Indate, Indate2, Sort, Cancel });
+                var currentUrl = Url.Action("QuotesView", "QuoteSchedule", new { page, SalesID, CustNo, Indate, Indate2, Sort, Cancel, EngSr, CustMaterial });
                 // 導向登入頁，並帶入 returnUrl 參數
                 return RedirectToAction("Login", "Home", new { returnUrl = currentUrl });
             }
