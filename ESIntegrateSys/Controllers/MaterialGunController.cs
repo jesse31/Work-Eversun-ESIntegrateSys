@@ -1398,8 +1398,7 @@ namespace ESIntegrateSys.Controllers
         #endregion
 
         /// <summary>
-        /// 將料槍編號標準化：移除全形空白、轉半形、轉大寫，
-        /// 並保留字母與數字間的空格。
+        /// 將料槍編號標準化：移除全形空白、轉半形、轉大寫。
         /// </summary>
         /// <param name="input">原始料槍編號</param>
         /// <returns>標準化後的料槍編號</returns>
@@ -1418,30 +1417,7 @@ namespace ESIntegrateSys.Controllers
                 .Trim()
                 .ToUpperInvariant();
 
-            // 4. 只移除「字母和字母」或「數字和數字」間的空白
-            var sb = new System.Text.StringBuilder();
-            for (int i = 0; i < normalized.Length; i++)
-            {
-                char c = normalized[i];
-                if (char.IsWhiteSpace(c) && i > 0 && i < normalized.Length - 1)
-                {
-                    char prev = normalized[i - 1];
-                    char next = normalized[i + 1];
-                    bool prevIsLetter = char.IsLetter(prev);
-                    bool nextIsLetter = char.IsLetter(next);
-                    bool prevIsDigit = char.IsDigit(prev);
-                    bool nextIsDigit = char.IsDigit(next);
-
-                    // 移除字母和字母或數字和數字間的空白
-                    if ((prevIsLetter && nextIsLetter) || (prevIsDigit && nextIsDigit))
-                    {
-                        continue;
-                    }
-                }
-                sb.Append(c);
-            }
-
-            return sb.ToString();
+            return normalized;
         }
     }
 }
