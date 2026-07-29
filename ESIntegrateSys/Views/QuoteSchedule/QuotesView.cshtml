@@ -18,10 +18,39 @@
             display: inline-block;
             width: auto;
         }
+
+        /* Bootstrap 預設在停用按鈕加 pointer-events: none，滑鼠事件會直接穿透到底下元素，
+           cursor 樣式因此不會生效（會顯示底層元素的游標）；改回 auto 才能讓 cursor: not-allowed 實際顯示，
+           原生 disabled 屬性本身已擋掉點擊/鍵盤觸發，改回 auto 不會讓按鈕變成可點擊（比照新版 EIS 平台 site.css 規則） */
+        .btn:disabled,
+        .btn.disabled {
+            pointer-events: auto;
+            cursor: not-allowed;
+        }
+
+        /* 匯出中提示視窗：頁面全域字級較小，SweetAlert2 預設的 em 相對單位會被連帶縮小，
+           故明確指定固定尺寸與字級，不依賴繼承，確保視窗與文字清楚可讀 */
+        .quotesview-export-popup {
+            width: 26em !important;
+            padding: 1.6em !important;
+        }
+        .quotesview-export-popup .swal2-title {
+            font-size: 1.6rem !important;
+        }
+        .quotesview-export-popup .swal2-html-container {
+            font-size: 1.15rem !important;
+        }
     </style>
     <script src="~/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Scripts/sweetalert2.all.min.js"></script>
     <script>
+        // 是否已查詢過：未查詢前不可匯出，避免空篩選條件匯出全表資料
+        var hasSearched = false;
+
         $(document).ready(function () {
+            // 進入頁面預設禁用匯出，待查詢成功後才解鎖
+            $('#exp').prop('disabled', true).attr('title', '請先查詢後再匯出');
+
             // 使用 AJAX 載入客戶清單 ------------------------------------------------------------------------------------------------
             $.ajax({
                 url: '@Url.Action("QuoteCust", "QuoteSchedule")',
@@ -86,6 +115,9 @@
                         console.log(data);
                         // 更新部分顯示
                         $('#partialViewContainer').html(data);
+                        // 查詢成功才解鎖匯出，確保匯出時的篩選條件已實際查詢過
+                        hasSearched = true;
+                        $('#exp').prop('disabled', false);
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
                         console.log("Error: " + textStatus + " " + errorThrown);
@@ -110,6 +142,14 @@
 
             // 匯出Excel按鈕點擊事件 --------------------------------------------------------------------------------------------
             $('#exp').click(function () {
+                // 防禦性二次檢查：未查詢過不可匯出（按鈕本身已用 disabled 擋掉正常點擊）
+                if (!hasSearched) {
+                    Swal.fire({
+                        icon: 'warning', title: '請先查詢', text: '請先設定篩選條件並查詢，再進行匯出，避免匯出全部資料造成檔案過大',
+                        customClass: { popup: 'quotesview-export-popup' }
+                    });
+                    return;
+                }
                 // 將表單的值設置為當前查詢條件
                 $('#exportSalesID').val($("#SalesID").val());
                 $('#exportCustNo').val($("#CustNo").val());
@@ -119,8 +159,16 @@
                 $('#exportCancel').val($("#Cancel").prop('checked'));
                 $('#exportEngSr').val($("#EngSr").val());
                 $('#exportCustMaterial').val($("#CustMaterial").val());
-                // 提交表單
+                // 提交表單（傳統表單 GET 送出觸發檔案下載，瀏覽器不會離開當前頁面，
+                // 但也沒有 JS 可偵測的「下載完成」事件，故用固定延遲關閉提示視窗，非精確進度）
+                Swal.fire({
+                    title: '匯出中...', text: '請稍候，正在產生 Excel 檔案',
+                    allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false,
+                    customClass: { popup: 'quotesview-export-popup' },
+                    didOpen: function () { Swal.showLoading(); }
+                });
                 $('#exportForm').submit();
+                setTimeout(function () { Swal.close(); }, 3000);
             });
         });
     </script>
@@ -193,7 +241,7 @@
     <input type="hidden" id="exportEngSr" name="EngSr" />
     <input type="hidden" id="exportCustMaterial" name="CustMaterial" />
 </form>
-<p><label class="btn-link" id="exp" name="exp">匯出Excel</label></p>
+<p><button type="button" class="btn btn-link" id="exp" name="exp">匯出Excel</button></p>
 <div id="partialViewContainer">
     @Html.Partial("_QuotePartialView", Model)
 </div>

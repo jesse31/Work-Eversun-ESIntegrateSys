@@ -117,15 +117,27 @@ namespace ESIntegrateSys.Controllers
             string uId = (Session["Member"] as MemberViewModels)?.fUserId ?? string.Empty;
             string fname = (Session["Member"] as MemberViewModels)?.fName ?? string.Empty;
 
+            // 將部門、使用者ID、姓名存入ViewBag（先設定，first-visit 分支與 _QuotePartialView 皆需用到）
+            ViewBag.DeptNo = dept;
+            ViewBag.UserId = uId;
+            ViewBag.Name = fname;
+
+            // 初次進入頁面（非 AJAX、且網址完全沒有查詢參數）不自動查詢，避免載入即撈全表資料；
+            // 待使用者按下查詢鈕（AJAX 觸發）才實際查詢。分頁連結（PagedListPager）會帶著既有篩選條件
+            // 以 querystring 形式送出非 AJAX 請求，此時 QueryString.Count > 0，仍需正常查詢，否則分頁會失效
+            if (!Request.IsAjaxRequest() && Request.QueryString.Count == 0)
+            {
+                ViewBag.HasSearched = false;
+                var emptyPagedResult = new List<QuoteDataListDto>().ToPagedList(1, pageSize);
+                return View("QuotesView", "_QuoteLayout", emptyPagedResult);
+            }
+
             try
             {
                 // 直接取得查詢結果（可能為 DTO 或內部模型），防止 service 回傳 null
                 var rawResult = _quoteScheduleService.GetQuoteData(SalesID, CustNo, Indate, Indate2, Sort, Cancel, dept, EngSr, CustMaterial);
 
-                // 將部門、使用者ID、姓名存入ViewBag
-                ViewBag.DeptNo = dept;
-                ViewBag.UserId = uId;
-                ViewBag.Name = fname;
+                ViewBag.HasSearched = true;
 
                 // 需要確保傳入 View 的型別為 IPagedList<QuoteDataListDto>
                 IEnumerable<QuoteDataListDto> dtoEnumerable = null;
@@ -889,6 +901,14 @@ namespace ESIntegrateSys.Controllers
             string dept = (Session["Member"] as MemberViewModels).UDeptNo;
             // 查詢報價資料
             quoteDataLists = qq.QuoteDataSearch(SalesID, CustNo, Indate, Indate2, Sort, Cancel, dept, EngSr, CustMaterial);
+
+            // Vian 要求匯出[排除業務取消的報價資料] By 20262728 Jesse
+            // 匯出取消單範圍過濾：對齊清單頁「顯示取消單」勾選狀態，僅套用於匯出，不影響 QuotesView 清單頁顯示邏輯
+            // Cancel 非 true（未勾選「顯示取消單」）：匯出排除業務取消的報價資料；Cancel 為 true：不過濾，維持現況（查詢本身已只回傳取消單）
+            if (Cancel != true)
+            {
+                quoteDataLists = quoteDataLists.Where(q => !q.CancelChk).ToList();
+            }
 
             // 建立工作表
             ISheet sheet = workbook.CreateSheet("報價資料");

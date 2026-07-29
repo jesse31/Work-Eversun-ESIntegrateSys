@@ -136,6 +136,14 @@
             <th></th>
             <th></th>
         </tr>
+        @if (Model.TotalItemCount == 0)
+        {
+            <tr>
+                <td colspan="17" style="text-align:center; color:#888; padding:20px;">
+                    @(ViewBag.HasSearched == false ? "請設定查詢條件後點擊查詢" : "無資料")
+                </td>
+            </tr>
+        }
         @foreach (var item in Model)
         {
             // 取得鍵值
