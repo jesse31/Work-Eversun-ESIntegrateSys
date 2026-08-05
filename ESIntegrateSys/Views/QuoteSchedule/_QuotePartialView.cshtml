@@ -180,7 +180,7 @@
         <td>@item.WoNoAttri</td>
         <td>@(item.RequDate != DateTime.MinValue ? item.RequDate.ToString("yyyy/MM/dd") : "")</td>
         <td>@item.Mark</td>
-        <td>@item.IEonwer</td>
+        <td id="ieowner_@item.Sno">@item.IEonwer</td>
         <td>@(item.IEQuoteDate != DateTime.MinValue ? item.IEQuoteDate.ToString("yyyy/MM/dd") : "")</td>
         <td>@(item.IEQuoteTDate != DateTime.MinValue ? item.IEQuoteTDate.ToString("yyyy/MM/dd") : "")</td>
         @if (item.CancelChk)
@@ -325,6 +325,9 @@
     $(document).on("change", ".handleCheckbox", function () {
         var recordId = $(this).data("record-id");
         var isChecked = $(this).is(":checked");
+        var originalState = !isChecked; // 記住操作前的狀態，失敗時還原
+        var $checkbox = $(`#handleCheckbox_${recordId}`);
+        var $ieowner = $(`#ieowner_${recordId}`);
 
         // 發送 AJAX 請求
         $.ajax({
@@ -332,20 +335,36 @@
             type: 'POST',
             data: {
                 sno: recordId,
-                isChecked: isChecked
+                isChecked: isChecked,
+                ieonwerName: fName // 僅供前端顯示，權限判斷由後端以 Session 使用者為準
             },
             success: function (response) {
                 if (response.isChecked) {
-                    alert("該資料已經被其他使用者勾選，報價中！");
-                    $(`#handleCheckbox_${recordId}`).prop("checked", true); // 保持勾選
-                    $(`#handleCheckbox_${recordId}`).prop("disabled", true); // 禁用 checkbox
+                    Swal.fire({ icon: 'warning', title: '報價中', text: '該資料已經被其他使用者勾選，報價中！' });
+                    $checkbox.prop("checked", true); // 保持勾選
+                    $checkbox.prop("disabled", true); // 禁用 checkbox
                 } else if (response.status == "success") {
-                    alert("紀錄已成功更新");
-                    window.location.assign(window.location.href);//刷新當前頁
+                    if (isChecked) {
+                        // 勾選成功：顯示負責人、禁用 checkbox
+                        $ieowner.text(response.ieonwer);
+                        $checkbox.prop("disabled", true);
+                        Swal.fire({ icon: 'success', title: '成功', text: '紀錄已設置為報價中', timer: 1500, showConfirmButton: false });
+                    } else {
+                        // 取消成功：清空負責人、啟用 checkbox
+                        $ieowner.text("");
+                        $checkbox.prop("disabled", false);
+                        Swal.fire({ icon: 'info', title: '已取消', text: '已取消報價中狀態', timer: 1500, showConfirmButton: false });
+                    }
+                } else {
+                    // 後端驗證失敗（例如：非原勾選者嘗試取消），還原 checkbox 狀態
+                    $checkbox.prop("checked", originalState);
+                    Swal.fire({ icon: 'error', title: '無法更新', text: response.message || '無法更新紀錄' });
                 }
             },
             error: function () {
-                alert('無法更新紀錄');
+                // AJAX 失敗，還原 checkbox 狀態
+                $checkbox.prop("checked", originalState);
+                Swal.fire({ icon: 'error', title: '錯誤', text: '無法更新紀錄' });
             }
         });
     });

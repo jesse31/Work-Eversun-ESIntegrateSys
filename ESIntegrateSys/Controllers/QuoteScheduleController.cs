@@ -537,17 +537,25 @@ namespace ESIntegrateSys.Controllers
 
         /// <summary>
         /// 處理 IE 報價資料的勾選狀態變更，根據 isChecked 參數新增或移除鎖定狀態。
+        /// 取消勾選時僅允許原勾選者本人操作（以 Session 中的使用者 ID 驗證）。
         /// </summary>
         /// <param name="sno">業務開單資料的唯一識別碼</param>
         /// <param name="isChecked">是否勾選（true 表示鎖定，false 表示解除鎖定）</param>
-        /// <returns>JsonResult，回傳操作結果狀態</returns>
+        /// <param name="ieonwerName">當前登入者姓名，僅用於回傳給前端顯示，不作為權限判斷依據</param>
+        /// <returns>JsonResult，回傳操作結果狀態；勾選成功時附帶 IE 負責人姓名與狀態</returns>
         [HttpPost]
-        public JsonResult HandleCheckboxChange(int sno, bool isChecked)
+        public JsonResult HandleCheckboxChange(int sno, bool isChecked, string ieonwerName)
         {
-            // 取得目前登入者的使用者ID
+            // 取得目前登入者的使用者ID（來自 Session，權限判斷一律以此為準，不採用前端傳入值）
             string uId = (Session["Member"] as MemberViewModels).fUserId;
             // 依據 sno 查詢 IE 報價資料
             var forIE = db.ES_QuoteForIE.FirstOrDefault(o => o.id == sno);
+
+            // 取消勾選時，僅原勾選者本人可以取消，避免其他使用者誤操作或惡意取消他人報價狀態
+            if (!isChecked && forIE != null && forIE.IEonwer != uId)
+            {
+                return Json(new { status = "error", message = "只有原勾選者才能取消" });
+            }
 
             //if (isChecked)
             //{
@@ -585,8 +593,8 @@ namespace ESIntegrateSys.Controllers
             // 儲存資料庫變更
             db.SaveChanges();
 
-            // 回傳成功狀態
-            return Json(new { status = "success" });
+            // 回傳成功狀態，附帶 IE 負責人名稱與狀態供前端直接更新畫面，避免整頁重新整理
+            return Json(new { status = "success", ieonwer = isChecked ? ieonwerName : "", iestatus = isChecked ? "U" : "" });
         }
 
         #endregion
