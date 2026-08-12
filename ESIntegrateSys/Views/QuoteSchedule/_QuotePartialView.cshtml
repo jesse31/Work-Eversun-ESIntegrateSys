@@ -257,37 +257,10 @@
 
 <script src="~/Scripts/jquery-3.7.1.min.js"></script>
 <script>
-        var fName='@(ViewBag.Name.ToString())';
-        var Temp = '@(ViewBag.UserId.ToString())';
-        var uId = Temp.padStart(5, '0');
+    // 注意：fName / uId 兩個變數已移至 QuotesView.cshtml（整頁載入時宣告一次），此處直接沿用全域變數。
+    // 「Edit/Cancel/IE Check 連結點擊」「報價中 checkbox 變更」兩個委派事件也已移至 QuotesView.cshtml，
+    // 避免每次查詢（本 partial 被 AJAX 重新載入）時重複疊加綁定。
     $(document).ready(function () {
-        // Handle click on edit, cancel, and check links
-        $(document).on("click", ".seditlink, .cancel-link, .edit-link", function (e) {
-            e.preventDefault();
-            var Deptno = $(this).closest("tr").data("dept");
-            var IEonwer = $(this).closest("tr").data("ieonwer");
-            var IEStatus = $(this).closest("tr").data("iestatus");
-            var actionType = $(this).hasClass("seditlink") ? "修改" : "取消";
-
-            if (IEStatus == "U" && IEonwer !== fName) {
-                alert("報價中，此單不可操作！");
-                return false;
-            }
-            if (IEonwer.length == 3 && Deptno == "SD") {
-                alert("IE已報價，此單不可" + actionType + "！");
-            } else {
-                if ($(this).hasClass("cancel-link")) {
-                    if (confirm("您確定要取消報價嗎?")) {
-                        window.location.href = this.href;
-                    } else {
-                        return false;
-                    }
-                } else {
-                    window.location.href = this.href;
-                }
-            }
-        });
-
         // 檢查每個 checkbox 的狀態
         $(".handleCheckbox").each(function () {
             var recordId = $(this).data("record-id");
@@ -321,53 +294,6 @@
             });
         });
 
-        // 事件代理：當使用者點擊 checkbox 時
-    $(document).on("change", ".handleCheckbox", function () {
-        var recordId = $(this).data("record-id");
-        var isChecked = $(this).is(":checked");
-        var originalState = !isChecked; // 記住操作前的狀態，失敗時還原
-        var $checkbox = $(`#handleCheckbox_${recordId}`);
-        var $ieowner = $(`#ieowner_${recordId}`);
-
-        // 發送 AJAX 請求
-        $.ajax({
-            url: '@Url.Action("HandleCheckboxChange", "QuoteSchedule")',
-            type: 'POST',
-            data: {
-                sno: recordId,
-                isChecked: isChecked,
-                ieonwerName: fName // 僅供前端顯示，權限判斷由後端以 Session 使用者為準
-            },
-            success: function (response) {
-                if (response.isChecked) {
-                    Swal.fire({ icon: 'warning', title: '報價中', text: '該資料已經被其他使用者勾選，報價中！' });
-                    $checkbox.prop("checked", true); // 保持勾選
-                    $checkbox.prop("disabled", true); // 禁用 checkbox
-                } else if (response.status == "success") {
-                    if (isChecked) {
-                        // 勾選成功：顯示負責人、禁用 checkbox
-                        $ieowner.text(response.ieonwer);
-                        $checkbox.prop("disabled", true);
-                        Swal.fire({ icon: 'success', title: '成功', text: '紀錄已設置為報價中', timer: 1500, showConfirmButton: false });
-                    } else {
-                        // 取消成功：清空負責人、啟用 checkbox
-                        $ieowner.text("");
-                        $checkbox.prop("disabled", false);
-                        Swal.fire({ icon: 'info', title: '已取消', text: '已取消報價中狀態', timer: 1500, showConfirmButton: false });
-                    }
-                } else {
-                    // 後端驗證失敗（例如：非原勾選者嘗試取消），還原 checkbox 狀態
-                    $checkbox.prop("checked", originalState);
-                    Swal.fire({ icon: 'error', title: '無法更新', text: response.message || '無法更新紀錄' });
-                }
-            },
-            error: function () {
-                // AJAX 失敗，還原 checkbox 狀態
-                $checkbox.prop("checked", originalState);
-                Swal.fire({ icon: 'error', title: '錯誤', text: '無法更新紀錄' });
-            }
-        });
-    });
     });
 
 
@@ -384,13 +310,7 @@
             modal.hide();
         });
 
-        // 當user點模擬窗以外的地方則關閉模擬窗
-        $(window).click(function (event) {
-            if ($(event.target).is(modal)) {
-                modal.hide();
-            }
-        });
-
+        // 註：「點模擬窗以外的地方則關閉」已移至 QuotesView.cshtml，避免每次查詢重新綁定
 
         // 展開按鈕事件
         $('.expand-btn').click(function () {
@@ -428,13 +348,7 @@
                 modal.style.display = "none";
             }
         }
-        // 上傳按鈕事件
-        $(document).on("click", ".upload-link", function (e) {
-            e.preventDefault(); // 防止默认行为
-            var sno = $(this).data("sno");
-            $("#modalSno").val(sno); // 設置隱藏字串sno
-            modal.style.display = "block"; // 打開模態視窗
-        });
+        // 註：「點上傳連結開啟 Modal」已移至 QuotesView.cshtml，避免每次查詢重新綁定
 
         // 文件上傳submit事件
         $('#uploadForm').submit(function (e) {

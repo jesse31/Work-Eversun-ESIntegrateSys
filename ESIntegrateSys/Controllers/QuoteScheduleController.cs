@@ -536,8 +536,8 @@ namespace ESIntegrateSys.Controllers
         }
 
         /// <summary>
-        /// 處理 IE 報價資料的勾選狀態變更，根據 isChecked 參數新增或移除鎖定狀態。
-        /// 取消勾選時僅允許原勾選者本人操作（以 Session 中的使用者 ID 驗證）。
+        /// 處理 IE 報價資料的勾選狀態變更，依前端傳入的 isChecked 參數明確設定或解除鎖定狀態。
+        /// 勾選時若該筆資料已被其他使用者鎖定則拒絕覆蓋；取消勾選時僅允許原勾選者本人操作（以 Session 中的使用者 ID 驗證）。
         /// </summary>
         /// <param name="sno">業務開單資料的唯一識別碼</param>
         /// <param name="isChecked">是否勾選（true 表示鎖定，false 表示解除鎖定）</param>
@@ -551,45 +551,46 @@ namespace ESIntegrateSys.Controllers
             // 依據 sno 查詢 IE 報價資料
             var forIE = db.ES_QuoteForIE.FirstOrDefault(o => o.id == sno);
 
-            // 取消勾選時，僅原勾選者本人可以取消，避免其他使用者誤操作或惡意取消他人報價狀態
-            if (!isChecked && forIE != null && forIE.IEonwer != uId)
+            if (isChecked)
             {
-                return Json(new { status = "error", message = "只有原勾選者才能取消" });
-            }
-
-            //if (isChecked)
-            //{
-            // 其他使用者已經勾選，回傳錯誤提示
-            // return Json(new { isAlreadyChecked = true });
-            //}
-
-            // 若查有 IE 報價資料
-            if (forIE != null)
-            {
-                // 若目前狀態為 "U"（已鎖定），則移除該筆資料
-                if (forIE.IEStatus == "U")
+                // 勾選時，若已被其他使用者鎖定，拒絕覆蓋其鎖定，避免任何人都能清除他人的鎖定
+                if (forIE != null && forIE.IEStatus == "U" && forIE.IEonwer != uId)
                 {
-                    db.ES_QuoteForIE.Remove(forIE);
-                    //forIE.IEStatus = "";
+                    return Json(new { status = "locked", message = "該資料已被其他使用者勾選，報價中" });
+                }
+
+                if (forIE != null)
+                {
+                    // 設定目前使用者為鎖定者，並將狀態設為 "U"
+                    forIE.IEonwer = uId;
+                    forIE.IEStatus = "U";
                 }
                 else
                 {
-                    // 否則設定目前使用者為鎖定者，並將狀態設為 "U"
-                    forIE.IEonwer = uId;
-                    forIE.IEStatus = "U";
+                    // 若查無資料，則新增一筆鎖定紀錄
+                    forIE = new ES_QuoteForIE
+                    {
+                        id = sno,
+                        IEonwer = uId,
+                        IEStatus = "U",
+                    };
+                    db.ES_QuoteForIE.Add(forIE);
                 }
             }
             else
             {
-                // 若查無資料，則新增一筆鎖定紀錄
-                forIE = new ES_QuoteForIE
+                // 取消勾選時，僅原勾選者本人可以取消，避免其他使用者誤操作或惡意取消他人報價狀態
+                if (forIE != null && forIE.IEonwer != uId)
                 {
-                    id = sno,
-                    IEonwer = uId,
-                    IEStatus = "U",
-                };
-                db.ES_QuoteForIE.Add(forIE);
+                    return Json(new { status = "error", message = "只有原勾選者才能取消" });
+                }
+
+                if (forIE != null)
+                {
+                    db.ES_QuoteForIE.Remove(forIE);
+                }
             }
+
             // 儲存資料庫變更
             db.SaveChanges();
 
