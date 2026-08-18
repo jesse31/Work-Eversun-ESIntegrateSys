@@ -485,7 +485,6 @@
     <Content Include="Scripts\select2\select2.min.js" />
     <Content Include="Scripts\sweetalert2.all.min.js" />
     <Content Include="Scripts\_FunctionMenu.js" />
-    <Content Include="Views\QuoteSchedule\Index.cshtml" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -527,7 +526,6 @@
     <Content Include="Views\QuoteSchedule\SalesEdit.cshtml" />
     <Content Include="Views\QuoteSchedule\QuoteIE.cshtml" />
     <Content Include="Views\Shared\_QuoteLayout.cshtml" />
-    <Content Include="Views\QuoteSchedule\PieChart.cshtml" />
     <Content Include="Views\QuoteSchedule\_FilesPartialView.cshtml" />
     <Content Include="Views\Shared\_WoTSLayout.cshtml" />
     <Content Include="Views\WoTimeSheet\StTS.cshtml" />
