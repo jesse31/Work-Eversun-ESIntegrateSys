@@ -8,6 +8,7 @@ using NPOI.XSSF.UserModel;
 using PagedList;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -628,11 +629,11 @@ namespace ESIntegrateSys.Controllers
                         db.ES_QuoteUploadRecords.Add(record);
                         db.SaveChanges();
 
-                        // TODO: 檔案存檔路徑不要存絕對路徑
                         // 取得檔案名稱
                         var fileName = Path.GetFileName(file.FileName);
-                        // 組合檔案儲存路徑
-                        var filePath = Path.Combine(Server.MapPath("~/UploadedFiles"), fileName);
+                        // 組合檔案儲存路徑（基礎路徑來自 Web.config，新舊系統共用同一網路共享路徑）
+                        var basePath = ConfigurationManager.AppSettings["FileUploadPath"];
+                        var filePath = Path.Combine(basePath, fileName);
                         // 儲存檔案至指定路徑
                         file.SaveAs(filePath);
 
@@ -640,7 +641,7 @@ namespace ESIntegrateSys.Controllers
                         var fileRecord = new Models.ES_QuoteUploadFiles
                         {
                             RecordId = record.Q_sno, // 使用 record 的 Q_sno 作為 RecordId
-                            FilePath = filePath, // 檔案儲存路徑
+                            FilePath = fileName, // 僅存檔名，讀取時動態組合基礎路徑（與新系統設計一致）
                             UploadTime = DateTime.Now, // 上傳時間
                             FileName = fileName, // 檔案名稱
                             DeptNo = deptNo // 部門編號
@@ -715,8 +716,31 @@ namespace ESIntegrateSys.Controllers
                 return HttpNotFound();
             }
 
-            // 讀取檔案內容為 byte 陣列
-            byte[] fileBytes = System.IO.File.ReadAllBytes(fileRecord.FilePath);
+            // 組合檔案完整路徑（基礎路徑來自 Web.config，FilePath 僅存檔名）
+            var basePath = ConfigurationManager.AppSettings["FileUploadPath"];
+            var fullPath = Path.Combine(basePath, fileRecord.FilePath);
+
+            byte[] fileBytes;
+            try
+            {
+                // 讀取檔案內容為 byte 陣列
+                fileBytes = System.IO.File.ReadAllBytes(fullPath);
+            }
+            catch (Exception ex)
+            {
+                // 記錄錯誤到伺服器日誌，避免拋出未處理例外導致整個頁面崩潰
+                try
+                {
+                    var logPath = Server.MapPath("~/App_Data/QuoteSchedule_error.log");
+                    System.IO.File.AppendAllText(logPath, DateTime.Now.ToString("s") + " - Download error (path: " + fullPath + "): " + ex.ToString() + Environment.NewLine);
+                }
+                catch
+                {
+                    // 忽略日誌寫入錯誤
+                }
+                return new HttpStatusCodeResult(500, "檔案讀取失敗，請聯絡系統管理員。");
+            }
+
             // 取得檔案名稱
             string fileName = fileRecord.FileName;
             // 回傳檔案下載，MIME 型態為 octet-stream
