@@ -759,10 +759,11 @@ namespace ESIntegrateSys.Controllers
             // 依據 recordId 查詢所有檔案記錄
             var recordQuery = db.ES_QuoteUploadFiles.Where(r => r.RecordId == recordId);
 
-            // 若部門為 IE，則只顯示 IE 部門的檔案
+            // 若部門為 IE，則只顯示 IE 部門的檔案；
+            // 新系統上傳時 DeptNo 寫入 "FAC001"（新系統 qs:dept-ie 系統參數），與舊系統的 "IE" 不同，故需一併比對
             if (deptNo == "IE")
             {
-                recordQuery = recordQuery.Where(d => d.DeptNo == "IE");
+                recordQuery = recordQuery.Where(d => d.DeptNo == "IE" || d.DeptNo == "FAC001");
             }
 
             // 將查詢結果轉換成 List
