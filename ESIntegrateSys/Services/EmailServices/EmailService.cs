@@ -63,9 +63,10 @@ namespace ESIntegrateSys.Services.EmailServices
                 case "報價安排數超過通知":
                     // 業務姓名或 IT 部門
                     // 排除離職員工（fStatus == true）By Jesse 20260211
+                    // 排除 IT 部門 By Jesse 20260903
                     string fNameBody = bodys.Length >= 7 ? bodys[7] : string.Empty;
                     toEmails = db.ES_Member
-                        .Where(m => (m.fName == fNameBody || m.Dept_No == "IT") && m.fStatus == true)
+                        .Where(m => (m.fName == fNameBody) && m.fStatus == true)
                         .Select(m => m.email)
                         .ToList();
                     break;
@@ -73,17 +74,19 @@ namespace ESIntegrateSys.Services.EmailServices
                 case "取消報價通知":
                     // IE 或 IT 部門，排除 Brian
                     // 排除離職員工（fStatus == true）
+                    // 排除 IT 部門 By Jesse 20260903
                     toEmails = db.ES_Member
-                        .Where(m => (m.Dept_No == "IE" || m.Dept_No == "IT") && m.fUserId != "00081" && m.fStatus == true)
+                        .Where(m => (m.Dept_No == "IE") && m.fUserId != "00081" && m.fStatus == true)
                         .Select(m => m.email)
                         .ToList();
                     break;
                 case "IE報價完成通知":
                     // 業務、IE 或 IT 部門，排除 Brian
                     // 排除離職員工（fStatus == true）By Jesse 20260211
+                    // 排除 IT 部門 By Jesse 20260903
                     string fUserId1 = bodys.Length > 3 ? bodys[3] : string.Empty;
                     toEmails = db.ES_Member
-                        .Where(m => (m.fUserId == fUserId1 || m.Dept_No == "IE" || m.Dept_No == "IT")
+                        .Where(m => (m.fUserId == fUserId1 || m.Dept_No == "IE")
                             && m.fUserId != "00081" && m.fStatus == true)
                         .Select(m => m.email)
                         .ToList();
@@ -91,9 +94,10 @@ namespace ESIntegrateSys.Services.EmailServices
                 default:
                     // 使用者編號或 IT 部門
                     // 排除離職員工（fStatus == true）By Jesse 20260211
+                    // 排除 IT 部門 By Jesse 20260903
                     string fUserIdBody = bodys.Length >= 8 ? bodys[8] : string.Empty;
                     toEmails = db.ES_Member
-                        .Where(m => (m.fUserId == fUserIdBody || m.Dept_No == "IT") && m.fStatus == true)
+                        .Where(m => (m.fUserId == fUserIdBody) && m.fStatus == true)
                         .Select(m => m.email)
                         .ToList();
                     break;
