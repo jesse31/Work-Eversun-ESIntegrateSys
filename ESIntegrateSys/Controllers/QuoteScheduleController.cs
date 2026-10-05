@@ -651,6 +651,11 @@ namespace ESIntegrateSys.Controllers
                         db.ES_QuoteUploadFiles.Add(fileRecord);
                         db.SaveChanges();
 
+                        // 新系統依上傳者判斷刪除權限，並行上線期間舊系統也要寫入上傳者工號
+                        db.Database.ExecuteSqlCommand(
+                            "UPDATE ES_QuoteUploadFiles SET UploaderEmployeeNo = @p0 WHERE sno = @p1",
+                            ieonwer, fileRecord.sno);
+
                         // 提交交易
                         transaction.Commit();
 

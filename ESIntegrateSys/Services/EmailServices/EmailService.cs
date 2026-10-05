@@ -84,10 +84,10 @@ namespace ESIntegrateSys.Services.EmailServices
                     // 業務、IE 或 IT 部門，排除 Brian
                     // 排除離職員工（fStatus == true）By Jesse 20260211
                     // 排除 IT 部門 By Jesse 20260903
+                    // Vian 要求，IE報價完成通知要寄給 Brian By Jesse 20261001
                     string fUserId1 = bodys.Length > 3 ? bodys[3] : string.Empty;
                     toEmails = db.ES_Member
-                        .Where(m => (m.fUserId == fUserId1 || m.Dept_No == "IE")
-                            && m.fUserId != "00081" && m.fStatus == true)
+                        .Where(m => (m.fUserId == fUserId1 || m.Dept_No == "IE") && m.fStatus == true)
                         .Select(m => m.email)
                         .ToList();
                     break;
