@@ -57,6 +57,12 @@
             // 進入頁面預設禁用匯出，待查詢成功後才解鎖
             $('#exp').prop('disabled', true).attr('title', '請先查詢後再匯出');
 
+            // 唯讀模式下從異動入口被導回清單時，顯示原因
+            var readOnlyMessage = '@Html.Raw(HttpUtility.JavaScriptStringEncode(TempData[ESIntegrateSys.Filters.QsReadOnlyAttribute.TempDataKey] as string ?? ""))';
+            if (readOnlyMessage) {
+                Swal.fire({ icon: 'info', title: '僅供查詢', text: readOnlyMessage });
+            }
+
             // 使用 AJAX 載入客戶清單 ------------------------------------------------------------------------------------------------
             $.ajax({
                 url: '@Url.Action("QuoteCust", "QuoteSchedule")',
@@ -291,7 +297,11 @@
 
         <hr />
         @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-        @if (dept == "SD")
+        @if (ESIntegrateSys.Filters.QsReadOnlyAttribute.IsEnabled)
+        {
+            <div class="alert alert-warning">@ESIntegrateSys.Filters.QsReadOnlyAttribute.Message</div>
+        }
+        else if (dept == "SD")
         {
             <div class="form-group">
                 @Html.ActionLink("報價機種登記", "QuoteSales", null, new { @class = "btn btn-info" })

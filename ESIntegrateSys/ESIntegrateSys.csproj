@@ -229,6 +229,7 @@
     <Compile Include="Controllers\QuoteScheduleController.cs" />
     <Compile Include="Controllers\WoTimeSheetController.cs" />
     <Compile Include="Filters\DepartmentAuthorizationAttribute.cs" />
+    <Compile Include="Filters\QsReadOnlyAttribute.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

@@ -1,4 +1,5 @@
-﻿using ESIntegrateSys.Models;
+﻿using ESIntegrateSys.Filters;
+using ESIntegrateSys.Models;
 using ESIntegrateSys.Models_QSchedule;
 using ESIntegrateSys.Services.Dtos;
 using ESIntegrateSys.Services.QuoteScheduleServices;
@@ -228,6 +229,7 @@ namespace ESIntegrateSys.Controllers
         /// <returns>
         /// ActionResult，回傳業務開單頁面或登入頁面
         /// </returns>
+        [QsReadOnly]
         public ActionResult QuoteSales()
         {
             // 檢查是否已登入
@@ -253,6 +255,7 @@ namespace ESIntegrateSys.Controllers
         /// <param name="OtherName">其他客戶名稱（當客戶編號為99時使用）</param>
         /// <returns>ActionResult，執行完畢後導向報價查詢頁面</returns>
         [HttpPost]
+        [QsReadOnly]
         public ActionResult QuoteSales(string CustNo, string EngSr, string SalesNo, string CustMaterial, int WoNoAttri, DateTime RequDate, string Mark, string OtherName)
         {
             // 取得目前登入者的使用者ID
@@ -324,6 +327,7 @@ namespace ESIntegrateSys.Controllers
         /// <param name="sno">業務開單資料的唯一識別碼</param>
         /// <returns>ActionResult，回傳編輯頁面或登入頁面</returns>
         [HttpGet]
+        [QsReadOnly]
         public ActionResult SalesEdit(int? sno)
         {
             // 檢查 sno 是否有值，且已登入
@@ -365,6 +369,7 @@ namespace ESIntegrateSys.Controllers
         /// <param name="Mark">備註</param>
         /// <returns>ActionResult，執行完畢後導向報價查詢頁面</returns>
         [HttpPost]
+        [QsReadOnly]
         public ActionResult SalesEdit(int sno, string engSr, string CustMaterial, int WoNoAttri, DateTime RequDate, string Mark)
         {
             // 取得目前登入者的姓名
@@ -382,6 +387,7 @@ namespace ESIntegrateSys.Controllers
         /// </summary>
         /// <param name="sno">要取消的業務開單資料唯一識別碼。</param>
         /// <returns>ActionResult，執行完畢後導向報價查詢頁面。</returns>
+        [QsReadOnly]
         public ActionResult SalesCancel(int sno)
         {
             // 取得目前登入者的姓名
@@ -401,6 +407,7 @@ namespace ESIntegrateSys.Controllers
         /// </summary>
         /// <param name="sno">業務開單資料的唯一識別碼</param>
         /// <returns>ActionResult，回傳 IE 報價頁面或登入頁面</returns>
+        [QsReadOnly]
         public ActionResult QuoteIE(int sno)
         {
             // 檢查是否已登入
@@ -479,6 +486,7 @@ namespace ESIntegrateSys.Controllers
         /// <param name="UpdateMark">IE 備註</param>
         /// <returns>ActionResult，執行完畢後導向報價查詢頁面</returns>
         [HttpPost]
+        [QsReadOnly]
         public ActionResult QuoteIE(int sno, DateTime? IEQuoteDate, DateTime? IEQuoteTDate, string Mark, string UpdateMark)
         {
             // 取得目前登入者的使用者ID
@@ -501,6 +509,7 @@ namespace ESIntegrateSys.Controllers
         /// <param name="sno">業務開單資料的唯一識別碼。</param>
         /// <returns>HttpStatusCodeResult，回傳 200 表示成功。</returns>
         [HttpPost]
+        [QsReadOnly]
         public ActionResult ClearIEStatus(int sno)
         {
             // 根據 sno 查詢 IE 報價資料
@@ -545,6 +554,7 @@ namespace ESIntegrateSys.Controllers
         /// <param name="ieonwerName">當前登入者姓名，僅用於回傳給前端顯示，不作為權限判斷依據</param>
         /// <returns>JsonResult，回傳操作結果狀態；勾選成功時附帶 IE 負責人姓名與狀態</returns>
         [HttpPost]
+        [QsReadOnly]
         public JsonResult HandleCheckboxChange(int sno, bool isChecked, string ieonwerName)
         {
             // 取得目前登入者的使用者ID（來自 Session，權限判斷一律以此為準，不採用前端傳入值）
@@ -610,6 +620,7 @@ namespace ESIntegrateSys.Controllers
         /// <param name="file">上傳的檔案物件</param>
         /// <returns>ActionResult，執行完畢後導向報價查詢頁面</returns>
         [HttpPost]
+        [QsReadOnly]
         public ActionResult Upload(string name, int sno, HttpPostedFileBase file)
         {
             // 檢查檔案是否存在且大小大於 0
@@ -792,6 +803,7 @@ namespace ESIntegrateSys.Controllers
         /// <param name="sno">檔案的唯一識別碼。</param>
         /// <param name="rcode">記錄的唯一識別碼（未使用）。</param>
         /// <returns>執行完畢後導向報價查詢頁面。</returns>
+        [QsReadOnly]
         public ActionResult DelDownload(int sno, int rcode)
         {
             // 根據 sno 查詢檔案紀錄

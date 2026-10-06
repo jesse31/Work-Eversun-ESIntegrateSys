@@ -6,6 +6,8 @@
     // 使用複合鍵來存儲統計數據，鍵為 (WoNoAttri, RequDate)
     var countDict = new Dictionary<Tuple<int, DateTime>, int>();
     string dept = ViewBag.DeptNo;
+    // 新系統上線後切換唯讀：異動入口比照已取消單停用，查詢、下載不受影響
+    bool readOnly = ESIntegrateSys.Filters.QsReadOnlyAttribute.IsEnabled;
 }
 
 <head>
@@ -183,7 +185,7 @@
         <td id="ieowner_@item.Sno">@item.IEonwer</td>
         <td>@(item.IEQuoteDate != DateTime.MinValue ? item.IEQuoteDate.ToString("yyyy/MM/dd") : "")</td>
         <td>@(item.IEQuoteTDate != DateTime.MinValue ? item.IEQuoteTDate.ToString("yyyy/MM/dd") : "")</td>
-        @if (item.CancelChk)
+        @if (item.CancelChk || readOnly)
         {
             if (dept == "SD")
             {
@@ -208,14 +210,19 @@
             }
         }
         @*<td><button class="btn-default" data-sno="@item.Sno">上傳</button></td>*@
-        <td><a href="#" class="upload-link" data-sno="@item.Sno"><i class="fas fa-paperclip"></i> </a></td>
+        <td>
+            @if (!readOnly)
+            {
+                <a href="#" class="upload-link" data-sno="@item.Sno"><i class="fas fa-paperclip"></i> </a>
+            }
+        </td>
         @if (dept != "SD")
         {
             <td>
                 <input type="checkbox" class="handleCheckbox" id="handleCheckbox_@item.Sno"
                        data-record-id="@item.Sno" data-status="@item.IEStatus"
                        @(item.IEStatus == "U" ? "checked" : "")
-                       @(item.IEStatus == "U" ? "disabled" : "") /> 報價中
+                       @(item.IEStatus == "U" || readOnly ? "disabled" : "") /> 報價中
             </td>
 
 

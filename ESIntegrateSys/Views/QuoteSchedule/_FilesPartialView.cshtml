@@ -17,7 +17,7 @@
                 <td>@file.UploadTime</td>
                 <td>
                     <a href="@Url.Action("Download", "QuoteSchedule", new { sno = file.sno })" class="btn btn-primary">下載</a>
-                    @if (file.DeptNo == ViewBag.dept)
+                    @if (file.DeptNo == ViewBag.dept && !ESIntegrateSys.Filters.QsReadOnlyAttribute.IsEnabled)
                         {
                             <a href="@Url.Action("DelDownload", "QuoteSchedule", new { sno = file.sno ,rcode=@ViewBag.no})" class="btn btn-warning">  刪除</a>
                         }
