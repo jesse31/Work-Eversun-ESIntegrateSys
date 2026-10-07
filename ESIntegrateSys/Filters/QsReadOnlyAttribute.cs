@@ -1,5 +1,6 @@
 ﻿using System.Configuration;
 using System.Net;
+using System.Web;
 using System.Web.Mvc;
 
 namespace ESIntegrateSys.Filters
@@ -28,6 +29,24 @@ namespace ESIntegrateSys.Filters
             }
         }
 
+        /// <summary>
+        /// Ajax 請求被擋下時回 403，訊息放在 HTML 的 title（上傳等前端以 title 顯示失敗原因）。
+        /// 須略過 IIS 自訂錯誤頁，否則訊息會被 IIS 的錯誤頁取代。
+        /// </summary>
+        /// <param name="response">目前的 HTTP 回應</param>
+        /// <param name="message">要顯示的訊息</param>
+        public static ActionResult AjaxForbidden(HttpResponseBase response, string message)
+        {
+            response.StatusCode = (int)HttpStatusCode.Forbidden;
+            response.TrySkipIisCustomErrors = true;
+            return new ContentResult
+            {
+                Content = "<html><head><title>" + HttpUtility.HtmlEncode(message) + "</title></head></html>",
+                ContentType = "text/html",
+                ContentEncoding = System.Text.Encoding.UTF8
+            };
+        }
+
         /// <inheritdoc/>
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
@@ -40,7 +59,7 @@ namespace ESIntegrateSys.Filters
             }
             else if (filterContext.HttpContext.Request.IsAjaxRequest())
             {
-                filterContext.Result = new HttpStatusCodeResult(HttpStatusCode.Forbidden, Message);
+                filterContext.Result = AjaxForbidden(filterContext.HttpContext.Response, Message);
             }
             else
             {
