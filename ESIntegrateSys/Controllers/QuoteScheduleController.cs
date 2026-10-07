@@ -372,6 +372,7 @@ namespace ESIntegrateSys.Controllers
         [QsReadOnly]
         public ActionResult SalesEdit(int sno, string engSr, string CustMaterial, int WoNoAttri, DateTime RequDate, string Mark)
         {
+            if (IsQuoteCompleted(sno)) return CompletedQuoteBlocked();
             // 取得目前登入者的姓名
             string Sales = (Session["Member"] as MemberViewModels).fName;
             // 建立報價查詢物件
@@ -489,12 +490,14 @@ namespace ESIntegrateSys.Controllers
         [QsReadOnly]
         public ActionResult QuoteIE(int sno, DateTime? IEQuoteDate, DateTime? IEQuoteTDate, string Mark, string UpdateMark)
         {
+            if (IsQuoteCompleted(sno)) return CompletedQuoteBlocked();
             // 取得目前登入者的使用者ID
             string uId = (Session["Member"] as MemberViewModels).fUserId;
             // 建立報價查詢物件
             QuoteQuery quoteIE = new QuoteQuery(db);
             // 執行 IE 報價資料更新
             quoteIE.QuoteIE(uId, sno, IEQuoteDate, IEQuoteTDate, Mark, UpdateMark);
+            MarkCompletedIfReady(sno);
             // 更新完成後導向報價查詢頁面
             return RedirectToAction("QuotesView");
         }
@@ -557,6 +560,7 @@ namespace ESIntegrateSys.Controllers
         [QsReadOnly]
         public JsonResult HandleCheckboxChange(int sno, bool isChecked, string ieonwerName)
         {
+            if (IsQuoteCompleted(sno)) return Json(new { status = "error", message = CompletedQuoteMessage });
             // 取得目前登入者的使用者ID（來自 Session，權限判斷一律以此為準，不採用前端傳入值）
             string uId = (Session["Member"] as MemberViewModels).fUserId;
             // 依據 sno 查詢 IE 報價資料
@@ -623,6 +627,7 @@ namespace ESIntegrateSys.Controllers
         [QsReadOnly]
         public ActionResult Upload(string name, int sno, HttpPostedFileBase file)
         {
+            if (IsQuoteCompleted(sno)) return CompletedQuoteBlocked();
             // 檢查檔案是否存在且大小大於 0
             if (file != null && file.ContentLength > 0)
             {
@@ -669,6 +674,8 @@ namespace ESIntegrateSys.Controllers
 
                         // 提交交易
                         transaction.Commit();
+
+                        MarkCompletedIfReady(sno);
 
                         // 若部門為 IE，則發送 IE 報價完成通知郵件
                         if (deptNo == "IE")
@@ -811,6 +818,13 @@ namespace ESIntegrateSys.Controllers
             // 若查有檔案則刪除
             if (fileRecord != null)
             {
+                // 已完成報價或已被歷史版次引用的附件不可刪（新系統規則，硬刪除被引用的附件也會違反外鍵）
+                if ((fileRecord.RecordId.HasValue && IsQuoteCompleted(fileRecord.RecordId.Value))
+                    || db.Database.SqlQuery<int>("SELECT COUNT(1) FROM ES_QuoteRevisionFile WHERE FileSno = @p0", sno).Single() > 0)
+                {
+                    return CompletedQuoteBlocked();
+                }
+
                 db.ES_QuoteUploadFiles.Remove(fileRecord);
                 db.SaveChanges();
             }
@@ -893,6 +907,54 @@ namespace ESIntegrateSys.Controllers
             return Json(descriptions, JsonRequestBehavior.AllowGet);
         }
 
+        #endregion
+
+        #region 新系統完成狀態同步
+        /// <summary>已完成報價被擋下時顯示的訊息</summary>
+        private const string CompletedQuoteMessage = "已完成報價請至新系統執行重新報價";
+
+        /// <summary>
+        /// 新系統以 ES_QuoteForIE.CompletedNotifiedAt 判定「已完成報價」，判定後不可再修改、上傳、刪除附件或重新鎖定，
+        /// 須由新系統「重新報價」退回。舊系統並行期間同樣遵守。
+        /// </summary>
+        /// <param name="sno">業務開單資料的唯一識別碼</param>
+        private bool IsQuoteCompleted(int sno)
+        {
+            return db.Database.SqlQuery<int>(
+                "SELECT COUNT(1) FROM ES_QuoteForIE WHERE id = @p0 AND CompletedNotifiedAt IS NOT NULL", sno).Single() > 0;
+        }
+
+        /// <summary>依入口的回應方式擋下已完成報價的異動，回應方式比照 QsReadOnlyAttribute</summary>
+        private ActionResult CompletedQuoteBlocked()
+        {
+            if (Request.IsAjaxRequest())
+            {
+                return QsReadOnlyAttribute.AjaxForbidden(Response, CompletedQuoteMessage);
+            }
+            TempData[QsReadOnlyAttribute.TempDataKey] = CompletedQuoteMessage;
+            return RedirectToAction("QuotesView");
+        }
+
+        /// <summary>
+        /// 達成完成條件時寫入完成時間，讓新系統顯示為已完成。條件比照新系統：IE 報價日已填、存在目前版本
+        /// （未刪除、未封存）的 IE 部門附件、業務未取消。同時清除鎖定，IE 負責人不動。
+        /// 不設待補寄旗標：舊系統 IE 上傳時已自行寄出完成通知。舊系統 model 無此欄位，直接下 SQL。
+        /// </summary>
+        /// <param name="sno">業務開單資料的唯一識別碼</param>
+        private void MarkCompletedIfReady(int sno)
+        {
+            // IE 部門附件的 DeptNo：舊系統寫入 'IE'，新系統寫入系統參數 qs:dept-ie 的值（Web.config QsIeDeptCode）
+            var ieDeptCode = ConfigurationManager.AppSettings["QsIeDeptCode"] ?? "";
+            db.Database.ExecuteSqlCommand(@"
+UPDATE ES_QuoteForIE
+SET CompletedNotifiedAt = GETDATE(), CompletedNotificationPending = 0, IEStatus = '', LockedAt = NULL
+WHERE id = @p0 AND CompletedNotifiedAt IS NULL AND IEQuoteDate IS NOT NULL
+  AND EXISTS (SELECT 1 FROM ES_QuoteUploadFiles f
+              WHERE f.RecordId = @p0 AND f.DeptNo IN ('IE', @p1)
+                AND ISNULL(f.IsDeleted, 0) = 0 AND f.ArchivedRevisionNo IS NULL)
+  AND EXISTS (SELECT 1 FROM ES_QuoteForSales s WHERE s.sno = @p0 AND ISNULL(s.CancelChk, 0) = 0)",
+                sno, ieDeptCode);
+        }
         #endregion
 
         #region Login 驗證相關Class
